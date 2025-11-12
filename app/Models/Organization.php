@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Database\Model;
+
 /**
  * Organization Model
  * Handles multi-tenancy for different organizations
  */
-class Organization
+class Organization extends Model
 {
     protected $table = 'organizations';
     protected $fillable = ['name', 'slug', 'domain', 'is_active'];

@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Database\Model;
+
 /**
  * Template Model
  * Stores HTML email templates with variable placeholders
  */
-class Template
+class Template extends Model
 {
     protected $table = 'templates';
     protected $fillable = [

@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Database\Model;
+
 /**
  * User Model
  * Handles user authentication with role-based access
  */
-class User
+class User extends Model
 {
     protected $table = 'users';
     protected $fillable = ['organization_id', 'name', 'email', 'password', 'role', 'is_active'];

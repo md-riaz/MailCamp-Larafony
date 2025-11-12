@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Database\Model;
+
 /**
  * Recipient Model
  * Stores recipient lists for campaigns
  */
-class Recipient
+class Recipient extends Model
 {
     protected $table = 'recipients';
     protected $fillable = [

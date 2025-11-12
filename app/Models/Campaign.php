@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Database\Model;
+
 /**
  * Campaign Model
  * Manages email campaigns
  */
-class Campaign
+class Campaign extends Model
 {
     protected $table = 'campaigns';
     protected $fillable = [

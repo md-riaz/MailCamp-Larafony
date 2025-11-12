@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Database\Model;
+
 /**
  * QueueJob Model
  * Database-backed queue for batch email sending with throttling
  */
-class QueueJob
+class QueueJob extends Model
 {
     protected $table = 'queue_jobs';
     protected $fillable = [

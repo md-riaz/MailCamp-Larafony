@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Database\Model;
+
 /**
  * Log Model
  * Tracks email opens, clicks, and failures
  */
-class Log
+class Log extends Model
 {
     protected $table = 'logs';
     protected $fillable = [

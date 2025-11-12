@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Database\Model;
+
 /**
  * SmtpSetting Model
  * Stores SMTP configuration per organization
  */
-class SmtpSetting
+class SmtpSetting extends Model
 {
     protected $table = 'smtp_settings';
     protected $fillable = [

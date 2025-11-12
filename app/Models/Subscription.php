@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Database\Model;
+
 /**
  * Subscription Model
  * Manages email subscription preferences
  */
-class Subscription
+class Subscription extends Model
 {
     protected $table = 'subscriptions';
     protected $fillable = [
