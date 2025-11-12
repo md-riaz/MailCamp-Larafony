@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- PHP 7.4 or higher with extensions:
+- PHP 8.5 or higher with extensions:
   - PDO
   - PDO_MySQL
   - OpenSSL
@@ -21,8 +21,13 @@
 # Update system
 sudo apt update && sudo apt upgrade -y
 
-# Install PHP and extensions
-sudo apt install php8.1 php8.1-cli php8.1-fpm php8.1-mysql php8.1-mbstring php8.1-xml php8.1-curl -y
+# Install PHP 8.5
+sudo add-apt-repository ppa:ondrej/php
+sudo apt update
+sudo apt install php8.5-cli php8.5-fpm php8.5-dev php8.5-mysql php8.5-mbstring php8.5-xml php8.5-curl -y
+
+# Verify installation
+php8.5 --version
 
 # Install MySQL
 sudo apt install mysql-server -y
@@ -100,7 +105,7 @@ server {
     }
     
     location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
+        fastcgi_pass unix:/var/run/php/php8.5-fpm.sock;
         fastcgi_index index.php;
         fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
         include fastcgi_params;
@@ -241,7 +246,7 @@ sudo crontab -e
 
 **Dockerfile:**
 ```dockerfile
-FROM php:8.1-fpm
+FROM php:8.5-fpm
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \

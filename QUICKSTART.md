@@ -4,7 +4,7 @@ Get MailCamp up and running in 5 minutes!
 
 ## Prerequisites
 
-- PHP 7.4+ with PDO and MySQL extensions
+- PHP 8.5+ with PDO and MySQL extensions
 - MySQL 5.7+
 - Composer (optional, for dependencies)
 
