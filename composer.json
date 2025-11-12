@@ -4,8 +4,8 @@
     "type": "project",
     "license": "MIT",
     "require": {
-        "php": ">=8.3",
-        "larafony/core": "dev-main",
+        "php": ">=8.5",
+        "larafony/core": "*",
         "phpmailer/phpmailer": "^6.8"
     },
     "require-dev": {
