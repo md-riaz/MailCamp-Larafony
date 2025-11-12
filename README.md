@@ -1,6 +1,8 @@
 # MailCamp - Multi-tenant Email Campaign Manager
 
-MailCamp is a powerful multi-tenant mail campaign manager built on Larafony MVC framework. Each organization can configure its own SMTP settings, design custom email templates, manage recipients, and track campaign performance.
+MailCamp is a powerful multi-tenant mail campaign manager built on the **Larafony Framework**. Each organization can configure its own SMTP settings, design custom email templates, manage recipients, and track campaign performance.
+
+Built with modern PHP 8.5+ features including property hooks, attributes, and asymmetric visibility.
 
 ## Features
 
@@ -32,8 +34,8 @@ The application uses the following tables:
 
 ### Requirements
 
-- PHP 7.4 or higher
-- MySQL 5.7 or higher
+- **PHP 8.5 or higher** (required for property hooks and modern PHP features)
+- MySQL 5.7 or higher / PostgreSQL / SQLite
 - Composer (for PHP dependencies)
 - Web server (Apache/Nginx) or PHP built-in server
 
@@ -57,6 +59,10 @@ The application uses the following tables:
    
    Edit `.env` and configure your database and application settings:
    ```
+   APP_ENV=local
+   APP_DEBUG=true
+   APP_KEY=your-app-key-here
+   
    DB_HOST=127.0.0.1
    DB_PORT=3306
    DB_DATABASE=mailcamp
@@ -64,12 +70,19 @@ The application uses the following tables:
    DB_PASSWORD=your_password
    ```
 
-4. **Run migrations**
+4. **Initialize the application**
    ```bash
-   php cli/migrate.php
+   php bin/larafony app:init
+   ```
+   
+   This will check your database connection and create the database if needed.
+
+5. **Run migrations**
+   ```bash
+   php bin/larafony migrate
    ```
 
-5. **Start the application**
+6. **Start the application**
    
    Using PHP built-in server:
    ```bash
@@ -78,12 +91,12 @@ The application uses the following tables:
    
    Or configure your web server to point to the `public` directory.
 
-6. **Start the queue worker** (in a separate terminal)
+7. **Start the queue worker** (in a separate terminal)
    ```bash
-   php cli/queue-worker.php
+   php bin/larafony queue:work
    ```
 
-7. **Access the application**
+8. **Access the application**
    
    Open your browser and navigate to `http://localhost:8000`
 
@@ -137,36 +150,88 @@ This ensures good deliverability by not overwhelming email servers.
 
 ## Architecture
 
-### MVC Structure
+### Larafony Framework Structure
+
+MailCamp follows the **Larafony Framework** architecture with modern PHP 8.5+ features:
 
 ```
 MailCamp-Larafony/
-├── app/
-│   ├── Controllers/      # Request handlers
-│   ├── Models/           # Database models
+├── src/
+│   ├── Controllers/      # Attribute-based routing controllers
+│   ├── Models/           # ORM models with property hooks
+│   ├── DTOs/             # Data Transfer Objects with validation
 │   ├── Middleware/       # Request middleware
-│   └── Workers/          # Background workers
-├── config/               # Configuration files
+│   └── Console/          # Console commands
+├── bootstrap/
+│   ├── app.php          # Application bootstrap
+│   └── console.php      # Console bootstrap
+├── bin/
+│   └── larafony         # Console entry point
+├── config/              # Configuration files
 ├── database/
-│   ├── migrations/       # Database migrations
-│   └── seeds/            # Database seeders
-├── public/               # Web root
+│   ├── migrations/      # Database migrations
+│   └── seeders/         # Database seeders
+├── public/              # Web root
+│   └── index.php        # Application entry point
 ├── resources/
-│   ├── views/            # View templates
-│   └── assets/           # CSS, JS, images
-├── routes/               # Route definitions
-├── storage/              # Logs and cache
-└── cli/                  # CLI scripts
+│   └── views/           # Blade templates
+└── storage/             # Logs and cache
+```
+
+### Modern PHP 8.5+ Features
+
+**Property Hooks**
+```php
+public ?string $name {
+    get => $this->name ?? null;
+    set {
+        $this->name = $value;
+        $this->markPropertyAsChanged('name');
+    }
+}
+```
+
+**Attribute-Based Routing**
+```php
+#[Route('/campaigns', 'GET')]
+public function index(ServerRequestInterface $request): ResponseInterface
+{
+    // Controller logic
+}
+```
+
+**ORM Relationships with Attributes**
+```php
+#[BelongsTo(
+    related: Organization::class,
+    foreign_key: 'organization_id',
+    local_key: 'id'
+)]
+public ?Organization $organization { 
+    get => $this->relations->getRelation('organization'); 
+}
+```
+
+**DTOs with Asymmetric Visibility**
+```php
+#[IsValidated]
+public protected(set) string $email {
+    get => $this->email;
+    set => $this->email = filter_var($value, FILTER_VALIDATE_EMAIL) 
+        ? $value 
+        : throw new \InvalidArgumentException('Invalid email');
+}
 ```
 
 ### Key Components
 
-- **AuthController**: Handles user registration, login, and role-based access
-- **CampaignController**: Manages campaign creation, recipient import, and launching
-- **TemplateController**: Template CRUD operations with variable parsing
+- **AuthController**: User authentication with Larafony Auth facade
+- **CampaignController**: Campaign management with ORM relationships
+- **TemplateController**: Template CRUD with variable parsing
 - **SmtpSettingController**: SMTP configuration management
-- **QueueWorker**: Background worker for processing email queue with throttling
-- **TrackingController**: Handles open/click tracking and unsubscribes
+- **Models**: Active Record pattern with property hooks and attribute-based relationships
+- **DTOs**: Type-safe request validation with property hooks
+- **Middleware**: PSR-15 middleware for authentication and authorization
 
 ## Security
 
