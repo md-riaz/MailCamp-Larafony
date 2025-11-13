@@ -26,6 +26,7 @@ class SmtpSettingController extends Controller
             return $this->redirect('/login');
         }
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         $smtpSetting = SmtpSetting::query()
             ->where('organization_id', '=', $user->organization_id)
@@ -44,6 +45,7 @@ class SmtpSettingController extends Controller
             return $this->redirect('/login');
         }
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         // Check if settings already exist

@@ -8,6 +8,7 @@ use App\Models\Campaign;
 use App\Models\Recipient;
 use App\Models\Template;
 use Larafony\Framework\Auth\Auth;
+use Larafony\Framework\Database\Base\Query\Enums\OrderDirection;
 use Larafony\Framework\Routing\Advanced\Attributes\Route;
 use Larafony\Framework\Web\Controller;
 use Psr\Http\Message\ResponseInterface;
@@ -28,6 +29,7 @@ class DashboardController extends Controller
             return $this->redirect('/login');
         }
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         $organization_id = $user->organization_id;
 
@@ -59,7 +61,7 @@ class DashboardController extends Controller
         // Get recent campaigns
         $recentCampaigns = Campaign::query()
             ->where('organization_id', '=', $organization_id)
-            ->orderBy('created_at', 'DESC')
+                ->orderBy('created_at', OrderDirection::DESC)
             ->limit(5)
             ->get();
 

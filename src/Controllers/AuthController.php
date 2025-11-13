@@ -31,6 +31,7 @@ class AuthController extends Controller
     public function login(LoginDto $dto): ResponseInterface
     {
         // Find user by email
+        /** @var User|null $user */
         $user = User::query()->where('email', '=', $dto->email)->first();
 
         if (!$user || !$user->verifyPassword($dto->password)) {

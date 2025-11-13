@@ -27,6 +27,7 @@ class TemplateController extends Controller
             return $this->redirect('/login');
         }
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         $templates = Template::query()
             ->where('organization_id', '=', $user->organization_id)
@@ -58,6 +59,7 @@ class TemplateController extends Controller
             return $this->redirect('/login');
         }
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         $template = new Template()->fill([
@@ -83,8 +85,12 @@ class TemplateController extends Controller
             return $this->redirect('/login');
         }
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
-        $template = Template::find($id);
+        /** @var Template|null $template */
+        $template = Template::query()->where('id', '=', $id)->first();
+        /** @var Template|null $template */
+        $template = Template::query()->where('id', '=', $id)->first();
 
         if (!$template || $template->organization_id !== $user->organization_id) {
             return $this->json(['error' => 'Template not found'], 404);
@@ -103,8 +109,10 @@ class TemplateController extends Controller
             return $this->redirect('/login');
         }
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
-        $template = Template::find($id);
+        /** @var Template|null $template */
+        $template = Template::query()->where('id', '=', $id)->first();
 
         if (!$template || $template->organization_id !== $user->organization_id) {
             return $this->json(['error' => 'Template not found'], 404);
@@ -131,14 +139,14 @@ class TemplateController extends Controller
             return $this->json(['error' => 'Unauthorized'], 401);
         }
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
-        $template = Template::find($id);
-
-        if (!$template || $template->organization_id !== $user->organization_id) {
+        /** @var Template|null $template */
+        $template = Template::query()->where('id', '=', $id)->first();        if (!$template || $template->organization_id !== $user->organization_id) {
             return $this->json(['error' => 'Template not found'], 404);
         }
 
-        $template->delete();
+        Template::query()->where('id', '=', $id)->delete();
 
         return $this->redirect('/templates');
     }

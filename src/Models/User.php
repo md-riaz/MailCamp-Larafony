@@ -39,14 +39,6 @@ class User extends Authenticable
         }
     }
 
-    public ?string $password {
-        get => $this->password ?? null;
-        set {
-            $this->password = $value;
-            $this->markPropertyAsChanged('password');
-        }
-    }
-
     public ?string $role {
         get => $this->role ?? null;
         set {

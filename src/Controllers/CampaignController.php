@@ -28,6 +28,7 @@ class CampaignController extends Controller
             return $this->redirect('/login');
         }
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         $campaigns = Campaign::query()
             ->where('organization_id', '=', $user->organization_id)
@@ -47,6 +48,7 @@ class CampaignController extends Controller
             return $this->redirect('/login');
         }
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         $templates = Template::query()
             ->where('organization_id', '=', $user->organization_id)
@@ -66,6 +68,7 @@ class CampaignController extends Controller
             return $this->redirect('/login');
         }
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         $campaign = new Campaign()->fill([
@@ -87,8 +90,10 @@ class CampaignController extends Controller
             return $this->redirect('/login');
         }
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
-        $campaign = Campaign::find($id);
+        /** @var Campaign|null $campaign */
+        $campaign = Campaign::query()->where('id', '=', $id)->first();
 
         if (!$campaign || $campaign->organization_id !== $user->organization_id) {
             return $this->json(['error' => 'Campaign not found'], 404);
@@ -107,10 +112,10 @@ class CampaignController extends Controller
             return $this->json(['error' => 'Unauthorized'], 401);
         }
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
-        $campaign = Campaign::find($id);
-
-        if (!$campaign || $campaign->organization_id !== $user->organization_id) {
+        /** @var Campaign|null $campaign */
+        $campaign = Campaign::query()->where('id', '=', $id)->first();        if (!$campaign || $campaign->organization_id !== $user->organization_id) {
             return $this->json(['error' => 'Campaign not found'], 404);
         }
 
