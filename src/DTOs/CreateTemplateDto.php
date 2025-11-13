@@ -5,24 +5,20 @@ declare(strict_types=1);
 namespace App\DTOs;
 
 use Larafony\Framework\Validation\Attributes\IsValidated;
+use Larafony\Framework\Validation\Attributes\MinLength;
+use Larafony\Framework\Validation\FormRequest;
 
-class CreateTemplateDto
+class CreateTemplateDto extends FormRequest
 {
     #[IsValidated]
-    public protected(set) string $name {
-        get => $this->name;
-        set => $this->name = $value;
-    }
+    #[MinLength(3)]
+    public protected(set) string $name;
 
     #[IsValidated]
-    public protected(set) string $subject {
-        get => $this->subject;
-        set => $this->subject = $value;
-    }
+    #[MinLength(3)]
+    public protected(set) string $subject;
 
     #[IsValidated]
-    public protected(set) string $html_content {
-        get => $this->html_content;
-        set => $this->html_content = $value;
-    }
+    #[MinLength(10)]
+    public protected(set) string $html_content;
 }

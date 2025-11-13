@@ -5,18 +5,15 @@ declare(strict_types=1);
 namespace App\DTOs;
 
 use Larafony\Framework\Validation\Attributes\IsValidated;
+use Larafony\Framework\Validation\Attributes\MinLength;
+use Larafony\Framework\Validation\FormRequest;
 
-class CreateCampaignDto
+class CreateCampaignDto extends FormRequest
 {
     #[IsValidated]
-    public protected(set) string $name {
-        get => $this->name;
-        set => $this->name = $value;
-    }
+    #[MinLength(3)]
+    public protected(set) string $name;
 
     #[IsValidated]
-    public protected(set) int $template_id {
-        get => $this->template_id;
-        set => $this->template_id = $value;
-    }
+    public protected(set) int $template_id;
 }

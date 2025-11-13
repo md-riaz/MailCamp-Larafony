@@ -4,19 +4,18 @@ declare(strict_types=1);
 
 namespace App\DTOs;
 
+use Larafony\Framework\Validation\Attributes\Email;
 use Larafony\Framework\Validation\Attributes\IsValidated;
+use Larafony\Framework\Validation\Attributes\MinLength;
+use Larafony\Framework\Validation\FormRequest;
 
-class LoginDto
+class LoginDto extends FormRequest
 {
     #[IsValidated]
-    public protected(set) string $email {
-        get => $this->email;
-        set => $this->email = filter_var($value, FILTER_VALIDATE_EMAIL) ? $value : throw new \InvalidArgumentException('Invalid email');
-    }
+    #[Email]
+    public protected(set) string $email;
 
     #[IsValidated]
-    public protected(set) string $password {
-        get => $this->password;
-        set => $this->password = $value;
-    }
+    #[MinLength(6)]
+    public protected(set) string $password;
 }

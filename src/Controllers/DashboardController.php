@@ -21,7 +21,6 @@ class DashboardController extends Controller
     }
 
     #[Route('/', 'GET')]
-    #[Route('/dashboard', 'GET')]
     public function index(ServerRequestInterface $request): ResponseInterface
     {
         // Check if user is authenticated

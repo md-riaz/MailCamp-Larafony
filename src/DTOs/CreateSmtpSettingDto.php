@@ -4,49 +4,34 @@ declare(strict_types=1);
 
 namespace App\DTOs;
 
+use Larafony\Framework\Validation\Attributes\Email;
 use Larafony\Framework\Validation\Attributes\IsValidated;
+use Larafony\Framework\Validation\Attributes\MinLength;
+use Larafony\Framework\Validation\FormRequest;
 
-class CreateSmtpSettingDto
+class CreateSmtpSettingDto extends FormRequest
 {
     #[IsValidated]
-    public protected(set) string $host {
-        get => $this->host;
-        set => $this->host = $value;
-    }
+    #[MinLength(3)]
+    public protected(set) string $host;
 
     #[IsValidated]
-    public protected(set) int $port {
-        get => $this->port;
-        set => $this->port = $value;
-    }
+    public protected(set) int $port;
 
     #[IsValidated]
-    public protected(set) string $encryption {
-        get => $this->encryption;
-        set => $this->encryption = $value;
-    }
+    public protected(set) string $encryption;
 
     #[IsValidated]
-    public protected(set) string $username {
-        get => $this->username;
-        set => $this->username = $value;
-    }
+    public protected(set) string $username;
 
     #[IsValidated]
-    public protected(set) string $password {
-        get => $this->password;
-        set => $this->password = $value;
-    }
+    #[MinLength(6)]
+    public protected(set) string $password;
 
     #[IsValidated]
-    public protected(set) string $from_email {
-        get => $this->from_email;
-        set => $this->from_email = filter_var($value, FILTER_VALIDATE_EMAIL) ? $value : throw new \InvalidArgumentException('Invalid email');
-    }
+    #[Email]
+    public protected(set) string $from_email;
 
     #[IsValidated]
-    public protected(set) string $from_name {
-        get => $this->from_name;
-        set => $this->from_name = $value;
-    }
+    public protected(set) string $from_name;
 }

@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\DTOs\CreateTemplateDto;
 use App\Models\Template;
 use Larafony\Framework\Auth\Auth;
+use Larafony\Framework\Database\Base\Query\Enums\OrderDirection;
 use Larafony\Framework\Routing\Advanced\Attributes\Route;
 use Larafony\Framework\Web\Controller;
 use Psr\Http\Message\ResponseInterface;
@@ -29,7 +30,7 @@ class TemplateController extends Controller
         $user = Auth::user();
         $templates = Template::query()
             ->where('organization_id', '=', $user->organization_id)
-            ->orderBy('created_at', 'DESC')
+            ->orderBy('created_at', OrderDirection::DESC)
             ->get();
 
         return $this->render('templates.index', [
@@ -95,8 +96,7 @@ class TemplateController extends Controller
         ]);
     }
 
-    #[Route('/templates/{id}', 'PUT')]
-    #[Route('/templates/{id}', 'POST')]
+    #[Route('/templates/{id}', ['PUT', 'POST'])]
     public function update(ServerRequestInterface $request, int $id, CreateTemplateDto $dto): ResponseInterface
     {
         if (!Auth::check()) {
@@ -124,7 +124,6 @@ class TemplateController extends Controller
         return $this->redirect('/templates');
     }
 
-    #[Route('/templates/{id}/delete', 'POST')]
     #[Route('/templates/{id}', 'DELETE')]
     public function destroy(ServerRequestInterface $request, int $id): ResponseInterface
     {

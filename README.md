@@ -100,6 +100,25 @@ The application uses the following tables:
    
    Open your browser and navigate to `http://localhost:8000`
 
+9. **[Optional] Load demo data**
+   ```bash
+   php database/seeds/demo_data.php
+   ```
+   
+   This creates a demo organization with sample users, templates, and campaigns.
+
+## Demo Credentials
+
+If you ran the demo data seeder, you can login with:
+
+| Role    | Email                      | Password    |
+|---------|----------------------------|-------------|
+| Admin   | admin@demo.example.com     | admin123    |
+| Manager | manager@demo.example.com   | manager123  |
+| User    | user@demo.example.com      | user123     |
+
+**Note:** Change these passwords in production!
+
 ## Usage
 
 ### First Time Setup

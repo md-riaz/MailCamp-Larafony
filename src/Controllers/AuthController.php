@@ -98,8 +98,7 @@ class AuthController extends Controller
         return $this->redirect('/dashboard');
     }
 
-    #[Route('/logout', 'GET')]
-    #[Route('/logout', 'POST')]
+    #[Route('/logout', ['GET', 'POST'])]
     public function logout(ServerRequestInterface $request): ResponseInterface
     {
         Auth::logout();
