@@ -57,8 +57,8 @@ class Template extends Model
         }
     }
 
-    public ?bool $is_active {
-        get => $this->is_active ?? true;
+    public int $is_active {
+        get => $this->is_active ?? 1;
         set {
             $this->is_active = $value;
             $this->markPropertyAsChanged('is_active');

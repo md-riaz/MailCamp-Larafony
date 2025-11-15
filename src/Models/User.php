@@ -47,8 +47,8 @@ class User extends Authenticable
         }
     }
 
-    public ?bool $is_active {
-        get => $this->is_active ?? true;
+    public int $is_active {
+        get => $this->is_active ?? 1;
         set {
             $this->is_active = $value;
             $this->markPropertyAsChanged('is_active');
@@ -85,21 +85,5 @@ class User extends Authenticable
     public function isManager(): bool
     {
         return in_array($this->role, ['admin', 'manager']);
-    }
-
-    /**
-     * Hash password before saving
-     */
-    public static function hashPassword(string $password): string
-    {
-        return password_hash($password, PASSWORD_BCRYPT);
-    }
-
-    /**
-     * Verify password
-     */
-    public function verifyPassword(string $password): bool
-    {
-        return password_verify($password, $this->password);
     }
 }

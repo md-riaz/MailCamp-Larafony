@@ -52,7 +52,7 @@ class CampaignController extends Controller
         $user = Auth::user();
         $templates = Template::query()
             ->where('organization_id', '=', $user->organization_id)
-            ->where('is_active', '=', true)
+            ->where('is_active', '=', 1)
             ->get();
 
         return $this->render('campaigns.create', [

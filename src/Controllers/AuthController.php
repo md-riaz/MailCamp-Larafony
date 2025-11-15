@@ -34,24 +34,22 @@ class AuthController extends Controller
         /** @var User|null $user */
         $user = User::query()->where('email', '=', $dto->email)->first();
 
-        if (!$user || !$user->verifyPassword($dto->password)) {
+        if (!$user instanceof User) {
             return $this->render('auth.login', [
                 'error' => 'Invalid credentials',
                 'email' => $dto->email,
             ]);
         }
 
-        if (!$user->is_active) {
-            return $this->render('auth.login', [
-                'error' => 'Account is inactive',
-                'email' => $dto->email,
-            ]);
+        // Attempt login with Auth facade (auto-checks password and is_active)
+        if (Auth::attempt($user, $dto->password)) {
+            return $this->redirect('/dashboard');
         }
 
-        // Login user
-        Auth::login($user);
-
-        return $this->redirect('/dashboard');
+        return $this->render('auth.login', [
+            'error' => 'Invalid credentials or account is inactive',
+            'email' => $dto->email,
+        ]);
     }
 
     #[Route('/register', 'GET')]
@@ -78,19 +76,18 @@ class AuthController extends Controller
         $org = new Organization()->fill([
             'name' => $dto->organization_name,
             'slug' => Organization::generateSlug($dto->organization_name),
-            'is_active' => true,
+            'is_active' => 1,
         ]);
         $org->save();
 
         // Create user
-        $user = new User()->fill([
-            'organization_id' => $org->id,
-            'name' => $dto->name,
-            'email' => $dto->email,
-            'password' => User::hashPassword($dto->password),
-            'role' => 'admin', // First user is admin
-            'is_active' => true,
-        ]);
+        $user = new User();
+        $user->organization_id = $org->id;
+        $user->name = $dto->name;
+        $user->email = $dto->email;
+        $user->password = $dto->password; // Auto-hashed with Argon2id
+        $user->role = 'admin'; // First user is admin
+        $user->is_active = 1;
         $user->save();
 
         // Auto-login

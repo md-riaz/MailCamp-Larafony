@@ -38,8 +38,8 @@ class Organization extends Model
         }
     }
 
-    public ?bool $is_active {
-        get => $this->is_active ?? true;
+    public int $is_active {
+        get => $this->is_active ?? 1;
         set {
             $this->is_active = $value;
             $this->markPropertyAsChanged('is_active');
@@ -55,11 +55,11 @@ class Organization extends Model
     public array $users { get => $this->relations->getRelation('users'); }
 
     // HasOne relationship: Organization has one SmtpSetting
-    #[HasOne(
-        related: SmtpSetting::class,
-        foreign_key: 'organization_id',
-        local_key: 'id'
-    )]
+    // #[HasOne(
+    //     related: SmtpSetting::class,
+    //     foreign_key: 'organization_id',
+    //     local_key: 'id'
+    // )]
     public ?SmtpSetting $smtpSettings { get => $this->relations->getRelation('smtpSettings'); }
 
     // HasMany relationship: Organization has many Templates

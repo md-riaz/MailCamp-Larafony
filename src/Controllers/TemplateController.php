@@ -67,7 +67,7 @@ class TemplateController extends Controller
             'name' => $dto->name,
             'subject' => $dto->subject,
             'html_content' => $dto->html_content,
-            'is_active' => true,
+            'is_active' => 1,
         ]);
 
         // Parse and store variables

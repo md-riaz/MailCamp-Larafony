@@ -53,13 +53,13 @@ try {
         $stmt = $pdo->prepare("
             INSERT INTO users (organization_id, name, email, password, role, is_active) 
             VALUES (?, ?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE name=name
+            ON DUPLICATE KEY UPDATE password=VALUES(password), role=VALUES(role), is_active=VALUES(is_active)
         ");
         $stmt->execute([
             $orgId,
             $user[0],
             $user[1],
-            password_hash($user[2], PASSWORD_BCRYPT),
+            password_hash($user[2], PASSWORD_ARGON2ID),
             $user[3],
             1
         ]);

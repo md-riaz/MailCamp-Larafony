@@ -63,7 +63,7 @@ class SmtpSettingController extends Controller
                 'password' => SmtpSetting::encryptPassword($dto->password),
                 'from_email' => $dto->from_email,
                 'from_name' => $dto->from_name,
-                'is_active' => true,
+                'is_active' => 1,
             ]);
         } else {
             // Create new
@@ -76,7 +76,7 @@ class SmtpSettingController extends Controller
                 'password' => SmtpSetting::encryptPassword($dto->password),
                 'from_email' => $dto->from_email,
                 'from_name' => $dto->from_name,
-                'is_active' => true,
+                'is_active' => 1,
             ]);
         }
 
