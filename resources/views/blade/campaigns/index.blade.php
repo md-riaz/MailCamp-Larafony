@@ -47,7 +47,7 @@ ob_start();
                 <td><?php echo $campaign->total_recipients; ?></td>
                 <td><?php echo $campaign->sent_count; ?></td>
                 <td><?php echo $campaign->failed_count; ?></td>
-                <td><?php echo date('M d, Y', strtotime($campaign->created_at)); ?></td>
+                <td><?php echo $campaign->created_at->format('M d, Y'); ?></td>
                 <td>
                     <a href="/campaigns/<?php echo $campaign->id; ?>" class="btn">View</a>
                     <?php if ($campaign->status === 'draft'): ?>

@@ -5,6 +5,8 @@ return [
     'env' => getenv('APP_ENV') ?: 'production',
     'debug' => (bool) getenv('APP_DEBUG') ?: false,
     'url' => getenv('APP_URL') ?: 'http://localhost',
+    // Added encryption key mapping so EncryptionService can read Config::get('app.key')
+    'key' => getenv('APP_KEY') ?: null,
     
     'queue' => [
         'driver' => getenv('QUEUE_DRIVER') ?: 'database',

@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\DTOs\CreateSmtpSettingDto;
 use App\Models\SmtpSetting;
+use App\Models\User;
 use Larafony\Framework\Auth\Auth;
 use Larafony\Framework\Routing\Advanced\Attributes\Route;
 use Larafony\Framework\Web\Controller;
@@ -27,9 +28,9 @@ class SmtpSettingController extends Controller
         }
 
         /** @var \App\Models\User $user */
-        $user = Auth::user();
+        $user = User::query()->where('id', '=', Auth::id())->first();
         $smtpSetting = SmtpSetting::query()
-            ->where('organization_id', '=', $user->organization_id)
+            ->where('organization_id', '=', $user->getOrganizationId())
             ->first();
 
         return $this->render('smtp.index', [
@@ -46,11 +47,11 @@ class SmtpSettingController extends Controller
         }
 
         /** @var \App\Models\User $user */
-        $user = Auth::user();
+        $user = User::query()->where('id', '=', Auth::id())->first();
 
         // Check if settings already exist
         $smtpSetting = SmtpSetting::query()
-            ->where('organization_id', '=', $user->organization_id)
+            ->where('organization_id', '=', $user->getOrganizationId())
             ->first();
 
         if ($smtpSetting) {
@@ -68,7 +69,7 @@ class SmtpSettingController extends Controller
         } else {
             // Create new
             $smtpSetting = new SmtpSetting()->fill([
-                'organization_id' => $user->organization_id,
+                'organization_id' => $user->getOrganizationId(),
                 'host' => $dto->host,
                 'port' => $dto->port,
                 'encryption' => $dto->encryption,

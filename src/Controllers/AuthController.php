@@ -8,6 +8,7 @@ use App\DTOs\LoginDto;
 use App\DTOs\RegisterDto;
 use App\Models\Organization;
 use App\Models\User;
+use App\Models\UserProfile;
 use Larafony\Framework\Auth\Auth;
 use Larafony\Framework\Routing\Advanced\Attributes\Route;
 use Larafony\Framework\Web\Controller;
@@ -82,13 +83,26 @@ class AuthController extends Controller
 
         // Create user
         $user = new User();
-        $user->organization_id = $org->id;
-        $user->name = $dto->name;
         $user->email = $dto->email;
         $user->password = $dto->password; // Auto-hashed with Argon2id
-        $user->role = 'admin'; // First user is admin
         $user->is_active = 1;
         $user->save();
+
+        // Create user profile
+        $profile = new UserProfile();
+        $profile->user_id = $user->id;
+        $profile->organization_id = $org->id;
+        $profile->name = $dto->name;
+        $profile->save();
+
+        // Assign admin role (using framework's RBAC)
+        $adminRole = \Larafony\Framework\Database\ORM\Entities\Role::query()
+            ->where('name', '=', 'admin')
+            ->first();
+        
+        if ($adminRole) {
+            $user->addRole($adminRole);
+        }
 
         // Auto-login
         Auth::login($user);

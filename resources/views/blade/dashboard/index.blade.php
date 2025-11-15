@@ -46,7 +46,7 @@ ob_start();
                 <td><?php echo $campaign->total_recipients; ?></td>
                 <td><?php echo $campaign->sent_count; ?></td>
                 <td><?php echo $campaign->failed_count; ?></td>
-                <td><?php echo date('M d, Y', strtotime($campaign->created_at)); ?></td>
+                <td><?php echo $campaign->created_at->format('M d, Y'); ?></td>
             </tr>
             <?php endforeach; ?>
         </tbody>
@@ -60,7 +60,7 @@ ob_start();
     <h2>Quick Actions</h2>
     <a href="/campaigns/create" class="btn btn-success">Create New Campaign</a>
     <a href="/templates/create" class="btn">Create Template</a>
-    <?php if ($_SESSION['role'] === 'admin'): ?>
+    <?php if (isset($user) && property_exists($user, 'role') && $user->role === 'admin'): ?>
     <a href="/smtp-settings" class="btn">Configure SMTP</a>
     <?php endif; ?>
 </div>

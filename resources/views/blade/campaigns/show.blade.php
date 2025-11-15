@@ -57,18 +57,18 @@ ob_start();
         </tr>
         <tr>
             <td><strong>Created:</strong></td>
-            <td><?php echo date('F d, Y H:i:s', strtotime($campaign->created_at)); ?></td>
+            <td><?php echo $campaign->created_at->format('F d, Y H:i:s'); ?></td>
         </tr>
         <?php if ($campaign->started_at): ?>
         <tr>
             <td><strong>Started:</strong></td>
-            <td><?php echo date('F d, Y H:i:s', strtotime($campaign->started_at)); ?></td>
+            <td><?php echo $campaign->started_at->format('F d, Y H:i:s'); ?></td>
         </tr>
         <?php endif; ?>
         <?php if ($campaign->completed_at): ?>
         <tr>
             <td><strong>Completed:</strong></td>
-            <td><?php echo date('F d, Y H:i:s', strtotime($campaign->completed_at)); ?></td>
+            <td><?php echo $campaign->completed_at->format('F d, Y H:i:s'); ?></td>
         </tr>
         <?php endif; ?>
     </table>

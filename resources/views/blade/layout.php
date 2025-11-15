@@ -235,7 +235,7 @@
     </style>
 </head>
 <body>
-    <?php if (isset($_SESSION['user_id'])): ?>
+    <?php if (isset($user)): ?>
     <nav>
         <div class="container">
             <h1>📧 MailCamp</h1>

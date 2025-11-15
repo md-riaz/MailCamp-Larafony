@@ -29,7 +29,7 @@ ob_start();
                 <td><?php echo htmlspecialchars($template->subject); ?></td>
                 <td><?php echo htmlspecialchars($template->variables ?? '[]'); ?></td>
                 <td><?php echo $template->is_active ? 'Active' : 'Inactive'; ?></td>
-                <td><?php echo date('M d, Y', strtotime($template->created_at)); ?></td>
+                <td><?php echo $template->created_at->format('M d, Y'); ?></td>
                 <td>
                     <a href="/templates/<?php echo $template->id; ?>/edit" class="btn">Edit</a>
                     <form method="POST" action="/templates/<?php echo $template->id; ?>" style="display: inline;">

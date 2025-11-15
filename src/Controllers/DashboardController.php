@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Models\Campaign;
 use App\Models\Recipient;
 use App\Models\Template;
+use App\Models\User;
 use Larafony\Framework\Auth\Auth;
 use Larafony\Framework\Database\Base\Query\Enums\OrderDirection;
 use Larafony\Framework\Routing\Advanced\Attributes\Route;
@@ -29,9 +30,10 @@ class DashboardController extends Controller
             return $this->redirect('/login');
         }
 
+        // Get full user model with all properties
         /** @var \App\Models\User $user */
-        $user = Auth::user();
-        $organization_id = $user->organization_id;
+        $user = User::query()->where('id', '=', Auth::id())->first();
+        $organization_id = $user->getOrganizationId();
 
         // Get statistics
         $totalCampaigns = Campaign::query()
@@ -61,7 +63,7 @@ class DashboardController extends Controller
         // Get recent campaigns
         $recentCampaigns = Campaign::query()
             ->where('organization_id', '=', $organization_id)
-                ->orderBy('created_at', OrderDirection::DESC)
+            ->orderBy('created_at', OrderDirection::DESC)
             ->limit(5)
             ->get();
 
@@ -70,5 +72,11 @@ class DashboardController extends Controller
             'recent_campaigns' => $recentCampaigns,
             'user' => $user,
         ]);
+    }
+
+    #[Route('/dashboard', 'GET')]
+    public function dashboard(ServerRequestInterface $request): ResponseInterface
+    {
+        return $this->index($request);
     }
 }

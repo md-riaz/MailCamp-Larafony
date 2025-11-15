@@ -4,64 +4,37 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Larafony\Framework\Database\ORM\Attributes\BelongsTo;
 use Larafony\Framework\Database\ORM\Attributes\HasMany;
 use Larafony\Framework\Database\ORM\Entities\User as Authenticable;
 
+/**
+ * User Model
+ * 
+ * Extends framework's Authenticable User entity.
+ * Uses profile relationship for application-specific data.
+ * Uses framework's RBAC system for roles and permissions.
+ */
 class User extends Authenticable
 {
     public string $table { get => 'users'; }
 
-    public array $fillable = ['organization_id', 'name', 'email', 'password', 'role', 'is_active'];
-    public array $hidden = ['password'];
+    public array $fillable = ['email', 'username', 'password', 'is_active'];
+    public array $hidden = ['password', 'remember_token', 'password_reset_token'];
 
-    public ?int $organization_id {
-        get => $this->organization_id ?? null;
-        set {
-            $this->organization_id = $value;
-            $this->markPropertyAsChanged('organization_id');
+    private ?UserProfile $_profile = null;
+
+    /**
+     * Get user's profile (lazy loaded)
+     */
+    public function profile(): ?UserProfile
+    {
+        if ($this->_profile === null && isset($this->id)) {
+            $this->_profile = UserProfile::query()
+                ->where('user_id', '=', $this->id)
+                ->first();
         }
+        return $this->_profile;
     }
-
-    public ?string $name {
-        get => $this->name ?? null;
-        set {
-            $this->name = $value;
-            $this->markPropertyAsChanged('name');
-        }
-    }
-
-    public ?string $email {
-        get => $this->email ?? null;
-        set {
-            $this->email = $value;
-            $this->markPropertyAsChanged('email');
-        }
-    }
-
-    public ?string $role {
-        get => $this->role ?? null;
-        set {
-            $this->role = $value;
-            $this->markPropertyAsChanged('role');
-        }
-    }
-
-    public int $is_active {
-        get => $this->is_active ?? 1;
-        set {
-            $this->is_active = $value;
-            $this->markPropertyAsChanged('is_active');
-        }
-    }
-
-    // BelongsTo relationship: User belongs to Organization
-    #[BelongsTo(
-        related: Organization::class,
-        foreign_key: 'organization_id',
-        local_key: 'id'
-    )]
-    public ?Organization $organization { get => $this->relations->getRelation('organization'); }
 
     // HasMany relationship: User has many Campaigns
     #[HasMany(
@@ -72,18 +45,42 @@ class User extends Authenticable
     public array $campaigns { get => $this->relations->getRelation('campaigns'); }
 
     /**
-     * Check if user has admin role
+     * Get user's organization ID via profile
      */
-    public function isAdmin(): bool
+    public function getOrganizationId(): ?int
     {
-        return $this->role === 'admin';
+        return $this->profile()?->organization_id;
     }
 
     /**
-     * Check if user has manager or admin role
+     * Get user's name via profile
+     */
+    public function getName(): ?string
+    {
+        return $this->profile()?->name;
+    }
+
+    /**
+     * Get user's organization via profile
+     */
+    public function getOrganization(): ?Organization
+    {
+        return $this->profile()?->organization;
+    }
+
+    /**
+     * Check if user has admin role (using framework's RBAC)
+     */
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin');
+    }
+
+    /**
+     * Check if user has manager or admin role (using framework's RBAC)
      */
     public function isManager(): bool
     {
-        return in_array($this->role, ['admin', 'manager']);
+        return $this->hasRole('admin') || $this->hasRole('manager');
     }
 }
