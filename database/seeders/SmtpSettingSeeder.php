@@ -60,7 +60,7 @@ class SmtpSettingSeeder
         $count = 0;
         foreach ($smtpSettings as $settingData) {
             $smtp = new SmtpSetting();
-            $smtp->organization_id = $defaultOrg->id;
+            $smtp->organization_id = (int)$defaultOrg->id;
             $smtp->host = $settingData['host'];
             $smtp->port = $settingData['port'];
             $smtp->username = $settingData['username'];

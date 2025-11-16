@@ -43,7 +43,7 @@ class CampaignSeeder
             [
                 'name' => 'Welcome Campaign - Q4 2024',
                 'template_id' => $welcomeTemplate->id,
-                'status' => 'completed',
+                'status' => 'sent',
                 'total_recipients' => 150,
                 'sent_count' => 148,
                 'failed_count' => 2,
@@ -54,7 +54,7 @@ class CampaignSeeder
             [
                 'name' => 'Monthly Newsletter - November 2024',
                 'template_id' => $newsletterTemplate->id,
-                'status' => 'completed',
+                'status' => 'sent',
                 'total_recipients' => 500,
                 'sent_count' => 495,
                 'failed_count' => 5,
@@ -100,7 +100,7 @@ class CampaignSeeder
         $count = 0;
         foreach ($campaigns as $campaignData) {
             $campaign = new Campaign();
-            $campaign->organization_id = $defaultOrg->id;
+            $campaign->organization_id = (int)$defaultOrg->id;
             $campaign->template_id = $campaignData['template_id'];
             $campaign->name = $campaignData['name'];
             $campaign->status = $campaignData['status'];
@@ -110,14 +110,14 @@ class CampaignSeeder
             $campaign->scheduled_at = $campaignData['scheduled_at'];
             $campaign->started_at = $campaignData['started_at'];
             $campaign->completed_at = $campaignData['completed_at'];
-            $campaign->created_by = $adminUser->id;
+            $campaign->created_by = (int)$adminUser->id;
             $campaign->save();
             $count++;
             echo "   ✓ {$campaignData['name']} created (ID: {$campaign->id}, Status: {$campaignData['status']})\n";
             
             // Add sample recipients for campaigns with recipients
             if ($campaignData['total_recipients'] > 0) {
-                $this->createSampleRecipients($campaign->id, $defaultOrg->id, $campaignData);
+                $this->createSampleRecipients((int)$campaign->id, (int)$defaultOrg->id, $campaignData);
             }
         }
         

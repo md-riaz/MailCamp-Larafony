@@ -37,8 +37,8 @@ class UserSeeder
         
         // Create admin profile
         $adminProfile = new UserProfile();
-        $adminProfile->user_id = $admin->id;
-        $adminProfile->organization_id = $defaultOrg->id;
+        $adminProfile->user_id = (int)$admin->id;
+        $adminProfile->organization_id = (int)$defaultOrg->id;
         $adminProfile->name = 'System Administrator';
         $adminProfile->save();
         echo "   ✓ Admin profile created\n";
@@ -55,8 +55,8 @@ class UserSeeder
         
         // Create manager profile
         $managerProfile = new UserProfile();
-        $managerProfile->user_id = $manager->id;
-        $managerProfile->organization_id = $defaultOrg->id;
+        $managerProfile->user_id = (int)$manager->id;
+        $managerProfile->organization_id = (int)$defaultOrg->id;
         $managerProfile->name = 'Campaign Manager';
         $managerProfile->save();
         echo "   ✓ Manager profile created\n";
@@ -73,8 +73,8 @@ class UserSeeder
         
         // Create user profile
         $userProfile = new UserProfile();
-        $userProfile->user_id = $user->id;
-        $userProfile->organization_id = $defaultOrg->id;
+        $userProfile->user_id = (int)$user->id;
+        $userProfile->organization_id = (int)$defaultOrg->id;
         $userProfile->name = 'Regular User';
         $userProfile->save();
         echo "   ✓ User profile created\n";

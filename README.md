@@ -102,20 +102,25 @@ The application uses the following tables:
 
 9. **[Optional] Load demo data**
    ```bash
-   php database/seeds/demo_data.php
+   php bin/larafony app:seed
    ```
    
-   This creates a demo organization with sample users, templates, and campaigns.
+   This creates:
+   - RBAC roles and permissions (admin, manager, user)
+   - Demo organization with 3 users
+   - 3 SMTP settings
+   - 5 email templates
+   - 5 campaigns with sample recipients
 
-## Demo Credentials
+## Test Credentials
 
-If you ran the demo data seeder, you can login with:
+After running the seeder, you can login with:
 
-| Role    | Email                      | Password    |
-|---------|----------------------------|-------------|
-| Admin   | admin@demo.example.com     | admin123    |
-| Manager | manager@demo.example.com   | manager123  |
-| User    | user@demo.example.com      | user123     |
+| Role    | Email                  | Password |
+|---------|------------------------|----------|
+| Admin   | admin@example.com      | password |
+| Manager | manager@example.com    | password |
+| User    | user@example.com       | password |
 
 **Note:** Change these passwords in production!
 

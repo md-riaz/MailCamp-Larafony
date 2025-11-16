@@ -207,7 +207,7 @@ HTML,
         $count = 0;
         foreach ($templates as $templateData) {
             $template = new Template();
-            $template->organization_id = $defaultOrg->id;
+            $template->organization_id = (int)$defaultOrg->id;
             $template->name = $templateData['name'];
             $template->subject = $templateData['subject'];
             $template->html_content = $templateData['html_content'];
