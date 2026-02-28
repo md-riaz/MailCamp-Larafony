@@ -1,0 +1,38 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  code-quality:
+    name: Static Analysis & Code Style
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: PHP syntax validation
+        run: composer lint
+
+      - name: Check for common issues
+        run: |
+          echo "Checking for debug statements..."
+          ! grep -rn "var_dump\|print_r\|dd(" src/ --include="*.php" || echo "Warning: Debug statements found"
+          echo "Checking for TODO/FIXME comments..."
+          grep -rn "TODO\|FIXME\|HACK\|XXX" src/ --include="*.php" || echo "No TODO/FIXME comments found"

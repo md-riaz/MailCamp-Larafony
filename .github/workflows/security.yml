@@ -1,0 +1,57 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Audit dependencies
+        run: composer audit
+
+  security-check:
+    name: Security Patterns Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for hardcoded secrets
+        run: |
+          echo "Scanning for potential hardcoded secrets..."
+          ! grep -rn "password\s*=\s*['\"][^'\"]*['\"]" src/ config/ --include="*.php" \
+            | grep -v "password.*=.*\$" \
+            | grep -v "password.*=>.*\$" \
+            | grep -v "\.example\." \
+            | grep -v "getenv\|EnvReader\|env(" \
+            || echo "Review: Potential hardcoded values found (may be false positives)"
+
+      - name: Check for unsafe functions
+        run: |
+          echo "Checking for potentially unsafe PHP functions..."
+          ! grep -rn "eval\s*(\|exec\s*(\|system\s*(\|passthru\s*(\|shell_exec\s*(" src/ --include="*.php" \
+            || echo "Warning: Potentially unsafe function calls found"
