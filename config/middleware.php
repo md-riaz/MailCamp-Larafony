@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Middleware\AuthMiddleware;
+use Larafony\Framework\DebugBar\Middleware\InjectDebugBar;
 
 return [
     'before_global' => [
@@ -12,6 +12,6 @@ return [
         // Add global middleware
     ],
     'after_global' => [
-        // Add global middleware that runs after request handling
+        InjectDebugBar::class,
     ],
 ];

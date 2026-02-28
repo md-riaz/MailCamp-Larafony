@@ -1,20 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
+use Larafony\Framework\Config\Environment\EnvReader;
+
 return [
-    'name' => getenv('APP_NAME') ?: 'MailCamp',
-    'env' => getenv('APP_ENV') ?: 'production',
-    'debug' => (bool) getenv('APP_DEBUG') ?: false,
-    'url' => getenv('APP_URL') ?: 'http://localhost',
-    // Added encryption key mapping so EncryptionService can read Config::get('app.key')
-    'key' => getenv('APP_KEY') ?: null,
-    
-    'queue' => [
-        'driver' => getenv('QUEUE_DRIVER') ?: 'database',
-        'throttle_per_hour' => (int) getenv('QUEUE_THROTTLE_EMAILS_PER_HOUR') ?: 100,
-    ],
-    
-    'session' => [
-        'driver' => getenv('SESSION_DRIVER') ?: 'file',
-        'lifetime' => (int) getenv('SESSION_LIFETIME') ?: 120,
-    ],
+    'name' => EnvReader::read('APP_NAME', 'MailCamp'),
+    'env' => EnvReader::read('APP_ENV', 'production'),
+    'debug' => (bool) EnvReader::read('APP_DEBUG', false),
+    'url' => EnvReader::read('APP_URL', 'http://localhost'),
+    'key' => EnvReader::read('APP_KEY', null),
 ];
