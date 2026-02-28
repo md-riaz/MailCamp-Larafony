@@ -91,6 +91,6 @@ class Organization extends Model
      */
     public static function generateSlug(string $name): string
     {
-        return strtolower(preg_replace('/[^A-Za-z0-9-]+/', '-', $name));
+        return trim(strtolower(preg_replace('/[^A-Za-z0-9-]+/', '-', $name)), '-');
     }
 }

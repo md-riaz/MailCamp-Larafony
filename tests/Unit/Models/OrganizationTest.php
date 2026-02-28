@@ -18,7 +18,7 @@ class OrganizationTest extends TestCase
     public function testGenerateSlugFromNameWithSpecialCharacters(): void
     {
         $slug = Organization::generateSlug('Acme Corp. & Partners!');
-        $this->assertSame('acme-corp-partners-', $slug);
+        $this->assertSame('acme-corp-partners', $slug);
     }
 
     public function testGenerateSlugFromNameWithMultipleSpaces(): void
@@ -37,5 +37,11 @@ class OrganizationTest extends TestCase
     {
         $slug = Organization::generateSlug('UPPERCASE');
         $this->assertSame('uppercase', $slug);
+    }
+
+    public function testGenerateSlugTrimsLeadingAndTrailingHyphens(): void
+    {
+        $slug = Organization::generateSlug('!Special Name!');
+        $this->assertSame('special-name', $slug);
     }
 }
