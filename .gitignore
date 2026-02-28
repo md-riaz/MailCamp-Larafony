@@ -16,3 +16,5 @@ example_demo/
 /framework/coverage/
 /framework/composer.lock
 /framework/.env.docker
+.phpunit.cache/
+/coverage/

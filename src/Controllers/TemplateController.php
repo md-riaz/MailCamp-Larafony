@@ -90,8 +90,6 @@ class TemplateController extends Controller
         $user = User::query()->where('id', '=', Auth::id())->first();
         /** @var Template|null $template */
         $template = Template::query()->where('id', '=', $id)->first();
-        /** @var Template|null $template */
-        $template = Template::query()->where('id', '=', $id)->first();
 
         if (!$template || $template->organization_id !== $user->getOrganizationId()) {
             return $this->json(['error' => 'Template not found'], 404);
@@ -143,7 +141,9 @@ class TemplateController extends Controller
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
         /** @var Template|null $template */
-        $template = Template::query()->where('id', '=', $id)->first();        if (!$template || $template->organization_id !== $user->getOrganizationId()) {
+        $template = Template::query()->where('id', '=', $id)->first();
+
+        if (!$template || $template->organization_id !== $user->getOrganizationId()) {
             return $this->json(['error' => 'Template not found'], 404);
         }
 

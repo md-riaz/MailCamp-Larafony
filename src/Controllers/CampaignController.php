@@ -116,7 +116,9 @@ class CampaignController extends Controller
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
         /** @var Campaign|null $campaign */
-        $campaign = Campaign::query()->where('id', '=', $id)->first();        if (!$campaign || $campaign->organization_id !== $user->getOrganizationId()) {
+        $campaign = Campaign::query()->where('id', '=', $id)->first();
+
+        if (!$campaign || $campaign->organization_id !== $user->getOrganizationId()) {
             return $this->json(['error' => 'Campaign not found'], 404);
         }
 
