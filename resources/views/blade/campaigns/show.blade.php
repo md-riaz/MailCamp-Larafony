@@ -35,11 +35,11 @@ ob_start();
 <div class="stats">
     <div class="stat-card">
         <h3>Open Rate</h3>
-        <div class="stat-value" style="font-size: 1.8rem;"><?php echo $stats['open_rate']; ?>%</div>
+        <div class="stat-value" style="font-size: 1.8rem;"><?php echo $stats['open_rate'] ?? '0'; ?>%</div>
     </div>
     <div class="stat-card">
         <h3>Click Rate</h3>
-        <div class="stat-value" style="font-size: 1.8rem;"><?php echo $stats['click_rate']; ?>%</div>
+        <div class="stat-value" style="font-size: 1.8rem;"><?php echo $stats['click_rate'] ?? '0'; ?>%</div>
     </div>
 </div>
 <?php endif; ?>
@@ -62,13 +62,13 @@ ob_start();
         <?php if ($campaign->started_at): ?>
         <tr>
             <td><strong>Started:</strong></td>
-            <td><?php echo $campaign->started_at->format('F d, Y H:i:s'); ?></td>
+            <td><?php echo date('F d, Y H:i:s', strtotime($campaign->started_at)); ?></td>
         </tr>
         <?php endif; ?>
         <?php if ($campaign->completed_at): ?>
         <tr>
             <td><strong>Completed:</strong></td>
-            <td><?php echo $campaign->completed_at->format('F d, Y H:i:s'); ?></td>
+            <td><?php echo date('F d, Y H:i:s', strtotime($campaign->completed_at)); ?></td>
         </tr>
         <?php endif; ?>
     </table>

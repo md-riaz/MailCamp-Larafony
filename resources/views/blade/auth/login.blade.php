@@ -15,12 +15,12 @@ ob_start();
     <form method="POST" action="/login">
         <div class="form-group">
             <label for="email">Email Address</label>
-            <input type="email" id="email" name="email" required autocomplete="username" aria-describedby="<?php echo !empty($error) ? 'form-error' : '' ?>" value="<?= htmlspecialchars($email ?? 'admin@example.com', ENT_QUOTES, 'UTF-8') ?>">
+            <input type="email" id="email" name="email" required autocomplete="username" aria-describedby="<?php echo !empty($error) ? 'form-error' : '' ?>" value="<?= htmlspecialchars($email ?? '', ENT_QUOTES, 'UTF-8') ?>">
         </div>
         
         <div class="form-group">
             <label for="password">Password</label>
-            <input type="password" id="password" name="password" required autocomplete="current-password" value="password">
+            <input type="password" id="password" name="password" required autocomplete="current-password">
         </div>
         
         <div class="form-group">

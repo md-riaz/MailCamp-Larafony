@@ -60,7 +60,7 @@ ob_start();
     <h2>Quick Actions</h2>
     <a href="/campaigns/create" class="btn btn-success">Create New Campaign</a>
     <a href="/templates/create" class="btn">Create Template</a>
-    <?php if (isset($user) && property_exists($user, 'role') && $user->role === 'admin'): ?>
+    <?php if (isset($user) && $user->isAdmin()): ?>
     <a href="/smtp-settings" class="btn">Configure SMTP</a>
     <?php endif; ?>
 </div>
