@@ -1,0 +1,76 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Larafony\Framework\Routing\ServiceProviders;
+
+use Larafony\Framework\Container\ServiceProvider;
+use Larafony\Framework\Routing\Advanced\AttributeRouteLoader;
+use Larafony\Framework\Routing\Advanced\AttributeRouteScanner;
+use Larafony\Framework\Routing\Advanced\Cache\RouteCache;
+use Larafony\Framework\Routing\Advanced\RouteMatcher;
+use Larafony\Framework\Routing\Advanced\Router;
+use Larafony\Framework\Routing\Advanced\UrlGenerator;
+use Larafony\Framework\Routing\Basic\Factories\ArrayHandlerFactory;
+use Larafony\Framework\Routing\Basic\Factories\StringHandlerFactory;
+use Larafony\Framework\Routing\Basic\RouteCollection;
+use Larafony\Framework\Web\Config;
+use Override;
+use Psr\EventDispatcher\EventDispatcherInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+
+class RouteServiceProvider extends ServiceProvider
+{
+    #[Override]
+    public function providers(): array
+    {
+        return [
+            RequestHandlerInterface::class => Router::class,
+            Router::class => Router::class,
+            UrlGenerator::class => UrlGenerator::class,
+            ArrayHandlerFactory::class => ArrayHandlerFactory::class,
+            StringHandlerFactory::class => StringHandlerFactory::class,
+            AttributeRouteScanner::class => AttributeRouteScanner::class,
+            AttributeRouteLoader::class => AttributeRouteLoader::class,
+            RouteMatcher::class => RouteMatcher::class,
+        ];
+    }
+
+    public function boot(\Larafony\Framework\Container\Contracts\ContainerContract $container): void
+    {
+        // Register RouteCollection with Advanced\RouteMatcher
+        $collection = new RouteCollection(
+            $container,
+            $container->get(RouteMatcher::class)
+        );
+        $container->set(RouteCollection::class, $collection);
+
+        // Register RouteCache with project-specific cache directory
+        $basePath = $container->getBinding('base_path');
+        $cacheDir = $basePath . '/storage/cache';
+        $routeCache = new RouteCache($cacheDir);
+        $container->set(RouteCache::class, $routeCache);
+
+        // Get base URL from config
+        $baseUrl = Config::get('app.url', '');
+
+        // Register Router with EventDispatcher
+        $eventDispatcher = $container->has(EventDispatcherInterface::class)
+            ? $container->get(EventDispatcherInterface::class)
+            : null;
+
+        $router = new Router(
+            $collection,
+            $container,
+            $eventDispatcher,
+            $baseUrl
+        );
+
+        $container->set(Router::class, $router);
+        $container->set(RequestHandlerInterface::class, $router);
+
+        // Register UrlGenerator
+        $urlGenerator = $router->getUrlGenerator();
+        $container->set(UrlGenerator::class, $urlGenerator);
+    }
+}

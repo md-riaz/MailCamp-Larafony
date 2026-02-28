@@ -1,0 +1,35 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Larafony\Framework\Container;
+
+use Larafony\Framework\Container\Contracts\ContainerContract;
+use Larafony\Framework\Container\Contracts\ServiceProviderContract;
+
+abstract class ServiceProvider implements ServiceProviderContract
+{
+    /**
+     * @return array<int|string, class-string>
+     */
+    public function providers(): array
+    {
+        return [];
+    }
+
+    public function register(ContainerContract $container): self
+    {
+        foreach ($this->providers() as $key => $class) {
+            $key = is_int($key) ? $class : $key;
+            $container->set($key, $class);
+        }
+        return $this;
+    }
+
+    public function boot(ContainerContract $container): void
+    {
+        if (! $container->has($this::class)) {
+            $container->set($this::class, $this);
+        }
+    }
+}

@@ -1,0 +1,62 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Larafony\Framework\Config;
+
+use Larafony\Framework\Config\Contracts\ConfigContract;
+use Larafony\Framework\Config\Environment\EnvironmentLoader;
+use Larafony\Framework\Container\Contracts\ContainerContract;
+use Larafony\Framework\Container\Helpers\DotContainer;
+
+class ConfigBase extends DotContainer implements ConfigContract
+{
+    private bool $loaded = false;
+    private readonly string $base_path;
+    public function __construct(private readonly ContainerContract $app)
+    {
+        parent::__construct();
+        $this->base_path = (string) $this->app->getBinding('base_path');
+    }
+
+    public function loadConfig(): void
+    {
+        if ($this->loaded) {
+            return;
+        }
+        $this->loaded = true;
+        $this->loadEnvironmentVariables();
+        $this->loadConfigFiles();
+        $this->app->set(ConfigContract::class, $this);
+    }
+
+    private function loadEnvironmentVariables(): void
+    {
+        $envPath = $this->base_path . '/.env';
+        $this->app->get(EnvironmentLoader::class)->load($envPath);
+    }
+
+    private function loadConfigFiles(): void
+    {
+        $configPath = $this->base_path . DIRECTORY_SEPARATOR . 'config';
+
+        if (! is_dir($configPath)) {
+            //@codeCoverageIgnoreStart
+            return;
+            //@codeCoverageIgnoreEnd
+        }
+
+        $files = scandir($configPath);
+
+        $files = $files === false ? [] : $files;
+        $files = array_filter($files, static fn ($file) => pathinfo($file, PATHINFO_EXTENSION) === 'php');
+
+        foreach ($files as $file) {
+            $key = pathinfo($file, PATHINFO_FILENAME);
+            $this->set(
+                $key,
+                require $configPath . DIRECTORY_SEPARATOR . $file
+            );
+        }
+    }
+}

@@ -11,3 +11,8 @@ composer.local.json
 .DS_Store
 Thumbs.db
 example_demo/
+/framework/vendor/
+/framework/.phpunit.cache/
+/framework/coverage/
+/framework/composer.lock
+/framework/.env.docker

@@ -1,0 +1,91 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Larafony\Framework\Tests\Mail;
+
+use Larafony\Framework\Mail\Mailer;
+use Larafony\Framework\Mail\MailerFactory;
+use Larafony\Framework\View\ViewManager;
+use PHPUnit\Framework\MockObject\Stub;
+use PHPUnit\Framework\TestCase;
+
+class MailerFactoryTest extends TestCase
+{
+    private ViewManager&Stub $viewManager;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->viewManager = $this->createStub(ViewManager::class);
+    }
+
+    public function testFromDsnCreatesMailer(): void
+    {
+        $mailer = MailerFactory::fromDsn('smtp://localhost:1025', $this->viewManager);
+
+        $this->assertInstanceOf(Mailer::class, $mailer);
+    }
+
+    public function testCreateSmtpMailerWithBasicConfig(): void
+    {
+        $mailer = MailerFactory::createSmtpMailer($this->viewManager, 'localhost', 1025);
+
+        $this->assertInstanceOf(Mailer::class, $mailer);
+    }
+
+    public function testCreateSmtpMailerWithAuthentication(): void
+    {
+        $mailer = MailerFactory::createSmtpMailer(
+            $this->viewManager,
+            'smtp.example.com',
+            587,
+            'user',
+            'pass'
+        );
+
+        $this->assertInstanceOf(Mailer::class, $mailer);
+    }
+
+    public function testCreateSmtpMailerWithSslEncryption(): void
+    {
+        $mailer = MailerFactory::createSmtpMailer(
+            $this->viewManager,
+            'smtp.example.com',
+            465,
+            'user',
+            'pass',
+            'ssl'
+        );
+
+        $this->assertInstanceOf(Mailer::class, $mailer);
+    }
+
+    public function testCreateSmtpMailerWithTlsEncryption(): void
+    {
+        $mailer = MailerFactory::createSmtpMailer(
+            $this->viewManager,
+            'smtp.example.com',
+            587,
+            'user',
+            'pass',
+            'tls'
+        );
+
+        $this->assertInstanceOf(Mailer::class, $mailer);
+    }
+
+    public function testCreateMailHogMailerWithDefaults(): void
+    {
+        $mailer = MailerFactory::createMailHogMailer($this->viewManager);
+
+        $this->assertInstanceOf(Mailer::class, $mailer);
+    }
+
+    public function testCreateMailHogMailerWithCustomHostAndPort(): void
+    {
+        $mailer = MailerFactory::createMailHogMailer($this->viewManager, 'mailhog.local', 2025);
+
+        $this->assertInstanceOf(Mailer::class, $mailer);
+    }
+}

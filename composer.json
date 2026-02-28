@@ -5,7 +5,7 @@
     "license": "MIT",
     "require": {
         "php": ">=8.5",
-        "larafony/core": "^2.0.0",
+        "larafony/core": "dev-main",
         "phpmailer/phpmailer": "^6.8",
         "paragonie/sodium_compat": "^2"
     },
@@ -16,7 +16,8 @@
     "autoload": {
         "psr-4": {
             "App\\": "src/",
-            "App\\Database\\Seeders\\": "database/seeders/"
+            "App\\Database\\Seeders\\": "database/seeders/",
+            "Larafony\\Framework\\": "framework/src/Larafony/"
         }
     },
     "autoload-dev": {
@@ -30,10 +31,20 @@
             "@php -r \"copy('.env.example', '.env');\""
         ]
     },
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "config": {
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "repositories": {
+        "local": {
+            "type": "path",
+            "url": "./framework",
+            "options": {
+                "symlink": true
+            }
         }
     }
 }
