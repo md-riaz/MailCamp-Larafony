@@ -227,7 +227,8 @@
             margin-bottom: 10px;
         }
         
-        .stat-card .number {
+        .stat-card .number,
+        .stat-card .stat-value {
             font-size: 32px;
             font-weight: bold;
             color: #2c3e50;

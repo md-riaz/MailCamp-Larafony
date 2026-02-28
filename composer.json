@@ -5,7 +5,7 @@
     "license": "MIT",
     "require": {
         "php": ">=8.5",
-        "larafony/core": "dev-main",
+        "larafony/core": "@dev",
         "phpmailer/phpmailer": "^6.8",
         "paragonie/sodium_compat": "^2"
     },

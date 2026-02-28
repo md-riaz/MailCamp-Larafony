@@ -103,6 +103,7 @@ class CampaignController extends Controller
         return $this->render('campaigns.show', [
             'campaign' => $campaign,
             'user' => $user,
+            'stats' => $campaign->getStats(),
         ]);
     }
 

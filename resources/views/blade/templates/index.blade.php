@@ -31,7 +31,7 @@ ob_start();
                 <td><?php echo $template->is_active ? 'Active' : 'Inactive'; ?></td>
                 <td><?php echo $template->created_at->format('M d, Y'); ?></td>
                 <td>
-                    <a href="/templates/<?php echo $template->id; ?>/edit" class="btn">Edit</a>
+                    <a href="/templates/<?php echo $template->id; ?>" class="btn">Edit</a>
                     <form method="POST" action="/templates/<?php echo $template->id; ?>" style="display: inline;">
                         <input type="hidden" name="_method" value="DELETE">
                         <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
