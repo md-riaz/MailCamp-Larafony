@@ -40,12 +40,13 @@ return [
     |
     */
     'cookie_params' => [
-        'lifetime'  => (int) EnvReader::read('SESSION_LIFETIME', '120'),
-        'path'      => '/',
-        'domain'    => EnvReader::read('SESSION_DOMAIN', null) ?: '',
-        'secure'    => (bool) EnvReader::read('SESSION_SECURE_COOKIE', 'false'),
-        'httponly'  => true,
-        'samesite'  => EnvReader::read('SESSION_SAME_SITE', 'lax'),
+        'lifetime'  => (int) EnvReader::read('SESSION_LIFETIME', '7200'),
+        'path'      => EnvReader::read('SESSION_PATH_COOKIE', '/'),
+        'domain'    => EnvReader::read('SESSION_DOMAIN', ''),
+        'secure'    => EnvReader::read('SESSION_SECURE_COOKIE') === 'true'
+            || (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+        'httponly'   => EnvReader::read('SESSION_HTTP_ONLY', 'true') === 'true',
+        'samesite'  => EnvReader::read('SESSION_SAME_SITE', 'Lax'),
     ],
 
 ];

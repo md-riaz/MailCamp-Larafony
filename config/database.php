@@ -1,19 +1,47 @@
 <?php
 
+declare(strict_types=1);
+
+use Larafony\Framework\Config\Environment\EnvReader;
+
 return [
-    'default' => getenv('DB_CONNECTION') ?: 'mysql',
-    
+    /*
+    |--------------------------------------------------------------------------
+    | Default Database Connection Name
+    |--------------------------------------------------------------------------
+    */
+
+    'default' => EnvReader::read('DB_CONNECTION', 'mysql'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Database Migrations
+    |--------------------------------------------------------------------------
+    */
+    'migrations' => [
+        'path' => 'database/migrations',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Database Connections
+    |--------------------------------------------------------------------------
+    */
     'connections' => [
+
         'mysql' => [
             'driver' => 'mysql',
-            'host' => getenv('DB_HOST') ?: '127.0.0.1',
-            'port' => (int) getenv('DB_PORT') ?: '3306',
-            'database' => getenv('DB_DATABASE') ?: 'mailcamp',
-            'username' => getenv('DB_USERNAME') ?: 'root',
-            'password' => getenv('DB_PASSWORD') ?: '',
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-            'prefix' => '',
+            'host' => EnvReader::read('DB_HOST', '127.0.0.1'),
+            'port' => (int) EnvReader::read('DB_PORT', '3306'),
+            'database' => EnvReader::read('DB_DATABASE', 'mailcamp'),
+            'username' => EnvReader::read('DB_USERNAME', 'root'),
+            'password' => EnvReader::read('DB_PASSWORD', ''),
+            'charset' => EnvReader::read('DB_CHARSET', 'utf8mb4'),
+            'collation' => EnvReader::read('DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => EnvReader::read('DB_PREFIX', ''),
+            'strict' => (bool) EnvReader::read('DB_STRICT_MODE', 'true'),
+            'engine' => EnvReader::read('DB_ENGINE', 'InnoDB'),
         ],
+
     ],
 ];

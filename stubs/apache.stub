@@ -1,0 +1,24 @@
+Apache Virtual Host Configuration:
+
+Run the following commands:
+
+sudo tee /etc/apache2/sites-available/mailcamp.conf > /dev/null <<'EOF'
+<VirtualHost *:80>
+    ServerName mailcamp.local
+    DocumentRoot {{DOC_ROOT}}
+
+    <Directory {{DOC_ROOT}}>
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+EOF
+
+sudo a2ensite mailcamp
+sudo a2enmod rewrite
+sudo systemctl reload apache2
+
+Add to /etc/hosts:
+echo "127.0.0.1 mailcamp.local" | sudo tee -a /etc/hosts
+
+Then visit: http://mailcamp.local

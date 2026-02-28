@@ -1,0 +1,86 @@
+{
+    "name": "larafony/core",
+    "description": "Larafony is a modern PHP 8.5 framework combining the elegance of Laravel, the stability of Symfony, and the power of PSR standards - built for production, not tutorials. Minimal dependencies, full PSR support, custom middleware stack, and analytics without cookies or Google.",
+    "keywords": ["php", "framework", "psr", "http", "middleware", "container", "inertia", "vue", "blade", "php8", "modern", "clean-code"],
+    "homepage": "https://www.larafony.com",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Damian Jóźwiak - masterphp.eu"
+        }
+    ],
+    "require": {
+        "php": ">=8.5",
+        "ext-uri": "*",
+        "ext-curl": "*",
+        "ext-pdo": "*",
+        "psr/clock": "^1.0",
+        "psr/container": "^2.0",
+        "psr/http-message": "^2.0",
+        "psr/http-factory": "^1.1",
+        "psr/http-server-handler": "^1.0",
+        "psr/http-server-middleware": "^1.0",
+        "psr/http-client": "^1.0",
+        "psr/log": "^3.0",
+        "psr/cache": "^3.0",
+        "psr/event-dispatcher": "^1.0",
+        "psr/simple-cache": "^3.0",
+        "mcp/sdk": "^0.1.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^12.4.0",
+        "phpstan/phpstan": "^2.1.30",
+        "nunomaduro/phpinsights": "dev-master"
+    },
+    "suggest": {
+        "ext-redis": "For caching using Redis",
+        "ext-memcached": "For caching uing Memcached"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Larafony\\Framework\\": "src/Larafony/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Larafony\\Framework\\Tests\\": "tests/Larafony/",
+            "App\\": "tests/public/src/"
+
+        }
+    },
+    "provide": {
+        "psr/container-implementation": "2.0",
+        "psr/http-message-implementation": "2.0",
+        "psr/http-factory-implementation": "1.1",
+        "psr/http-server-handler-implementation": "1.0",
+        "psr/http-server-middleware-implementation": "1.0",
+        "psr/http-client-implementation": "1.0",
+        "psr/log-implementation": "3.0",
+        "psr/clock-implementation": "1.0",
+        "psr/event-dispatcher-implementation": "1.0",
+        "psr/simple-cache-implementation": "3.0"
+    },
+    "scripts": {
+        "test": "php8.5 vendor/bin/phpunit --no-coverage",
+        "test-coverage": "php8.5 vendor/bin/phpunit --coverage-text",
+        "test-coverage-html": "php8.5 vendor/bin/phpunit --coverage-html coverage",
+        "analyse": "php8.5 vendor/bin/phpstan analyse --memory-limit=512M",
+        "insights": "php8.5 vendor/bin/phpinsights",
+        "insights:fix": "php8.5 vendor/bin/phpinsights --fix",
+        "insights:quality": "php8.5 vendor/bin/phpinsights --min-quality=95 --min-complexity=95 --min-architecture=95 --min-style=95 --no-interaction",
+        "quality": [
+            "@analyse",
+            "@test",
+            "@insights:quality"
+        ]
+    },
+
+    "minimum-stability": "stable",
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "php-http/discovery": true
+        }
+    }
+}
