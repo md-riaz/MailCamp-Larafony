@@ -19,3 +19,6 @@ example_demo/
 .phpunit.cache/
 /coverage/reference/larafony-demo-app/
 reference/larafony-framework/
+reference/
+reference/*
+reference/**
