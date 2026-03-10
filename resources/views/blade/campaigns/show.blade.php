@@ -1,99 +1,77 @@
 <?php 
 $title = 'Campaign Details';
 ob_start(); 
+$basePath = rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/');
+$created = $campaign->created_at ?? null;
+$createdText = is_object($created) && method_exists($created, 'format') ? $created->format('F d, Y H:i:s') : (is_string($created) && $created !== '' ? date('F d, Y H:i:s', strtotime($created)) : '—');
 ?>
 
-<h1><?php echo htmlspecialchars($campaign->name); ?></h1>
-
-<div style="margin-bottom: 20px;">
-    <a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/campaigns" class="btn">← Back to Campaigns</a>
-    <?php if ($campaign->status === 'draft'): ?>
-    <a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/campaigns/<?php echo $campaign->id; ?>/recipients" class="btn btn-success">Import Recipients</a>
-    <?php endif; ?>
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+    <div>
+        <h1 class="h3 mb-1"><?php echo htmlspecialchars($campaign->name); ?></h1>
+        <p class="text-secondary mb-0">Campaign details and delivery metrics</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="<?= $basePath ?>/campaigns" class="btn btn-outline-secondary">← Back to Campaigns</a>
+        <?php if ($campaign->status === 'draft'): ?>
+        <a href="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/recipients" class="btn btn-success">Import Recipients</a>
+        <?php endif; ?>
+    </div>
 </div>
 
-<div class="stats">
-    <div class="stat-card">
-        <h3>Status</h3>
-        <div class="stat-value" style="font-size: 1.5rem;"><?php echo htmlspecialchars($campaign->status); ?></div>
-    </div>
-    <div class="stat-card">
-        <h3>Total Recipients</h3>
-        <div class="stat-value"><?php echo $campaign->total_recipients; ?></div>
-    </div>
-    <div class="stat-card">
-        <h3>Sent</h3>
-        <div class="stat-value" style="color: #27ae60;"><?php echo $campaign->sent_count; ?></div>
-    </div>
-    <div class="stat-card">
-        <h3>Failed</h3>
-        <div class="stat-value" style="color: #e74c3c;"><?php echo $campaign->failed_count; ?></div>
-    </div>
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Status</div><div class="fs-4 fw-bold"><?php echo htmlspecialchars($campaign->status); ?></div></div></div></div>
+    <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Total Recipients</div><div class="fs-4 fw-bold"><?php echo $campaign->total_recipients; ?></div></div></div></div>
+    <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Sent</div><div class="fs-4 fw-bold text-success"><?php echo $campaign->sent_count; ?></div></div></div></div>
+    <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Failed</div><div class="fs-4 fw-bold text-danger"><?php echo $campaign->failed_count; ?></div></div></div></div>
 </div>
 
 <?php if ($campaign->status === 'sent' || $campaign->status === 'sending'): ?>
-<div class="stats">
-    <div class="stat-card">
-        <h3>Open Rate</h3>
-        <div class="stat-value" style="font-size: 1.8rem;"><?php echo $stats['open_rate'] ?? '0'; ?>%</div>
-    </div>
-    <div class="stat-card">
-        <h3>Click Rate</h3>
-        <div class="stat-value" style="font-size: 1.8rem;"><?php echo $stats['click_rate'] ?? '0'; ?>%</div>
-    </div>
+<div class="row g-3 mb-4">
+    <div class="col-md-6"><div class="card"><div class="card-body"><div class="text-secondary small">Open Rate</div><div class="fs-3 fw-bold"><?php echo $stats['open_rate'] ?? '0'; ?>%</div></div></div></div>
+    <div class="col-md-6"><div class="card"><div class="card-body"><div class="text-secondary small">Click Rate</div><div class="fs-3 fw-bold"><?php echo $stats['click_rate'] ?? '0'; ?>%</div></div></div></div>
 </div>
 <?php endif; ?>
 
-<div class="card">
-    <h2>Campaign Information</h2>
-    <table>
-        <tr>
-            <td><strong>Campaign ID:</strong></td>
-            <td><?php echo $campaign->id; ?></td>
-        </tr>
-        <tr>
-            <td><strong>Status:</strong></td>
-            <td><?php echo htmlspecialchars($campaign->status); ?></td>
-        </tr>
-        <tr>
-            <td><strong>Created:</strong></td>
-            <td><?php echo $campaign->created_at->format('F d, Y H:i:s'); ?></td>
-        </tr>
-        <?php if ($campaign->started_at): ?>
-        <tr>
-            <td><strong>Started:</strong></td>
-            <td><?php echo date('F d, Y H:i:s', strtotime($campaign->started_at)); ?></td>
-        </tr>
-        <?php endif; ?>
-        <?php if ($campaign->completed_at): ?>
-        <tr>
-            <td><strong>Completed:</strong></td>
-            <td><?php echo date('F d, Y H:i:s', strtotime($campaign->completed_at)); ?></td>
-        </tr>
-        <?php endif; ?>
-    </table>
+<div class="card mb-4">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Campaign Information</h2>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <tr><th style="width:220px;">Campaign ID</th><td><?php echo $campaign->id; ?></td></tr>
+                <tr><th>Status</th><td><?php echo htmlspecialchars($campaign->status); ?></td></tr>
+                <tr><th>Created</th><td><?php echo $createdText; ?></td></tr>
+                <?php if ($campaign->started_at): ?><tr><th>Started</th><td><?php echo date('F d, Y H:i:s', strtotime($campaign->started_at)); ?></td></tr><?php endif; ?>
+                <?php if ($campaign->completed_at): ?><tr><th>Completed</th><td><?php echo date('F d, Y H:i:s', strtotime($campaign->completed_at)); ?></td></tr><?php endif; ?>
+            </table>
+        </div>
+    </div>
 </div>
 
 <?php if ($campaign->status === 'draft' && $campaign->total_recipients > 0): ?>
-<div class="card">
-    <h2>Ready to Launch</h2>
-    <p>Your campaign has <?php echo $campaign->total_recipients; ?> recipients and is ready to be launched.</p>
-    <form method="POST" action="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/campaigns/<?php echo $campaign->id; ?>/launch">
-        <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to launch this campaign?')">Launch Campaign</button>
-    </form>
+<div class="card mb-4">
+    <div class="card-body">
+        <h2 class="h5 mb-2">Ready to Launch</h2>
+        <p class="text-secondary">Your campaign has <?php echo $campaign->total_recipients; ?> recipients and is ready to be launched.</p>
+        <form method="POST" action="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/launch">
+            <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to launch this campaign?')">Launch Campaign</button>
+        </form>
+    </div>
 </div>
 <?php elseif ($campaign->status === 'draft'): ?>
 <div class="card">
-    <h2>Import Recipients</h2>
-    <p>Upload a CSV file with recipient information to add them to this campaign.</p>
-    <form method="POST" action="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/campaigns/<?php echo $campaign->id; ?>/recipients" enctype="multipart/form-data">
-        <div class="form-group">
-            <label for="recipients_file">CSV File (email, name, custom_field1, ...)</label>
-            <input type="file" id="recipients_file" name="recipients_file" accept=".csv" required>
-            <small>Format: email,name,custom_field1,custom_field2,...</small>
-        </div>
-        <button type="submit" class="btn btn-success">Import Recipients</button>
-    </form>
+    <div class="card-body">
+        <h2 class="h5 mb-2">Import Recipients</h2>
+        <p class="text-secondary">Upload a CSV file with recipient information to add them to this campaign.</p>
+        <form method="POST" action="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/recipients" enctype="multipart/form-data" class="row g-3">
+            <div class="col-12">
+                <label for="recipients_file" class="form-label">CSV File (email, name, custom_field1, ...)</label>
+                <input type="file" class="form-control" id="recipients_file" name="recipients_file" accept=".csv" required>
+                <div class="form-text">Format: email,name,custom_field1,custom_field2,...</div>
+            </div>
+            <div class="col-12"><button type="submit" class="btn btn-success">Import Recipients</button></div>
+        </form>
+    </div>
 </div>
 <?php endif; ?>
 
