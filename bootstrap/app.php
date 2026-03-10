@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Larafony\Framework\Auth\ServiceProviders\AuthServiceProvider;
+use Larafony\Framework\Cache\ServiceProviders\CacheServiceProvider;
 use Larafony\Framework\Config\ServiceProviders\ConfigServiceProvider;
 use Larafony\Framework\Console\ServiceProviders\ConsoleServiceProvider;
 use Larafony\Framework\Database\ServiceProviders\DatabaseServiceProvider;
@@ -22,6 +23,7 @@ $app = \Larafony\Framework\Web\Application::instance(base_path: dirname(__DIR__)
 
 $app->withServiceProviders([
     ConfigServiceProvider::class,
+    CacheServiceProvider::class,
     SessionServiceProvider::class,
     EventServiceProvider::class,
     DatabaseServiceProvider::class,

@@ -55,7 +55,7 @@ ob_start();
                 <td><?php echo $campaign->total_recipients; ?></td>
                 <td><?php echo $campaign->sent_count; ?></td>
                 <td><?php echo $campaign->failed_count; ?></td>
-                <td><?php echo $campaign->created_at->format('M d, Y'); ?></td>
+                <td><?php $created = $campaign->created_at ?? null; echo is_object($created) && method_exists($created, 'format') ? $created->format('M d, Y') : (is_string($created) && $created !== '' ? date('M d, Y', strtotime($created)) : '—'); ?></td>
             </tr>
             <?php endforeach; ?>
         </tbody>

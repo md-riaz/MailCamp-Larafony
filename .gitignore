@@ -18,3 +18,4 @@ example_demo/
 /framework/.env.docker
 .phpunit.cache/
 /coverage/reference/larafony-demo-app/
+reference/larafony-framework/
