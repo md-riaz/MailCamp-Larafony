@@ -6,9 +6,9 @@ ob_start();
 <h1><?php echo htmlspecialchars($campaign->name); ?></h1>
 
 <div style="margin-bottom: 20px;">
-    <a href="/campaigns" class="btn">← Back to Campaigns</a>
+    <a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/campaigns" class="btn">← Back to Campaigns</a>
     <?php if ($campaign->status === 'draft'): ?>
-    <a href="/campaigns/<?php echo $campaign->id; ?>/recipients" class="btn btn-success">Import Recipients</a>
+    <a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/campaigns/<?php echo $campaign->id; ?>/recipients" class="btn btn-success">Import Recipients</a>
     <?php endif; ?>
 </div>
 
@@ -78,7 +78,7 @@ ob_start();
 <div class="card">
     <h2>Ready to Launch</h2>
     <p>Your campaign has <?php echo $campaign->total_recipients; ?> recipients and is ready to be launched.</p>
-    <form method="POST" action="/campaigns/<?php echo $campaign->id; ?>/launch">
+    <form method="POST" action="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/campaigns/<?php echo $campaign->id; ?>/launch">
         <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to launch this campaign?')">Launch Campaign</button>
     </form>
 </div>
@@ -86,7 +86,7 @@ ob_start();
 <div class="card">
     <h2>Import Recipients</h2>
     <p>Upload a CSV file with recipient information to add them to this campaign.</p>
-    <form method="POST" action="/campaigns/<?php echo $campaign->id; ?>/recipients" enctype="multipart/form-data">
+    <form method="POST" action="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/campaigns/<?php echo $campaign->id; ?>/recipients" enctype="multipart/form-data">
         <div class="form-group">
             <label for="recipients_file">CSV File (email, name, custom_field1, ...)</label>
             <input type="file" id="recipients_file" name="recipients_file" accept=".csv" required>

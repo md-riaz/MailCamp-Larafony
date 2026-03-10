@@ -6,7 +6,7 @@ ob_start();
 <h1>Create Email Campaign</h1>
 
 <div class="card">
-    <form method="POST" action="/campaigns">
+    <form method="POST" action="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/campaigns">
         <div class="form-group">
             <label for="name">Campaign Name</label>
             <input type="text" id="name" name="name" required>
@@ -25,13 +25,13 @@ ob_start();
                 <?php endif; ?>
             </select>
             <?php if (empty($templates)): ?>
-            <small>No templates available. <a href="/templates/create">Create a template first</a></small>
+            <small>No templates available. <a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/templates/create">Create a template first</a></small>
             <?php endif; ?>
         </div>
         
         <div class="form-group">
             <button type="submit" class="btn btn-success" <?php echo empty($templates) ? 'disabled' : ''; ?>>Create Campaign</button>
-            <a href="/campaigns" class="btn">Cancel</a>
+            <a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/campaigns" class="btn">Cancel</a>
         </div>
     </form>
 </div>

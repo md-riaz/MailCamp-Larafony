@@ -6,7 +6,7 @@ ob_start();
 <h1>SMTP Settings</h1>
 
 <div class="card">
-    <form method="POST" action="/smtp-settings">
+    <form method="POST" action="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/smtp-settings">
         <div class="form-group">
             <label for="host">SMTP Host</label>
             <input type="text" id="host" name="host" value="<?php echo htmlspecialchars($smtpSetting->host ?? ''); ?>" required>

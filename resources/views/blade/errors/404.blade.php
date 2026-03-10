@@ -62,7 +62,7 @@
             </div>
             @endif
             <div class="buttons">
-                <a href="/" class="btn btn-primary"><span class="icon" aria-hidden="true">🏠</span><span>Go Home</span></a>
+                <a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/" class="btn btn-primary"><span class="icon" aria-hidden="true">🏠</span><span>Go Home</span></a>
                 <a href="javascript:history.back()" class="btn btn-secondary"><span class="icon" aria-hidden="true">←</span><span>Go Back</span></a>
             </div>
             <div class="footer">Powered by <span class="larafony-logo">Larafony</span> Framework</div>

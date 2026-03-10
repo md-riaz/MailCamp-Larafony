@@ -3,7 +3,8 @@ $title = 'Login';
 ob_start(); 
 ?>
 
-<div class="card" style="max-width: 500px; margin: 100px auto;">
+<div class="auth-shell">
+<div class="card" style="max-width: 500px; width: 100%; margin: 0 auto;">
     <h2>Login to MailCamp</h2>
     <p style="color: #7f8c8d; margin-bottom: 20px;">Multi-tenant Email Campaign Manager</p>
     <?php if (!empty($error)) : ?>
@@ -12,7 +13,7 @@ ob_start();
         </div>
     <?php endif; ?>
     
-    <form method="POST" action="/login">
+    <form method="POST" action="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/login">
         <div class="form-group">
             <label for="email">Email Address</label>
             <input type="email" id="email" name="email" required autocomplete="username" aria-describedby="<?php echo !empty($error) ? 'form-error' : '' ?>" value="<?= htmlspecialchars($email ?? 'admin@example.com', ENT_QUOTES, 'UTF-8') ?>">
@@ -29,8 +30,9 @@ ob_start();
     </form>
     
     <p style="text-align: center; margin-top: 20px;">
-        Don't have an account? <a href="/register">Register here</a>
+        Don't have an account? <a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/register">Register here</a>
     </p>
+</div>
 </div>
 
 <?php 

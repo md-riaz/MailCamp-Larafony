@@ -6,7 +6,7 @@ ob_start();
 <h1>Create Email Template</h1>
 
 <div class="card">
-    <form method="POST" action="/templates">
+    <form method="POST" action="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/templates">
         <div class="form-group">
             <label for="name">Template Name</label>
             <input type="text" id="name" name="name" required>
@@ -25,7 +25,7 @@ ob_start();
         
         <div class="form-group">
             <button type="submit" class="btn btn-success">Create Template</button>
-            <a href="/templates" class="btn">Cancel</a>
+            <a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/templates" class="btn">Cancel</a>
         </div>
     </form>
 </div>

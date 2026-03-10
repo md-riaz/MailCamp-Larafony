@@ -3,7 +3,8 @@ $title = 'Register';
 ob_start(); 
 ?>
 
-<div class="card" style="max-width: 500px; margin: 100px auto;">
+<div class="auth-shell">
+<div class="card" style="max-width: 500px; width: 100%; margin: 0 auto;">
     <h2>Register Your Organization</h2>
     <p style="color: #7f8c8d; margin-bottom: 20px;">Create an account to start sending campaigns</p>
     <?php if (!empty($error)) : ?>
@@ -12,7 +13,7 @@ ob_start();
         </div>
     <?php endif; ?>
     
-    <form method="POST" action="/register">
+    <form method="POST" action="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/register">
         <div class="form-group">
             <label for="name">Full Name</label>
             <input type="text" id="name" name="name" required autocomplete="name" aria-describedby="<?php echo !empty($error) ? 'form-error' : '' ?>" value="<?= htmlspecialchars($name ?? '', ENT_QUOTES, 'UTF-8') ?>">
@@ -39,8 +40,9 @@ ob_start();
     </form>
     
     <p style="text-align: center; margin-top: 20px;">
-        Already have an account? <a href="/login">Login here</a>
+        Already have an account? <a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/login">Login here</a>
     </p>
+</div>
 </div>
 
 <?php 

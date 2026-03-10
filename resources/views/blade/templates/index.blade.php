@@ -3,10 +3,14 @@ $title = 'Email Templates';
 ob_start(); 
 ?>
 
-<h1>Email Templates</h1>
-
-<div style="margin-bottom: 20px;">
-    <a href="/templates/create" class="btn btn-success">Create New Template</a>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Email Templates</h1>
+        <p class="page-subtitle">Create reusable, variable-driven templates for campaigns.</p>
+    </div>
+    <div class="toolbar">
+        <a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/templates/create" class="btn btn-success">+ Create Template</a>
+    </div>
 </div>
 
 <div class="card">
@@ -28,11 +32,11 @@ ob_start();
                 <td><?php echo htmlspecialchars($template->name); ?></td>
                 <td><?php echo htmlspecialchars($template->subject); ?></td>
                 <td><?php echo htmlspecialchars($template->variables ?? '[]'); ?></td>
-                <td><?php echo $template->is_active ? 'Active' : 'Inactive'; ?></td>
+                <td><span class="badge <?php echo $template->is_active ? 'badge-success' : 'badge-muted'; ?>"><?php echo $template->is_active ? 'Active' : 'Inactive'; ?></span></td>
                 <td><?php echo $template->created_at->format('M d, Y'); ?></td>
                 <td>
-                    <a href="/templates/<?php echo $template->id; ?>" class="btn">Edit</a>
-                    <form method="POST" action="/templates/<?php echo $template->id; ?>" style="display: inline;">
+                    <a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/templates/<?php echo $template->id; ?>" class="btn">Edit</a>
+                    <form method="POST" action="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/templates/<?php echo $template->id; ?>" style="display: inline;">
                         <input type="hidden" name="_method" value="DELETE">
                         <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
                     </form>
@@ -42,7 +46,10 @@ ob_start();
         </tbody>
     </table>
     <?php else: ?>
-    <p>No templates yet. <a href="/templates/create">Create your first template</a></p>
+    <div class="empty-state">
+        <p>No templates yet.</p>
+        <p><a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/templates/create">Create your first template</a></p>
+    </div>
     <?php endif; ?>
 </div>
 

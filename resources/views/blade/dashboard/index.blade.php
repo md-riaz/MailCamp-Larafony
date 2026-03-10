@@ -3,7 +3,16 @@ $title = 'Dashboard';
 ob_start(); 
 ?>
 
-<h1>Dashboard</h1>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Overview of your campaigns, recipients, and templates.</p>
+    </div>
+    <div class="toolbar">
+        <a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/campaigns/create" class="btn btn-success">+ New Campaign</a>
+        <a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/templates/create" class="btn">+ New Template</a>
+    </div>
+</div>
 
 <div class="stats">
     <div class="stat-card">
@@ -41,7 +50,7 @@ ob_start();
         <tbody>
             <?php foreach ($recent_campaigns as $campaign): ?>
             <tr>
-                <td><a href="/campaigns/<?php echo $campaign->id; ?>"><?php echo htmlspecialchars($campaign->name); ?></a></td>
+                <td><a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/campaigns/<?php echo $campaign->id; ?>"><?php echo htmlspecialchars($campaign->name); ?></a></td>
                 <td><?php echo htmlspecialchars($campaign->status); ?></td>
                 <td><?php echo $campaign->total_recipients; ?></td>
                 <td><?php echo $campaign->sent_count; ?></td>
@@ -52,16 +61,19 @@ ob_start();
         </tbody>
     </table>
     <?php else: ?>
-    <p>No campaigns yet. <a href="/campaigns/create">Create your first campaign</a></p>
+    <div class="empty-state">
+        <p>No campaigns yet.</p>
+        <p><a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/campaigns/create">Create your first campaign</a></p>
+    </div>
     <?php endif; ?>
 </div>
 
 <div class="card">
     <h2>Quick Actions</h2>
-    <a href="/campaigns/create" class="btn btn-success">Create New Campaign</a>
-    <a href="/templates/create" class="btn">Create Template</a>
+    <a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/campaigns/create" class="btn btn-success">Create New Campaign</a>
+    <a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/templates/create" class="btn">Create Template</a>
     <?php if (isset($user) && $user->isAdmin()): ?>
-    <a href="/smtp-settings" class="btn">Configure SMTP</a>
+    <a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/smtp-settings" class="btn">Configure SMTP</a>
     <?php endif; ?>
 </div>
 
