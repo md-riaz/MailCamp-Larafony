@@ -17,4 +17,4 @@ example_demo/
 /framework/composer.lock
 /framework/.env.docker
 .phpunit.cache/
-/coverage/
+/coverage/reference/larafony-demo-app/

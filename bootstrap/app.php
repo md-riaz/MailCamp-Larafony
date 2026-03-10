@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Larafony\Framework\Auth\ServiceProviders\AuthServiceProvider;
 use Larafony\Framework\Config\ServiceProviders\ConfigServiceProvider;
+use Larafony\Framework\Console\ServiceProviders\ConsoleServiceProvider;
 use Larafony\Framework\Database\ServiceProviders\DatabaseServiceProvider;
 use Larafony\Framework\DebugBar\ServiceProviders\DebugBarServiceProvider;
 use Larafony\Framework\ErrorHandler\ServiceProviders\ErrorHandlerServiceProvider;
@@ -21,15 +22,16 @@ $app = \Larafony\Framework\Web\Application::instance(base_path: dirname(__DIR__)
 
 $app->withServiceProviders([
     ConfigServiceProvider::class,
+    SessionServiceProvider::class,
     EventServiceProvider::class,
     DatabaseServiceProvider::class,
     HttpServiceProvider::class,
     LogServiceProvider::class,
     RouteServiceProvider::class,
     ViewServiceProvider::class,
+    ConsoleServiceProvider::class,
     ErrorHandlerServiceProvider::class,
     AuthServiceProvider::class,
-    SessionServiceProvider::class,
     DebugBarServiceProvider::class,
     WebServiceProvider::class,
 ]);

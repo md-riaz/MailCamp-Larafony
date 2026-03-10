@@ -26,7 +26,17 @@ class AuthMiddleware implements MiddlewareInterface
             /** @var SessionManager $manager */
             $manager = Application::instance()->get(SessionManager::class);
             $manager->set('redirect_path', $request->getUri()->getPath());
-            return new ResponseFactory()->createResponse(code: 302)->withHeader('Location', $this->redirectPath);
+
+            $location = $this->redirectPath;
+            if (str_starts_with($location, '/') && !str_starts_with($location, '//')) {
+                $appUrl = $_ENV['APP_URL'] ?? getenv('APP_URL') ?: '';
+                $basePath = rtrim((string) (parse_url($appUrl, PHP_URL_PATH) ?? ''), '/');
+                if ($basePath !== '') {
+                    $location = $basePath . $location;
+                }
+            }
+
+            return new ResponseFactory()->createResponse(code: 302)->withHeader('Location', $location);
         }
 
         return $handler->handle($request);

@@ -37,5 +37,5 @@ ob_start();
 
 <?php 
 $content = ob_get_clean(); 
-include __DIR__ . '/../layout.php'; 
+include dirname(__DIR__, 3) . '/resources/views/blade/layout.php'; 
 ?>

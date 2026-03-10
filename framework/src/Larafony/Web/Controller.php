@@ -54,6 +54,15 @@ abstract class Controller
 
     public function redirect(string $url, int $status = 301): ResponseInterface
     {
+        // Make root-relative redirects base-path aware when app is mounted under a subpath.
+        if (str_starts_with($url, '/') && !str_starts_with($url, '//')) {
+            $appUrl = $_ENV['APP_URL'] ?? getenv('APP_URL') ?: '';
+            $basePath = rtrim((string) (parse_url($appUrl, PHP_URL_PATH) ?? ''), '/');
+            if ($basePath !== '') {
+                $url = $basePath . $url;
+            }
+        }
+
         /** @var ResponseFactory $factory */
         $factory = $this->container->get(ResponseFactory::class);
         return $factory->createResponse($status)->withHeader('Location', $url);
