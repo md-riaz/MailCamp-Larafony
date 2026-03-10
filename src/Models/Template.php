@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Larafony\Framework\Clock\Contracts\Clock;
 use Larafony\Framework\Database\ORM\Attributes\BelongsTo;
 use Larafony\Framework\Database\ORM\Attributes\HasMany;
 use Larafony\Framework\Database\ORM\Model;
@@ -103,16 +102,16 @@ class Template extends Model
         return $subject;
     }
 
-    public Clock $created_at {
-        get => $this->created_at;
+    public string $created_at {
+        get => $this->created_at ?? date('Y-m-d H:i:s');
         set {
             $this->created_at = $value;
             $this->markPropertyAsChanged('created_at');
         }
     }
 
-    public Clock $updated_at {
-        get => $this->updated_at;
+    public string $updated_at {
+        get => $this->updated_at ?? date('Y-m-d H:i:s');
         set {
             $this->updated_at = $value;
             $this->markPropertyAsChanged('updated_at');

@@ -12,7 +12,7 @@ use Larafony\Framework\DebugBar\Collectors\TimelineCollector;
 use Larafony\Framework\DebugBar\Collectors\ViewCollector;
 
 return [
-    'enabled' => EnvReader::read('APP_DEBUG', false),
+    'enabled' => EnvReader::read('APP_DEBUG', 'false'),
     'collectors' => [
         'queries' => QueryCollector::class,
         'cache' => CacheCollector::class,

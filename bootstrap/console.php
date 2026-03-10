@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Larafony\Framework\Cache\ServiceProviders\CacheServiceProvider;
 use Larafony\Framework\Config\ServiceProviders\ConfigServiceProvider;
 use Larafony\Framework\Console\ServiceProviders\ConsoleServiceProvider;
 use Larafony\Framework\Database\ServiceProviders\DatabaseServiceProvider;
@@ -15,6 +16,7 @@ $app = \Larafony\Framework\Console\Application::instance(base_path: dirname(__DI
 $app->withServiceProviders([
     HttpServiceProvider::class,
     ConfigServiceProvider::class,
+    CacheServiceProvider::class,
     ConsoleServiceProvider::class,
     DatabaseServiceProvider::class,
     ErrorHandlerServiceProvider::class,

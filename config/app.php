@@ -7,7 +7,8 @@ use Larafony\Framework\Config\Environment\EnvReader;
 return [
     'name' => EnvReader::read('APP_NAME', 'MailCamp'),
     'env' => EnvReader::read('APP_ENV', 'production'),
-    'debug' => (bool) EnvReader::read('APP_DEBUG', false),
+    'debug' => (bool) EnvReader::read('APP_DEBUG', 'false'),
     'url' => EnvReader::read('APP_URL', 'http://localhost'),
+    'timezone' => EnvReader::read('APP_TIMEZONE', 'Asia/Dhaka'),
     'key' => EnvReader::read('APP_KEY', null),
 ];
