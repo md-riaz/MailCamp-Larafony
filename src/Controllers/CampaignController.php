@@ -8,6 +8,7 @@ use App\DTOs\CreateCampaignDto;
 use App\Models\Campaign;
 use App\Models\Template;
 use App\Models\User;
+use App\ViewDto\CampaignViewDto;
 use Larafony\Framework\Auth\Auth;
 use Larafony\Framework\Database\Base\Query\Enums\OrderDirection;
 use Larafony\Framework\Routing\Advanced\Attributes\Route;
@@ -36,8 +37,13 @@ class CampaignController extends Controller
             ->orderBy('created_at', OrderDirection::DESC)
             ->get();
 
+        $campaignViews = array_map(
+            static fn (Campaign $campaign): CampaignViewDto => CampaignViewDto::fromModel($campaign),
+            $campaigns
+        );
+
         return $this->render('campaigns.index', [
-            'campaigns' => $campaigns,
+            'campaigns' => $campaignViews,
             'user' => $user,
         ]);
     }

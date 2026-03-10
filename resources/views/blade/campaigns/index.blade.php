@@ -32,16 +32,15 @@ ob_start();
             <tr>
                 <td><a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/campaigns/<?php echo $campaign->id; ?>"><?php echo htmlspecialchars($campaign->name); ?></a></td>
                 <td>
-                    <?php $statusClass = $campaign->status === 'sent' ? 'badge-success' : ($campaign->status === 'sending' ? 'badge-warning' : ($campaign->status === 'draft' ? 'badge-info' : 'badge-muted')); ?>
-                    <span class="badge <?php echo $statusClass; ?>"><?php echo htmlspecialchars($campaign->status); ?></span>
+                    <span class="badge <?php echo $campaign->statusBadgeClass; ?>"><?php echo htmlspecialchars($campaign->statusLabel); ?></span>
                 </td>
-                <td><?php echo $campaign->total_recipients; ?></td>
-                <td><?php echo $campaign->sent_count; ?></td>
-                <td><?php echo $campaign->failed_count; ?></td>
-                <td><?php echo $campaign->created_at->format('M d, Y'); ?></td>
+                <td><?php echo $campaign->totalRecipients; ?></td>
+                <td><?php echo $campaign->sentCount; ?></td>
+                <td><?php echo $campaign->failedCount; ?></td>
+                <td><?php echo $campaign->createdAtLabel; ?></td>
                 <td>
                     <a href="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/campaigns/<?php echo $campaign->id; ?>" class="btn">View</a>
-                    <?php if ($campaign->status === 'draft'): ?>
+                    <?php if ($campaign->canLaunch): ?>
                     <form method="POST" action="<?= rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/') ?>/campaigns/<?php echo $campaign->id; ?>/launch" style="display: inline;">
                         <button type="submit" class="btn btn-success" onclick="return confirm('Launch this campaign?')">Launch</button>
                     </form>
