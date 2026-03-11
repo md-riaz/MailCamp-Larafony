@@ -31,6 +31,16 @@ include $componentsPath . '/page-header.blade.php';
     <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Templates</div><div class="fs-3 fw-bold"><?php echo $stats['total_templates'] ?? 0; ?></div></div></div></div>
 </div>
 
+<h2 class="h5 mb-3">Delivery Health <span class="badge bg-secondary ms-2 text-uppercase" style="font-size: 0.65em;">Preview</span></h2>
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Sent</div><div class="fs-4 fw-bold"><?php echo number_format($deliveryHealthMetrics['sent'] ?? 0); ?></div></div></div></div>
+    <div class="col-6 col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Delivered</div><div class="fs-4 fw-bold text-success"><?php echo number_format($deliveryHealthMetrics['delivered'] ?? 0); ?></div><div class="text-muted small"><?php echo $deliveryHealthMetrics['delivery_rate'] ?? 0; ?>% rate</div></div></div></div>
+    <div class="col-6 col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Bounced</div><div class="fs-4 fw-bold text-danger"><?php echo number_format($deliveryHealthMetrics['bounced'] ?? 0); ?></div></div></div></div>
+    <div class="col-6 col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Opened</div><div class="fs-4 fw-bold text-info"><?php echo number_format($deliveryHealthMetrics['opened'] ?? 0); ?></div><div class="text-muted small"><?php echo $deliveryHealthMetrics['open_rate'] ?? 0; ?>% rate</div></div></div></div>
+    <div class="col-6 col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Clicked</div><div class="fs-4 fw-bold text-primary"><?php echo number_format($deliveryHealthMetrics['clicked'] ?? 0); ?></div><div class="text-muted small"><?php echo $deliveryHealthMetrics['ctr'] ?? 0; ?>% CTR | <?php echo $deliveryHealthMetrics['ctor'] ?? 0; ?>% CTOR</div></div></div></div>
+    <div class="col-6 col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Unsubscribed</div><div class="fs-4 fw-bold text-warning"><?php echo number_format($deliveryHealthMetrics['unsubscribed'] ?? 0); ?></div></div></div></div>
+</div>
+
 <div class="row g-3 mb-4">
     <div class="col-12 col-lg-5">
         <div class="card h-100">

@@ -91,9 +91,31 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        // TODO: T2.1 Replace mock data with actual event queries when T7.1 is complete.
+        $mockSent = 1500;
+        $mockDelivered = 1450;
+        $mockBounced = 50;
+        $mockOpened = 600;
+        $mockClicked = 150;
+        $mockUnsubscribed = 10;
+
+        $deliveryHealthMetrics = [
+            'sent' => $mockSent,
+            'delivered' => $mockDelivered,
+            'bounced' => $mockBounced,
+            'opened' => $mockOpened,
+            'clicked' => $mockClicked,
+            'unsubscribed' => $mockUnsubscribed,
+            'delivery_rate' => $mockSent > 0 ? round(($mockDelivered / $mockSent) * 100, 1) : 0,
+            'open_rate' => $mockDelivered > 0 ? round(($mockOpened / $mockDelivered) * 100, 1) : 0,
+            'ctr' => $mockDelivered > 0 ? round(($mockClicked / $mockDelivered) * 100, 1) : 0,
+            'ctor' => $mockOpened > 0 ? round(($mockClicked / $mockOpened) * 100, 1) : 0,
+        ];
+
         return $this->render('dashboard.index', [
             'stats' => $stats,
             'campaignHealth' => $campaignHealth,
+            'deliveryHealthMetrics' => $deliveryHealthMetrics,
             'recent_campaigns' => $recentCampaigns,
             'smtpSetting' => $smtpSetting,
             'user' => $user,
