@@ -25,7 +25,7 @@ ob_start();
 <div class="d-flex gap-2 flex-wrap">
     <a href="<?= $basePath ?>/campaigns" class="btn btn-outline-secondary">Back to campaigns</a>
     <?php if ($campaign->status === 'draft'): ?>
-    <a href="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/recipients" class="btn btn-primary">Import recipients</a>
+    <a href="#recipient-import" class="btn btn-primary">Import recipients</a>
     <?php endif; ?>
     <?php if ($campaign->status === 'draft' && $campaign->total_recipients > 0): ?>
     <form method="POST" action="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/launch" class="d-inline">
@@ -39,6 +39,14 @@ $title = (string) $campaign->name;
 $subtitle = 'Campaign details, delivery metrics, and next actions.';
 include $componentsPath . '/page-header.blade.php';
 ?>
+
+<?php if (!empty($notice['message'] ?? '')): ?>
+    <?php
+    $message = $notice['message'];
+    $type = $notice['type'] ?? 'info';
+    include $componentsPath . '/flash-alert.blade.php';
+    ?>
+<?php endif; ?>
 
 <div class="row g-3 mb-4">
     <div class="col-12 col-lg-6">
@@ -167,7 +175,7 @@ include $componentsPath . '/page-header.blade.php';
             <?php endif; ?>
 
             <?php if ($campaign->status === 'draft'): ?>
-            <form method="POST" action="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/recipients" enctype="multipart/form-data" class="row g-3 border rounded-3 p-3 mx-0">
+            <form id="recipient-import" method="POST" action="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/recipients" enctype="multipart/form-data" class="row g-3 border rounded-3 p-3 mx-0">
                 <div class="col-12 px-0">
                     <label for="recipients_file" class="form-label">Import recipients CSV</label>
                     <input type="file" class="form-control" id="recipients_file" name="recipients_file" accept=".csv" required>

@@ -15,6 +15,14 @@ $subtitle = 'Manage campaign drafts, launches, and delivery performance.';
 include $componentsPath . '/page-header.blade.php';
 ?>
 
+<?php if (!empty($notice['message'] ?? '')): ?>
+    <?php
+    $message = $notice['message'];
+    $type = $notice['type'] ?? 'info';
+    include $componentsPath . '/flash-alert.blade.php';
+    ?>
+<?php endif; ?>
+
 <div class="card mb-4">
     <div class="card-body">
         <form method="GET" action="<?= $basePath ?>/campaigns" class="row g-3 align-items-end">
