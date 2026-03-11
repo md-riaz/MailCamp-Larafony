@@ -123,20 +123,25 @@ class CampaignController extends Controller
         return $this->redirect("/campaigns/{$campaign->id}");
     }
 
-    #[Route('/campaigns/{id}', 'GET')]
-    public function show(ServerRequestInterface $request, int $id): ResponseInterface
+    #[Route('/campaigns/<id:\\d+>', 'GET')]
+    public function show(ServerRequestInterface $request, string $id): ResponseInterface
     {
         if (!Auth::check()) {
             return $this->redirect('/login');
         }
 
+        $campaignId = (int) $id;
+        if ($campaignId <= 0) {
+            return $this->redirect('/campaigns');
+        }
+
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
         /** @var Campaign|null $campaign */
-        $campaign = Campaign::query()->where('id', '=', $id)->first();
+        $campaign = Campaign::query()->where('id', '=', $campaignId)->first();
 
         if (!$campaign || $campaign->organization_id !== $user->getOrganizationId()) {
-            return $this->json(['error' => 'Campaign not found'], 404);
+            return $this->redirect('/campaigns');
         }
 
         return $this->render('campaigns.show', [
@@ -146,30 +151,35 @@ class CampaignController extends Controller
         ]);
     }
 
-    #[Route('/campaigns/{id}/launch', 'POST')]
-    public function launch(ServerRequestInterface $request, int $id): ResponseInterface
+    #[Route('/campaigns/<id:\\d+>/launch', 'POST')]
+    public function launch(ServerRequestInterface $request, string $id): ResponseInterface
     {
         if (!Auth::check()) {
             return $this->json(['error' => 'Unauthorized'], 401);
         }
 
+        $campaignId = (int) $id;
+        if ($campaignId <= 0) {
+            return $this->redirect('/campaigns');
+        }
+
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
         /** @var Campaign|null $campaign */
-        $campaign = Campaign::query()->where('id', '=', $id)->first();
+        $campaign = Campaign::query()->where('id', '=', $campaignId)->first();
 
         if (!$campaign || $campaign->organization_id !== $user->getOrganizationId()) {
-            return $this->json(['error' => 'Campaign not found'], 404);
+            return $this->redirect('/campaigns');
         }
 
         if (!$campaign->canStart()) {
-            return $this->json(['error' => 'Campaign cannot be started'], 400);
+            return $this->redirect('/campaigns/' . $campaign->id);
         }
 
         $campaign->status = 'active';
         $campaign->started_at = date('Y-m-d H:i:s');
         $campaign->save();
 
-        return $this->redirect("/campaigns/{$campaign->id}");
+        return $this->redirect('/campaigns/' . $campaign->id);
     }
 }
