@@ -2,7 +2,7 @@
 $title = 'Login';
 ob_start();
 $basePath = rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/');
-$componentsPath = dirname(__DIR__) . '/components';
+$componentsPath = dirname(__DIR__, 3) . '/resources/views/blade/components';
 ?>
 
 <div class="auth-shell">

@@ -2,7 +2,7 @@
 $title = 'Campaign Details';
 ob_start();
 $basePath = rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/');
-$componentsPath = dirname(__DIR__) . '/components';
+$componentsPath = dirname(__DIR__, 3) . '/resources/views/blade/components';
 $created = $campaign->created_at ?? null;
 $createdText = is_object($created) && method_exists($created, 'format') ? $created->format('F d, Y H:i:s') : (is_string($created) && $created !== '' ? date('F d, Y H:i:s', strtotime($created)) : '—');
 $startedText = $campaign->started_at ? date('F d, Y H:i:s', strtotime($campaign->started_at)) : 'Not started';
