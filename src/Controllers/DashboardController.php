@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Models\Campaign;
 use App\Models\Recipient;
+use App\Models\SmtpSetting;
 use App\Models\Template;
 use App\Models\User;
 use Larafony\Framework\Auth\Auth;
@@ -24,17 +25,14 @@ class DashboardController extends Controller
     #[Route('/', 'GET')]
     public function index(ServerRequestInterface $request): ResponseInterface
     {
-        // Check if user is authenticated
         if (!Auth::check()) {
             return $this->redirect('/login');
         }
 
-        // Get full user model with all properties
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
         $organization_id = $user->getOrganizationId();
 
-        // Get statistics
         $totalCampaigns = Campaign::query()
             ->where('organization_id', '=', $organization_id)
             ->count();
@@ -52,6 +50,25 @@ class DashboardController extends Controller
             ->where('organization_id', '=', $organization_id)
             ->count();
 
+        $draftCampaigns = Campaign::query()
+            ->where('organization_id', '=', $organization_id)
+            ->where('status', '=', 'draft')
+            ->count();
+
+        $sentCampaigns = Campaign::query()
+            ->where('organization_id', '=', $organization_id)
+            ->where('status', '=', 'sent')
+            ->count();
+
+        $failedCampaigns = Campaign::query()
+            ->where('organization_id', '=', $organization_id)
+            ->where('status', '=', 'failed')
+            ->count();
+
+        $smtpSetting = SmtpSetting::query()
+            ->where('organization_id', '=', $organization_id)
+            ->first();
+
         $stats = [
             'total_campaigns' => $totalCampaigns,
             'active_campaigns' => $activeCampaigns,
@@ -59,7 +76,15 @@ class DashboardController extends Controller
             'total_templates' => $totalTemplates,
         ];
 
-        // Get recent campaigns
+        $campaignHealth = [
+            'draft_campaigns' => $draftCampaigns,
+            'sent_campaigns' => $sentCampaigns,
+            'failed_campaigns' => $failedCampaigns,
+            'active_campaigns' => $activeCampaigns,
+            'healthy_campaigns' => max($totalCampaigns - $failedCampaigns, 0),
+            'attention_needed' => $failedCampaigns + ($draftCampaigns > 0 && $totalRecipients === 0 ? $draftCampaigns : 0),
+        ];
+
         $recentCampaigns = Campaign::query()
             ->where('organization_id', '=', $organization_id)
             ->orderBy('created_at', OrderDirection::DESC)
@@ -68,7 +93,9 @@ class DashboardController extends Controller
 
         return $this->render('dashboard.index', [
             'stats' => $stats,
+            'campaignHealth' => $campaignHealth,
             'recent_campaigns' => $recentCampaigns,
+            'smtpSetting' => $smtpSetting,
             'user' => $user,
         ]);
     }
