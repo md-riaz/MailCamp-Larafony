@@ -31,9 +31,37 @@ class CampaignController extends Controller
 
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
-        $campaigns = Campaign::query()
-            ->where('organization_id', '=', $user->getOrganizationId())
-            ->orderBy('created_at', OrderDirection::DESC)
+
+        $queryParams = $request->getQueryParams();
+        $search = trim((string) ($queryParams['q'] ?? ''));
+        $status = trim((string) ($queryParams['status'] ?? ''));
+        $sort = (string) ($queryParams['sort'] ?? 'created_desc');
+        $sortDirection = $sort === 'created_asc' ? OrderDirection::ASC : OrderDirection::DESC;
+        $normalizedSort = $sort === 'created_asc' ? 'created_asc' : 'created_desc';
+
+        $campaignQuery = Campaign::query()
+            ->where('organization_id', '=', $user->getOrganizationId());
+
+        if ($search !== '') {
+            $campaignQuery->whereLike('name', '%' . $search . '%');
+        }
+
+        $allowedStatuses = [
+            'draft' => 'Draft',
+            'active' => 'Active',
+            'sending' => 'Sending',
+            'sent' => 'Sent',
+            'failed' => 'Failed',
+        ];
+
+        if ($status !== '' && array_key_exists($status, $allowedStatuses)) {
+            $campaignQuery->where('status', '=', $status);
+        } else {
+            $status = '';
+        }
+
+        $campaigns = $campaignQuery
+            ->orderBy('created_at', $sortDirection)
             ->get();
 
         $campaignViews = array_map(
@@ -43,6 +71,12 @@ class CampaignController extends Controller
 
         return $this->render('campaigns.index', [
             'campaigns' => $campaignViews,
+            'filters' => [
+                'q' => $search,
+                'status' => $status,
+                'sort' => $normalizedSort,
+            ],
+            'statusOptions' => $allowedStatuses,
             'user' => $user,
         ]);
     }

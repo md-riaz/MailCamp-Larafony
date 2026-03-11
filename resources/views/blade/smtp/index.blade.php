@@ -1,12 +1,14 @@
-<?php 
+<?php
 $title = 'SMTP Settings';
-ob_start(); 
+ob_start();
 $basePath = rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/');
-?>
+$componentsPath = dirname(__DIR__) . '/components';
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">SMTP Settings</h1>
-</div>
+$title = 'SMTP Settings';
+$subtitle = 'Configure the SMTP connection used for campaign delivery.';
+$actionsHtml = '';
+include $componentsPath . '/page-header.blade.php';
+?>
 
 <div class="card">
     <div class="card-body">
@@ -70,7 +72,6 @@ function testConnection() {
 }
 </script>
 
-<?php 
-$content = ob_get_clean(); 
-include dirname(__DIR__, 3) . '/resources/views/blade/layout.php'; 
-?>
+<?php
+$content = ob_get_clean();
+include dirname(__DIR__, 3) . '/resources/views/blade/layout.php';

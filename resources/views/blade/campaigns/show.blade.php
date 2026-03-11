@@ -1,26 +1,28 @@
-<?php 
+<?php
 $title = 'Campaign Details';
-ob_start(); 
+ob_start();
 $basePath = rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/');
+$componentsPath = dirname(__DIR__) . '/components';
 $created = $campaign->created_at ?? null;
 $createdText = is_object($created) && method_exists($created, 'format') ? $created->format('F d, Y H:i:s') : (is_string($created) && $created !== '' ? date('F d, Y H:i:s', strtotime($created)) : '—');
+
+ob_start();
+?>
+<div class="d-flex gap-2 flex-wrap">
+    <a href="<?= $basePath ?>/campaigns" class="btn btn-outline-secondary">← Back to Campaigns</a>
+    <?php if ($campaign->status === 'draft'): ?>
+    <a href="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/recipients" class="btn btn-success">Import Recipients</a>
+    <?php endif; ?>
+</div>
+<?php
+$actionsHtml = ob_get_clean();
+$title = (string) $campaign->name;
+$subtitle = 'Campaign details and delivery metrics';
+include $componentsPath . '/page-header.blade.php';
 ?>
 
-<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
-    <div>
-        <h1 class="h3 mb-1"><?php echo htmlspecialchars($campaign->name); ?></h1>
-        <p class="text-secondary mb-0">Campaign details and delivery metrics</p>
-    </div>
-    <div class="d-flex gap-2 flex-wrap">
-        <a href="<?= $basePath ?>/campaigns" class="btn btn-outline-secondary">← Back to Campaigns</a>
-        <?php if ($campaign->status === 'draft'): ?>
-        <a href="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/recipients" class="btn btn-success">Import Recipients</a>
-        <?php endif; ?>
-    </div>
-</div>
-
 <div class="row g-3 mb-4">
-    <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Status</div><div class="fs-4 fw-bold"><?php echo htmlspecialchars($campaign->status); ?></div></div></div></div>
+    <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Status</div><div class="fs-4 fw-bold"><?php $label = ucfirst((string) $campaign->status); $class = match ((string) $campaign->status) { 'sent' => 'badge-success', 'sending' => 'badge-warning', 'draft' => 'badge-info', 'failed' => 'badge-danger', default => 'badge-muted', }; include $componentsPath . '/status-badge.blade.php'; ?></div></div></div></div>
     <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Total Recipients</div><div class="fs-4 fw-bold"><?php echo $campaign->total_recipients; ?></div></div></div></div>
     <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Sent</div><div class="fs-4 fw-bold text-success"><?php echo $campaign->sent_count; ?></div></div></div></div>
     <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Failed</div><div class="fs-4 fw-bold text-danger"><?php echo $campaign->failed_count; ?></div></div></div></div>
@@ -75,7 +77,6 @@ $createdText = is_object($created) && method_exists($created, 'format') ? $creat
 </div>
 <?php endif; ?>
 
-<?php 
-$content = ob_get_clean(); 
-include dirname(__DIR__, 3) . '/resources/views/blade/layout.php'; 
-?>
+<?php
+$content = ob_get_clean();
+include dirname(__DIR__, 3) . '/resources/views/blade/layout.php';
