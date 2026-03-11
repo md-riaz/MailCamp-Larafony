@@ -135,7 +135,7 @@ class CampaignController extends Controller
 
         $campaignId = (int) $id;
         if ($campaignId <= 0) {
-            return $this->redirect('/campaigns');
+            return $this->redirect('/campaigns?notice=invalid_campaign_link');
         }
 
         /** @var \App\Models\User $user */
@@ -144,7 +144,7 @@ class CampaignController extends Controller
         $campaign = Campaign::query()->where('id', '=', $campaignId)->first();
 
         if (!$campaign || $campaign->organization_id !== $user->getOrganizationId()) {
-            return $this->redirect('/campaigns');
+            return $this->redirect('/campaigns?notice=campaign_not_found');
         }
 
         return $this->render('campaigns.show', [
