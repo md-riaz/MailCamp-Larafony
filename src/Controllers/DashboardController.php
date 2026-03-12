@@ -92,13 +92,15 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $deliveryHealthMetrics = (new ObservabilityService())->dashboardMetrics($organization_id);
+        $observability = new ObservabilityService();
+        $deliveryHealthMetrics = $observability->dashboardMetrics($organization_id);
 
         return $this->render('dashboard.index', [
             'stats' => $stats,
             'campaignHealth' => $campaignHealth,
             'deliveryHealthMetrics' => $deliveryHealthMetrics,
             'recent_campaigns' => $recentCampaigns,
+            'recentEvents' => $observability->recentOrganizationEvents($organization_id, 12),
             'smtpSetting' => $smtpSetting,
             'user' => $user,
         ]);

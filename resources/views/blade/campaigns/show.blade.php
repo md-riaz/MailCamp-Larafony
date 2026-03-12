@@ -11,6 +11,8 @@ $deliveryTotal = max((int) ($campaign->total_recipients ?? 0), 0);
 $sentCount = max((int) ($campaign->sent_count ?? 0), 0);
 $failedCount = max((int) ($campaign->failed_count ?? 0), 0);
 $pendingCount = max($deliveryTotal - $sentCount - $failedCount, 0);
+$campaignMetrics = $campaignMetrics ?? [];
+$recentEvents = $recentEvents ?? [];
 $statusLabel = ucfirst((string) $campaign->status);
 $statusClass = match ((string) $campaign->status) {
     'sent' => 'badge-success',
@@ -117,24 +119,34 @@ include $componentsPath . '/page-header.blade.php';
                         </div>
                     </div>
                 </div>
-                <?php if ($campaign->status === 'sent' || $campaign->status === 'sending'): ?>
                 <div class="row g-3">
-                    <div class="col-6">
+                    <div class="col-6 col-md-3">
                         <div class="border rounded-3 p-3 h-100">
-                            <div class="text-secondary small">Open Rate</div>
-                            <div class="fs-5 fw-bold"><?php echo $stats['open_rate'] ?? '0'; ?>%</div>
+                            <div class="text-secondary small">Delivered</div>
+                            <div class="fs-5 fw-bold text-success"><?php echo (int) ($campaignMetrics['delivered'] ?? 0); ?></div>
                         </div>
                     </div>
-                    <div class="col-6">
+                    <div class="col-6 col-md-3">
                         <div class="border rounded-3 p-3 h-100">
-                            <div class="text-secondary small">Click Rate</div>
-                            <div class="fs-5 fw-bold"><?php echo $stats['click_rate'] ?? '0'; ?>%</div>
+                            <div class="text-secondary small">Opened</div>
+                            <div class="fs-5 fw-bold text-info"><?php echo (int) ($campaignMetrics['opened'] ?? 0); ?></div>
+                            <div class="text-muted small"><?php echo $campaignMetrics['open_rate'] ?? 0; ?>%</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="border rounded-3 p-3 h-100">
+                            <div class="text-secondary small">Clicked</div>
+                            <div class="fs-5 fw-bold text-primary"><?php echo (int) ($campaignMetrics['clicked'] ?? 0); ?></div>
+                            <div class="text-muted small"><?php echo $campaignMetrics['ctr'] ?? 0; ?>% CTR</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="border rounded-3 p-3 h-100">
+                            <div class="text-secondary small">Bounced</div>
+                            <div class="fs-5 fw-bold text-danger"><?php echo (int) ($campaignMetrics['bounced'] ?? 0); ?></div>
                         </div>
                     </div>
                 </div>
-                <?php else: ?>
-                <p class="text-secondary small mb-0">Open and click rates will appear here once delivery starts and tracking data exists.</p>
-                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -197,6 +209,70 @@ include $componentsPath . '/page-header.blade.php';
         $className = 'h-100 mb-0';
         include $componentsPath . '/table-shell.blade.php';
         ?>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-xl-8">
+        <?php ob_start(); ?>
+        <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+            <div>
+                <h2 class="h5 mb-1">Recent Campaign Events</h2>
+                <p class="text-secondary small mb-0">Latest queued, sent, opened, clicked, bounce, and webhook-normalized activity.</p>
+            </div>
+            <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events" class="btn btn-sm btn-outline-primary">Raw events API</a>
+        </div>
+        <?php if (!empty($recentEvents)): ?>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr><th>When</th><th>Event</th><th>Message</th><th>Recipient</th><th>Details</th></tr>
+                </thead>
+                <tbody>
+                <?php foreach ($recentEvents as $event): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars((string) ($event['timestamp'] ?? '—'), ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td><span class="badge bg-light text-dark border"><?php echo htmlspecialchars((string) ($event['event_type'] ?? 'unknown'), ENT_QUOTES, 'UTF-8'); ?></span></td>
+                        <td>
+                            <?php if (!empty($event['message_id'])): ?>
+                            <a href="<?= $basePath ?>/message/<?php echo (int) $event['message_id']; ?>/events">#<?php echo (int) $event['message_id']; ?></a>
+                            <?php else: ?>—<?php endif; ?>
+                        </td>
+                        <td><?php echo !empty($event['recipient_id']) ? '#' . (int) $event['recipient_id'] : '—'; ?></td>
+                        <td class="small text-secondary">
+                            <?php
+                            $details = [];
+                            $metadata = $event['metadata'] ?? null;
+                            if (is_array($metadata)) {
+                                if (!empty($metadata['recipient_email'])) { $details[] = $metadata['recipient_email']; }
+                                if (!empty($metadata['clicked_url'])) { $details[] = 'URL click'; }
+                                if (!empty($metadata['smtp_code'])) { $details[] = 'SMTP ' . $metadata['smtp_code']; }
+                                if (!empty($metadata['tracking_source'])) { $details[] = $metadata['tracking_source']; }
+                            }
+                            echo htmlspecialchars($details !== [] ? implode(' · ', $details) : '—', ENT_QUOTES, 'UTF-8');
+                            ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php else: ?>
+        <p class="text-secondary small mb-0">No campaign events recorded yet. Launch and send to start building the timeline.</p>
+        <?php endif; ?>
+        <?php $contentHtml = ob_get_clean(); $className = 'h-100 mb-0'; include $componentsPath . '/table-shell.blade.php'; ?>
+    </div>
+    <div class="col-12 col-xl-4">
+        <?php ob_start(); ?>
+        <h2 class="h5 mb-3">Drilldowns</h2>
+        <div class="d-grid gap-2">
+            <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events" class="btn btn-outline-primary text-start">Campaign events JSON</a>
+            <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events?event_type=clicked" class="btn btn-outline-secondary text-start">Clicked events only</a>
+            <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events?event_type=opened" class="btn btn-outline-secondary text-start">Opened events only</a>
+            <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events?event_type=bounced" class="btn btn-outline-secondary text-start">Bounced events only</a>
+        </div>
+        <p class="text-secondary small mt-3 mb-0">Message-level drilldowns are linked from the event table whenever a message id exists.</p>
+        <?php $contentHtml = ob_get_clean(); $className = 'h-100 mb-0'; include $componentsPath . '/table-shell.blade.php'; ?>
     </div>
 </div>
 

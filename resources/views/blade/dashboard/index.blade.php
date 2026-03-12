@@ -7,6 +7,7 @@ $campaignHealth = $campaignHealth ?? [];
 $smtpConfigured = isset($smtpSetting) && $smtpSetting && $smtpSetting->validate();
 $smtpStatusLabel = $smtpConfigured ? 'Configured' : 'Needs setup';
 $smtpStatusClass = $smtpConfigured ? 'badge-success' : 'badge-warning';
+$recentEvents = $recentEvents ?? [];
 
 ob_start();
 ?>
@@ -108,6 +109,47 @@ include $componentsPath . '/page-header.blade.php';
                 </p>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <?php
+        ob_start();
+        ?>
+        <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+            <div>
+                <h2 class="h5 mb-1">Recent Delivery Events</h2>
+                <p class="text-secondary small mb-0">Newest organization-wide delivery, open, click, and bounce activity.</p>
+            </div>
+        </div>
+        <?php if (!empty($recentEvents)): ?>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr><th>When</th><th>Event</th><th>Campaign</th><th>Message</th><th>Recipient</th></tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($recentEvents as $event): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars((string) ($event['timestamp'] ?? '—'), ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td><span class="badge bg-light text-dark border"><?php echo htmlspecialchars((string) ($event['event_type'] ?? 'unknown'), ENT_QUOTES, 'UTF-8'); ?></span></td>
+                        <td><?php if (!empty($event['campaign_id'])): ?><a href="<?= $basePath ?>/campaigns/<?php echo (int) $event['campaign_id']; ?>">#<?php echo (int) $event['campaign_id']; ?></a><?php else: ?>—<?php endif; ?></td>
+                        <td><?php if (!empty($event['message_id'])): ?><a href="<?= $basePath ?>/message/<?php echo (int) $event['message_id']; ?>/events">#<?php echo (int) $event['message_id']; ?></a><?php else: ?>—<?php endif; ?></td>
+                        <td><?php echo !empty($event['recipient_id']) ? '#' . (int) $event['recipient_id'] : '—'; ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php else: ?>
+        <p class="text-secondary small mb-0">No delivery events have been recorded yet.</p>
+        <?php endif; ?>
+        <?php
+        $contentHtml = ob_get_clean();
+        $className = 'mb-0';
+        include $componentsPath . '/table-shell.blade.php';
+        ?>
     </div>
 </div>
 

@@ -92,10 +92,110 @@ final class ObservabilityService
         return $this->buildEventCollection($query, $filters);
     }
 
+    /**
+     * @return array<string,int|float>
+     */
+    public function campaignMetrics(int $organizationId, int $campaignId): array
+    {
+        $sent = Message::query()
+            ->where('organization_id', '=', $organizationId)
+            ->where('campaign_id', '=', $campaignId)
+            ->whereIn('status', ['sent', 'delivered', 'opened', 'clicked', 'unsubscribed', 'complained', 'bounced'])
+            ->count();
+
+        $delivered = $this->campaignEventCount($organizationId, $campaignId, 'delivered');
+        $bounced = $this->campaignEventCount($organizationId, $campaignId, 'bounced');
+        $opened = $this->campaignEventCount($organizationId, $campaignId, 'opened');
+        $clicked = $this->campaignEventCount($organizationId, $campaignId, 'clicked');
+        $queued = $this->campaignEventCount($organizationId, $campaignId, 'queued');
+
+        if ($delivered === 0) {
+            $delivered = Message::query()
+                ->where('organization_id', '=', $organizationId)
+                ->where('campaign_id', '=', $campaignId)
+                ->whereIn('status', ['delivered', 'opened', 'clicked', 'unsubscribed', 'complained'])
+                ->count();
+        }
+
+        return [
+            'queued' => $queued,
+            'sent' => $sent,
+            'delivered' => $delivered,
+            'bounced' => $bounced,
+            'opened' => $opened,
+            'clicked' => $clicked,
+            'delivery_rate' => $sent > 0 ? round(($delivered / $sent) * 100, 1) : 0.0,
+            'open_rate' => $delivered > 0 ? round(($opened / $delivered) * 100, 1) : 0.0,
+            'ctr' => $delivered > 0 ? round(($clicked / $delivered) * 100, 1) : 0.0,
+            'ctor' => $opened > 0 ? round(($clicked / $opened) * 100, 1) : 0.0,
+        ];
+    }
+
+    /**
+     * @return array<int,array<string,mixed>>
+     */
+    public function recentCampaignEvents(int $organizationId, int $campaignId, int $limit = 20): array
+    {
+        $events = EmailEvent::query()
+            ->where('organization_id', '=', $organizationId)
+            ->where('campaign_id', '=', $campaignId)
+            ->orderBy('timestamp', OrderDirection::DESC)
+            ->orderBy('id', OrderDirection::DESC)
+            ->limit(max(1, min($limit, 100)))
+            ->get();
+
+        return array_map(static function (EmailEvent $event): array {
+            $metadata = json_decode((string) ($event->metadata ?? ''), true);
+            return [
+                'id' => $event->id,
+                'message_id' => $event->message_id,
+                'recipient_id' => $event->recipient_id ?? null,
+                'event_type' => $event->event_type,
+                'provider' => $event->provider ?? 'smtp',
+                'timestamp' => $event->timestamp,
+                'provider_message_id' => $event->provider_message_id,
+                'metadata' => is_array($metadata) ? $metadata : null,
+            ];
+        }, $events);
+    }
+
+    /**
+     * @return array<int,array<string,mixed>>
+     */
+    public function recentOrganizationEvents(int $organizationId, int $limit = 20): array
+    {
+        $events = EmailEvent::query()
+            ->where('organization_id', '=', $organizationId)
+            ->orderBy('timestamp', OrderDirection::DESC)
+            ->orderBy('id', OrderDirection::DESC)
+            ->limit(max(1, min($limit, 100)))
+            ->get();
+
+        return array_map(static function (EmailEvent $event): array {
+            return [
+                'id' => $event->id,
+                'campaign_id' => $event->campaign_id,
+                'message_id' => $event->message_id,
+                'recipient_id' => $event->recipient_id ?? null,
+                'event_type' => $event->event_type,
+                'timestamp' => $event->timestamp,
+            ];
+        }, $events);
+    }
+
     private function eventCount(int $organizationId, string $eventType): int
     {
         return EmailEvent::query()
             ->where('organization_id', '=', $organizationId)
+            ->where('event_type', '=', $eventType)
+            ->count();
+    }
+
+    private function campaignEventCount(int $organizationId, int $campaignId, string $eventType): int
+    {
+        return EmailEvent::query()
+            ->where('organization_id', '=', $organizationId)
+            ->where('campaign_id', '=', $campaignId)
             ->where('event_type', '=', $eventType)
             ->count();
     }

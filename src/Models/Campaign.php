@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\EmailEvent;
 use Larafony\Framework\Database\ORM\Attributes\BelongsTo;
 use Larafony\Framework\Database\ORM\Attributes\HasMany;
 use Larafony\Framework\Database\ORM\Model;
@@ -178,16 +179,30 @@ class Campaign extends Model
 
     private function calculateOpenRate(): float
     {
-        if ($this->sent_count == 0) return 0.0;
-        // Count unique opens from logs - placeholder
-        return 0.0;
+        if ($this->sent_count == 0) {
+            return 0.0;
+        }
+
+        $opened = EmailEvent::query()
+            ->where('campaign_id', '=', (int) $this->id)
+            ->where('event_type', '=', 'opened')
+            ->count();
+
+        return round(($opened / max((int) $this->sent_count, 1)) * 100, 1);
     }
 
     private function calculateClickRate(): float
     {
-        if ($this->sent_count == 0) return 0.0;
-        // Count unique clicks from logs - placeholder
-        return 0.0;
+        if ($this->sent_count == 0) {
+            return 0.0;
+        }
+
+        $clicked = EmailEvent::query()
+            ->where('campaign_id', '=', (int) $this->id)
+            ->where('event_type', '=', 'clicked')
+            ->count();
+
+        return round(($clicked / max((int) $this->sent_count, 1)) * 100, 1);
     }
 
     public string $created_at {

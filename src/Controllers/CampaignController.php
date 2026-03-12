@@ -10,6 +10,7 @@ use App\Models\Recipient;
 use App\Models\Template;
 use App\Models\User;
 use App\ViewDto\CampaignViewDto;
+use App\Services\ObservabilityService;
 use Larafony\Framework\Auth\Auth;
 use Larafony\Framework\Database\Base\Query\Enums\OrderDirection;
 use Larafony\Framework\Routing\Advanced\Attributes\Route;
@@ -147,10 +148,14 @@ class CampaignController extends Controller
             return $this->redirect('/campaigns?notice=campaign_not_found');
         }
 
+        $observability = new ObservabilityService();
+
         return $this->render('campaigns.show', [
             'campaign' => $campaign,
             'user' => $user,
             'stats' => $campaign->getStats(),
+            'campaignMetrics' => $observability->campaignMetrics($user->getOrganizationId(), $campaign->id),
+            'recentEvents' => $observability->recentCampaignEvents($user->getOrganizationId(), $campaign->id, 15),
             'notice' => $this->resolveCampaignDetailNotice($request),
         ]);
     }

@@ -137,6 +137,8 @@ final class CampaignMessageLifecycleService
         $payload = $recipient->getCustomData();
         $subject = $template->renderSubject($payload);
         $html = $template->render($payload);
+        $clickTracking = new ClickTrackingService();
+        $html = $clickTracking->injectTrackedLinks($html, $message);
         $html = (new OpenTrackingService())->injectTrackingPixel($html, $message);
 
         $dsn = $this->buildDsn($smtp);
