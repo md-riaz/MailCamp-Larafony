@@ -25,7 +25,8 @@
   - [x] dashboard delivery metrics wired to real data
   - [x] campaign event drilldown panel
   - [x] dashboard recent delivery events panel
-  - [ ] dedicated message/campaign timeline polish
+  - [x] dedicated message/campaign timeline polish
+  - [x] dashboard funnel and bounce breakdown blocks
 - [~] Wire click tracking fully
   - [x] outbound link rewrite service
   - [x] click redirect endpoint

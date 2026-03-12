@@ -8,6 +8,8 @@ $smtpConfigured = isset($smtpSetting) && $smtpSetting && $smtpSetting->validate(
 $smtpStatusLabel = $smtpConfigured ? 'Configured' : 'Needs setup';
 $smtpStatusClass = $smtpConfigured ? 'badge-success' : 'badge-warning';
 $recentEvents = $recentEvents ?? [];
+$deliveryFunnel = $deliveryFunnel ?? ['queued' => 0, 'sent' => 0, 'delivered' => 0, 'opened' => 0, 'clicked' => 0, 'bounced' => 0, 'unsubscribed' => 0, 'complained' => 0];
+$organizationBounceBreakdown = $organizationBounceBreakdown ?? ['hard' => 0, 'soft' => 0, 'blocked' => 0, 'domain_error' => 0, 'unknown' => 0];
 
 ob_start();
 ?>
@@ -34,12 +36,49 @@ include $componentsPath . '/page-header.blade.php';
 
 <h2 class="h5 mb-3">Delivery Health <span class="badge bg-secondary ms-2 text-uppercase" style="font-size: 0.65em;">Preview</span></h2>
 <div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Queued</div><div class="fs-4 fw-bold"><?php echo number_format($deliveryHealthMetrics['queued'] ?? 0); ?></div></div></div></div>
     <div class="col-6 col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Sent</div><div class="fs-4 fw-bold"><?php echo number_format($deliveryHealthMetrics['sent'] ?? 0); ?></div></div></div></div>
     <div class="col-6 col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Delivered</div><div class="fs-4 fw-bold text-success"><?php echo number_format($deliveryHealthMetrics['delivered'] ?? 0); ?></div><div class="text-muted small"><?php echo $deliveryHealthMetrics['delivery_rate'] ?? 0; ?>% rate</div></div></div></div>
-    <div class="col-6 col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Bounced</div><div class="fs-4 fw-bold text-danger"><?php echo number_format($deliveryHealthMetrics['bounced'] ?? 0); ?></div></div></div></div>
     <div class="col-6 col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Opened</div><div class="fs-4 fw-bold text-info"><?php echo number_format($deliveryHealthMetrics['opened'] ?? 0); ?></div><div class="text-muted small"><?php echo $deliveryHealthMetrics['open_rate'] ?? 0; ?>% rate</div></div></div></div>
     <div class="col-6 col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Clicked</div><div class="fs-4 fw-bold text-primary"><?php echo number_format($deliveryHealthMetrics['clicked'] ?? 0); ?></div><div class="text-muted small"><?php echo $deliveryHealthMetrics['ctr'] ?? 0; ?>% CTR | <?php echo $deliveryHealthMetrics['ctor'] ?? 0; ?>% CTOR</div></div></div></div>
-    <div class="col-6 col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Unsubscribed</div><div class="fs-4 fw-bold text-warning"><?php echo number_format($deliveryHealthMetrics['unsubscribed'] ?? 0); ?></div></div></div></div>
+    <div class="col-6 col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Bounced</div><div class="fs-4 fw-bold text-danger"><?php echo number_format($deliveryHealthMetrics['bounced'] ?? 0); ?></div><div class="text-muted small"><?php echo number_format(($deliveryHealthMetrics['hard_bounces'] ?? 0) + ($deliveryHealthMetrics['soft_bounces'] ?? 0)); ?> classified</div></div></div></div>
+</div>
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+            <div>
+                <h2 class="h5 mb-1">Delivery Funnel</h2>
+                <p class="text-secondary small mb-0">Queue to engagement progression from normalized event data.</p>
+            </div>
+        </div>
+        <div class="row g-3 align-items-stretch">
+            <?php foreach ([
+                'queued' => 'Queued',
+                'sent' => 'Sent',
+                'delivered' => 'Delivered',
+                'opened' => 'Opened',
+                'clicked' => 'Clicked',
+                'bounced' => 'Bounced',
+                'unsubscribed' => 'Unsubscribed',
+                'complained' => 'Complaints',
+            ] as $key => $label): ?>
+            <div class="col-6 col-md-3 col-xl">
+                <div class="border rounded-3 p-3 h-100 bg-light-subtle">
+                    <div class="text-secondary small"><?php echo $label; ?></div>
+                    <div class="fs-4 fw-bold"><?php echo number_format((int) ($deliveryFunnel[$key] ?? 0)); ?></div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <hr>
+        <div class="row g-3">
+            <div class="col-6 col-md-2"><div class="small text-secondary">Hard bounces</div><div class="fw-semibold text-danger"><?php echo (int) ($organizationBounceBreakdown['hard'] ?? 0); ?></div></div>
+            <div class="col-6 col-md-2"><div class="small text-secondary">Soft bounces</div><div class="fw-semibold text-warning"><?php echo (int) ($organizationBounceBreakdown['soft'] ?? 0); ?></div></div>
+            <div class="col-6 col-md-2"><div class="small text-secondary">Blocked</div><div class="fw-semibold text-danger"><?php echo (int) ($organizationBounceBreakdown['blocked'] ?? 0); ?></div></div>
+            <div class="col-6 col-md-3"><div class="small text-secondary">Domain errors</div><div class="fw-semibold text-secondary"><?php echo (int) ($organizationBounceBreakdown['domain_error'] ?? 0); ?></div></div>
+            <div class="col-6 col-md-3"><div class="small text-secondary">Unknown</div><div class="fw-semibold"><?php echo (int) ($organizationBounceBreakdown['unknown'] ?? 0); ?></div></div>
+        </div>
+    </div>
 </div>
 
 <div class="row g-3 mb-4">

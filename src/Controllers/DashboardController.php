@@ -99,6 +99,8 @@ class DashboardController extends Controller
             'stats' => $stats,
             'campaignHealth' => $campaignHealth,
             'deliveryHealthMetrics' => $deliveryHealthMetrics,
+            'deliveryFunnel' => $observability->dashboardFunnel($organization_id),
+            'organizationBounceBreakdown' => $observability->organizationBounceBreakdown($organization_id),
             'recent_campaigns' => $recentCampaigns,
             'recentEvents' => $observability->recentOrganizationEvents($organization_id, 12),
             'smtpSetting' => $smtpSetting,

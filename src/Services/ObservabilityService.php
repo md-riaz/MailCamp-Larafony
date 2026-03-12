@@ -15,6 +15,7 @@ final class ObservabilityService
      */
     public function dashboardMetrics(int $organizationId): array
     {
+        $queued = $this->eventCount($organizationId, 'queued');
         $sent = Message::query()
             ->where('organization_id', '=', $organizationId)
             ->whereIn('status', ['sent', 'delivered', 'opened', 'clicked', 'unsubscribed', 'complained', 'bounced'])
@@ -54,7 +55,10 @@ final class ObservabilityService
                 ->count();
         }
 
+        $bounceBreakdown = $this->organizationBounceBreakdown($organizationId);
+
         return [
+            'queued' => $queued,
             'sent' => $sent,
             'delivered' => $delivered,
             'bounced' => $bounced,
@@ -65,6 +69,10 @@ final class ObservabilityService
             'open_rate' => $delivered > 0 ? round(($opened / $delivered) * 100, 1) : 0.0,
             'ctr' => $delivered > 0 ? round(($clicked / $delivered) * 100, 1) : 0.0,
             'ctor' => $opened > 0 ? round(($clicked / $opened) * 100, 1) : 0.0,
+            'hard_bounces' => $bounceBreakdown['hard'],
+            'soft_bounces' => $bounceBreakdown['soft'],
+            'blocked_bounces' => $bounceBreakdown['blocked'],
+            'domain_errors' => $bounceBreakdown['domain_error'],
         ];
     }
 
@@ -188,6 +196,40 @@ final class ObservabilityService
      */
     public function campaignBounceBreakdown(int $campaignId): array
     {
+        return $this->bounceBreakdownForQuery(\App\Models\Bounce::query()->where('campaign_id', '=', $campaignId)->get());
+    }
+
+    /**
+     * @return array<string,int>
+     */
+    public function organizationBounceBreakdown(int $organizationId): array
+    {
+        return $this->bounceBreakdownForQuery(\App\Models\Bounce::query()->where('organization_id', '=', $organizationId)->get());
+    }
+
+    /**
+     * @return array<string,int>
+     */
+    public function dashboardFunnel(int $organizationId): array
+    {
+        return [
+            'queued' => $this->eventCount($organizationId, 'queued'),
+            'sent' => $this->eventCount($organizationId, 'sent'),
+            'delivered' => $this->eventCount($organizationId, 'delivered'),
+            'opened' => $this->eventCount($organizationId, 'opened'),
+            'clicked' => $this->eventCount($organizationId, 'clicked'),
+            'bounced' => $this->eventCount($organizationId, 'bounced'),
+            'unsubscribed' => $this->eventCount($organizationId, 'unsubscribed'),
+            'complained' => $this->eventCount($organizationId, 'spam_report'),
+        ];
+    }
+
+    /**
+     * @param array<int,\App\Models\Bounce> $bounces
+     * @return array<string,int>
+     */
+    private function bounceBreakdownForQuery(array $bounces): array
+    {
         $result = [
             'hard' => 0,
             'soft' => 0,
@@ -196,7 +238,7 @@ final class ObservabilityService
             'unknown' => 0,
         ];
 
-        foreach (\App\Models\Bounce::query()->where('campaign_id', '=', $campaignId)->get() as $bounce) {
+        foreach ($bounces as $bounce) {
             $type = (string) ($bounce->bounce_type ?? 'unknown');
             if (!array_key_exists($type, $result)) {
                 $type = 'unknown';
