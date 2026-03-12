@@ -80,9 +80,11 @@ final class CampaignSafetyService
             if ($domain === '' || !str_contains($domain, '.')) {
                 $errors[] = 'SMTP sender domain looks invalid.';
             }
-            if (preg_match('/(gmail|yahoo|hotmail|outlook)\./', $domain)) {
-                $warnings[] = 'Using a free-mail sender domain can hurt deliverability for campaigns.';
-            }
+        }
+
+        $deliverability = (new DeliverabilityAdvisorService())->analyze($smtpSetting?->from_email);
+        foreach ($deliverability['warnings'] as $warning) {
+            $warnings[] = $warning;
         }
 
         if ($bounceRate > 8.0) {
@@ -123,6 +125,7 @@ final class CampaignSafetyService
                 'click_rate' => $clickRate,
                 'sender_email' => $smtpSetting?->from_email,
             ],
+            'deliverability' => $deliverability,
         ];
     }
 }

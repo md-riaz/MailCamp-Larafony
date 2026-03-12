@@ -153,6 +153,7 @@
   - spam score high
   - low inbox probability signal
 - [~] Provide actionable recommendations and block/confirm gate when risk is high
+- [x] DNS-based MX/SPF/DMARC/common-DKIM checks shown on campaign page
 
 ### 15) Future Advanced Features (Backlog)
 - [ ] AI spam detection

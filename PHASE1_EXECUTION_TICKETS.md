@@ -296,7 +296,8 @@ Constraint: Standard SMTP only (no provider preset UX).
   - Campaign launch screen shows risk summary + guidance
 - Current notes:
   - Basic pre-send warnings now exist for sender quality, template quality, recipient volume, and required unsubscribe behavior
-  - DNS/authentication-specific checks (SPF/DKIM/DMARC/domain age) are still not implemented
+  - DNS-based MX/SPF/DMARC/common-DKIM checks are now surfaced on the campaign page
+  - Domain age and advanced spam/inbox scoring are still not implemented
 
 ### T8.2 High-risk send gate
 - Status: `TODO`

@@ -14,7 +14,8 @@ $pendingCount = max($deliveryTotal - $sentCount - $failedCount, 0);
 $campaignMetrics = $campaignMetrics ?? [];
 $bounceBreakdown = $bounceBreakdown ?? ['hard' => 0, 'soft' => 0, 'blocked' => 0, 'domain_error' => 0, 'unknown' => 0];
 $recentEvents = $recentEvents ?? [];
-$safety = $safety ?? ['ok' => true, 'should_pause' => false, 'risk_level' => 'low', 'errors' => [], 'warnings' => [], 'metrics' => []];
+$safety = $safety ?? ['ok' => true, 'should_pause' => false, 'risk_level' => 'low', 'errors' => [], 'warnings' => [], 'metrics' => [], 'deliverability' => ['domain' => null, 'checks' => [], 'warnings' => [], 'recommendations' => []]];
+$deliverability = $safety['deliverability'] ?? ['domain' => null, 'checks' => [], 'warnings' => [], 'recommendations' => []];
 $statusLabel = ucfirst((string) $campaign->status);
 $statusClass = match ((string) $campaign->status) {
     'sent' => 'badge-success',
@@ -216,7 +217,29 @@ include $componentsPath . '/page-header.blade.php';
             <div class="col-6"><div class="small text-secondary">Sender</div><div class="fw-semibold"><?php echo htmlspecialchars((string) (($safety['metrics']['sender_email'] ?? '—')), ENT_QUOTES, 'UTF-8'); ?></div></div>
         </div>
         <hr>
-        <p class="text-secondary small mb-0">Launch now checks template requirements, SMTP readiness, sender quality hints, bounce thresholds, and complaint thresholds before allowing activation.</p>
+        <hr>
+        <div class="small text-secondary mb-2">DNS deliverability checks for <?php echo htmlspecialchars((string) ($deliverability['domain'] ?? 'sender domain'), ENT_QUOTES, 'UTF-8'); ?></div>
+        <div class="row g-2 mb-3">
+            <?php foreach (($deliverability['checks'] ?? []) as $checkName => $check): ?>
+            <div class="col-6 col-md-3">
+                <div class="border rounded-3 p-2 h-100 bg-light-subtle">
+                    <div class="text-secondary small text-uppercase"><?php echo htmlspecialchars((string) $checkName, ENT_QUOTES, 'UTF-8'); ?></div>
+                    <div class="fw-semibold text-<?php echo ($check['status'] ?? 'warn') === 'pass' ? 'success' : 'warning'; ?>"><?php echo htmlspecialchars(strtoupper((string) ($check['status'] ?? 'warn')), ENT_QUOTES, 'UTF-8'); ?></div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php if (!empty($deliverability['recommendations'])): ?>
+        <div class="small text-secondary">
+            <strong>Recommendations:</strong>
+            <ul class="mb-0 mt-2">
+                <?php foreach ($deliverability['recommendations'] as $recommendation): ?>
+                <li><?php echo htmlspecialchars((string) $recommendation, ENT_QUOTES, 'UTF-8'); ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+        <?php endif; ?>
+        <p class="text-secondary small mt-3 mb-0">Launch now checks template requirements, SMTP readiness, sender quality hints, DNS deliverability posture, bounce thresholds, and complaint thresholds before allowing activation.</p>
         <?php
         $contentHtml = ob_get_clean();
         $className = 'h-100 mb-0';
