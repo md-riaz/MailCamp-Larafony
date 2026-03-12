@@ -19,13 +19,48 @@ final class SmtpReportIngestionService
     }
 
     /**
-     * @return array{received:int,processed:int,duplicates:int,unmatched:int,event_type:string}
+     * @param array<string,mixed> $security
+     * @return array{received:int,processed:int,duplicates:int,unmatched:int,event_type:string,security_reason?:string}
      */
-    public function ingest(string $rawPayload, string $source = 'smtp-report'): array
+    public function ingestWithSecurity(string $rawPayload, array $security, string $source = 'smtp-report'): array
+    {
+        if (($security['ok'] ?? false) !== true) {
+            $webhook = new Webhook();
+            $webhook->provider = 'smtp';
+            $webhook->event_type = 'rejected';
+            $webhook->signature = is_string($security['signature'] ?? null) ? $security['signature'] : null;
+            $webhook->idempotency_key = (string) ($security['idempotency_key'] ?? hash('sha256', $rawPayload));
+            $webhook->processing_status = 'failed';
+            $webhook->payload = json_encode(['raw' => $rawPayload], JSON_UNESCAPED_UNICODE);
+            $webhook->headers = json_encode([
+                'source' => $source,
+                'security' => $security,
+            ], JSON_UNESCAPED_UNICODE);
+            $webhook->processed_at = date('Y-m-d H:i:s');
+            $webhook->save();
+
+            return [
+                'received' => 1,
+                'processed' => 0,
+                'duplicates' => 0,
+                'unmatched' => 0,
+                'event_type' => 'rejected',
+                'security_reason' => (string) ($security['reason'] ?? 'rejected'),
+            ];
+        }
+
+        return $this->ingest($rawPayload, $source, $security);
+    }
+
+    /**
+     * @param array<string,mixed> $security
+     * @return array{received:int,processed:int,duplicates:int,unmatched:int,event_type:string,security_reason?:string}
+     */
+    public function ingest(string $rawPayload, string $source = 'smtp-report', array $security = []): array
     {
         $parsed = $this->parser->parse($rawPayload);
 
-        $idempotencyKey = $this->buildIdempotencyKey($source, $parsed, $rawPayload);
+        $idempotencyKey = (string) ($security['idempotency_key'] ?? $this->buildIdempotencyKey($source, $parsed, $rawPayload));
         $existing = Webhook::query()->where('idempotency_key', '=', $idempotencyKey)->first();
         if ($existing) {
             return [
@@ -43,10 +78,18 @@ final class SmtpReportIngestionService
         $webhook->provider = 'smtp';
         $webhook->event_type = (string) $parsed['event_type'];
         $webhook->provider_message_id = $parsed['provider_message_id'];
+        $webhook->signature = is_string($security['signature'] ?? null) ? $security['signature'] : null;
         $webhook->idempotency_key = $idempotencyKey;
         $webhook->processing_status = $message ? 'processed' : 'failed';
         $webhook->payload = json_encode(['raw' => $rawPayload], JSON_UNESCAPED_UNICODE);
-        $webhook->headers = json_encode(['source' => $source], JSON_UNESCAPED_UNICODE);
+        $webhook->headers = json_encode([
+            'source' => $source,
+            'security' => [
+                'reason' => $security['reason'] ?? 'not_checked',
+                'timestamp' => $security['timestamp'] ?? null,
+                'headers' => $security['headers'] ?? [],
+            ],
+        ], JSON_UNESCAPED_UNICODE);
         $webhook->campaign_id = $message?->campaign_id;
         $webhook->organization_id = $message?->organization_id;
         $webhook->message_id = $message?->id;

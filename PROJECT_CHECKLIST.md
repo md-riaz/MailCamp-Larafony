@@ -17,8 +17,8 @@
 - [~] Audit all existing migrations
   - [x] identify risky migrations and current migration mechanics
   - [x] write migration audit doc
-  - [ ] verify baseline 2024 migrations against fresh-boot assumptions
-  - [ ] define forward migration discipline
+  - [x] verify baseline 2024 migrations against fresh-boot assumptions
+  - [x] define forward migration discipline
 - [~] Build the event UI
   - [x] campaign events API
   - [x] message events API
@@ -202,8 +202,8 @@
 - [ ] Spam score analyzer pre-send checks (SPF/DKIM/DMARC/content/domain)
 
 ### EPIC 6 — Auth, Security, and Platform Stability
-- [ ] Keep `/mailcamp` base-path compatibility across all new endpoints
-- [ ] Idempotent webhook handling + signature verification + retry safety
+- [~] Keep `/mailcamp` base-path compatibility across all new endpoints
+- [~] Idempotent webhook handling + signature verification + retry safety
 - [ ] Protection rules/alerts for high-risk sending behavior
 
 ### EPIC 7 — Data Model & APIs

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Services\SmtpReportIngestionService;
+use App\Services\WebhookSecurityService;
 use Larafony\Framework\Routing\Advanced\Attributes\Route;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -31,7 +32,16 @@ class SmtpReportController extends Controller
         }
 
         $source = 'smtp-http';
-        $result = $this->service->ingest($raw, $source);
+        $security = (new WebhookSecurityService())->inspect($request, $raw, 'smtp');
+        $result = $this->service->ingestWithSecurity($raw, $security, $source);
+
+        if (($security['ok'] ?? false) !== true) {
+            return $this->json([
+                'ok' => false,
+                'error' => 'Webhook rejected',
+                'reason' => $security['reason'] ?? 'rejected',
+            ], 401);
+        }
 
         return $this->json([
             'ok' => true,
