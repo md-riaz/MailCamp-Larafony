@@ -2,15 +2,38 @@
 $title = 'Create Template';
 ob_start(); 
 $basePath = rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/');
+$componentsPath = dirname(__DIR__, 3) . '/resources/views/blade/components';
+
+ob_start();
+?>
+<div class="d-flex gap-2 flex-wrap">
+    <a href="<?= $basePath ?>/templates" class="btn btn-outline-secondary">Back to templates</a>
+</div>
+<?php
+$actionsHtml = ob_get_clean();
+$title = 'Create Email Template';
+$subtitle = 'Build a reusable template that can survive real SMTP campaigns and merge-field validation.';
+include $componentsPath . '/page-header.blade.php';
 ?>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Create Email Template</h1>
-    <a href="<?= $basePath ?>/templates" class="btn btn-outline-secondary">Back</a>
+<div class="card portal-hero mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-end gap-4">
+            <div>
+                <div class="eyebrow mb-3">Template Builder</div>
+                <h2 class="display-6 fw-bold mb-2">Create campaign-ready content with merge fields and unsubscribe-safe structure.</h2>
+                <p class="mb-0" style="max-width: 760px; color: rgba(255,255,255,0.84) !important;">Templates are product assets. Build them once, keep the structure disciplined, and launch campaigns with less guesswork.</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <?= $actionsHtml ?>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="card mb-4">
+<div class="card portal-surface-soft mb-4">
     <div class="card-body">
+        <div class="portal-section-title">Compose template</div>
         <form method="POST" action="<?= $basePath ?>/templates" class="row g-3">
             <div class="col-12">
                 <label for="name" class="form-label">Template Name</label>
@@ -38,6 +61,7 @@ $basePath = rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL
 
 <div class="card">
     <div class="card-body">
+        <div class="portal-section-title">Reference</div>
         <h2 class="h5 mb-3">Example Template</h2>
 <pre class="bg-light rounded p-3 border small mb-0">&lt;html&gt;
 &lt;body&gt;

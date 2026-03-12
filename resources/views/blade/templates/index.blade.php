@@ -12,10 +12,56 @@ $actionsHtml = ob_get_clean();
 $title = 'Email Templates';
 $subtitle = 'Create reusable, variable-driven templates for campaigns.';
 include $componentsPath . '/page-header.blade.php';
+?>
 
+<div class="card portal-hero mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-end gap-4">
+            <div>
+                <div class="eyebrow mb-3">Content Workspace</div>
+                <h2 class="display-6 fw-bold mb-2">Manage reusable email templates like product assets, not loose snippets.</h2>
+                <p class="mb-0" style="max-width: 760px; color: rgba(255,255,255,0.84) !important;">Keep subjects, merge fields, and call-to-action structure consistent so campaigns launch faster and stay easier to debug.</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <?= $actionsHtml ?>
+            </div>
+        </div>
+        <div class="portal-grid portal-grid-4 mt-4">
+            <div class="portal-metric">
+                <div class="metric-label">Templates</div>
+                <div class="metric-value"><?php echo count($templates ?? []); ?></div>
+                <div class="metric-note">Templates currently available to campaigns.</div>
+            </div>
+            <div class="portal-metric">
+                <div class="metric-label">Active state</div>
+                <div class="metric-value" style="font-size:22px;"><?php echo !empty($templates) ? 'Ready' : 'Empty'; ?></div>
+                <div class="metric-note">Whether the content library is usable right now.</div>
+            </div>
+            <div class="portal-metric">
+                <div class="metric-label">Variable model</div>
+                <div class="metric-value" style="font-size:22px;">Merge</div>
+                <div class="metric-note">Template bodies are driven by merge variables.</div>
+            </div>
+            <div class="portal-metric">
+                <div class="metric-label">Launch fit</div>
+                <div class="metric-value" style="font-size:22px;">SMTP-first</div>
+                <div class="metric-note">Templates are aligned to the SMTP campaign workflow.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php
 ob_start();
 if (!empty($templates)):
 ?>
+<div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+    <div>
+        <div class="portal-section-title mb-1">Template inventory</div>
+        <h2 class="h5 mb-1">Available templates</h2>
+        <p class="text-secondary small mb-0">Review merge fields, status, and creation dates before attaching a template to a campaign.</p>
+    </div>
+</div>
 <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
         <thead><tr><th>Name</th><th>Subject</th><th>Variables</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>

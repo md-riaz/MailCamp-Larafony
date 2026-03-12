@@ -10,8 +10,21 @@ $actionsHtml = '';
 include $componentsPath . '/page-header.blade.php';
 ?>
 
-<div class="card">
+<div class="card portal-hero mb-4">
     <div class="card-body">
+        <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-end gap-4">
+            <div>
+                <div class="eyebrow mb-3">Delivery Infrastructure</div>
+                <h2 class="display-6 fw-bold mb-2">Configure the SMTP foundation that every campaign depends on.</h2>
+                <p class="mb-0" style="max-width: 760px; color: rgba(255,255,255,0.84) !important;">Treat this as production infrastructure: sender identity, authentication, encryption, and connection testing all determine whether campaigns behave like a platform or a gamble.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card portal-surface-soft">
+    <div class="card-body">
+        <div class="portal-section-title">SMTP configuration</div>
         <form method="POST" action="<?= $basePath ?>/smtp-settings" class="row g-3">
             <div class="col-12 col-md-6">
                 <label for="host" class="form-label">SMTP Host</label>
