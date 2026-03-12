@@ -27,14 +27,51 @@ $subtitle = 'Overview of your campaigns, recipients, templates, and delivery rea
 include $componentsPath . '/page-header.blade.php';
 ?>
 
-<div class="row g-3 mb-4">
-    <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Total Campaigns</div><div class="fs-3 fw-bold"><?php echo $stats['total_campaigns'] ?? 0; ?></div></div></div></div>
-    <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Active Campaigns</div><div class="fs-3 fw-bold"><?php echo $stats['active_campaigns'] ?? 0; ?></div></div></div></div>
-    <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Total Recipients</div><div class="fs-3 fw-bold"><?php echo $stats['total_recipients'] ?? 0; ?></div></div></div></div>
-    <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Templates</div><div class="fs-3 fw-bold"><?php echo $stats['total_templates'] ?? 0; ?></div></div></div></div>
+<div class="card portal-hero mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-end gap-4">
+            <div>
+                <div class="eyebrow mb-3">Modern Mail Operations</div>
+                <h2 class="display-6 fw-bold mb-2">SMTP campaigns, safety checks, and delivery observability in one portal.</h2>
+                <p class="mb-0" style="max-width: 760px; color: rgba(255,255,255,0.84) !important;">Use this dashboard as your command center: validate sender posture, watch campaign health, and inspect real delivery events without jumping between tools.</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <?= $actionsHtml ?>
+            </div>
+        </div>
+        <div class="portal-grid portal-grid-4 mt-4">
+            <div class="portal-metric">
+                <div class="metric-label">Total campaigns</div>
+                <div class="metric-value"><?php echo $stats['total_campaigns'] ?? 0; ?></div>
+                <div class="metric-note">All campaigns created in this workspace.</div>
+            </div>
+            <div class="portal-metric">
+                <div class="metric-label">Active campaigns</div>
+                <div class="metric-value"><?php echo $stats['active_campaigns'] ?? 0; ?></div>
+                <div class="metric-note">Currently moving through send/monitor flow.</div>
+            </div>
+            <div class="portal-metric">
+                <div class="metric-label">Recipients</div>
+                <div class="metric-value"><?php echo $stats['total_recipients'] ?? 0; ?></div>
+                <div class="metric-note">Imported audience size across campaigns.</div>
+            </div>
+            <div class="portal-metric">
+                <div class="metric-label">Templates</div>
+                <div class="metric-value"><?php echo $stats['total_templates'] ?? 0; ?></div>
+                <div class="metric-note">Available content assets ready for launch.</div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<h2 class="h5 mb-3">Delivery Health <span class="badge bg-secondary ms-2 text-uppercase" style="font-size: 0.65em;">Preview</span></h2>
+<div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+    <div>
+        <div class="portal-section-title mb-1">Operations snapshot</div>
+        <h2 class="h4 mb-1">Delivery Health</h2>
+        <p class="text-secondary mb-0">A fast read on queue movement, engagement, and bounce pressure.</p>
+    </div>
+    <span class="badge bg-secondary text-uppercase" style="font-size: 0.65em;">Preview</span>
+</div>
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Queued</div><div class="fs-4 fw-bold"><?php echo number_format($deliveryHealthMetrics['queued'] ?? 0); ?></div></div></div></div>
     <div class="col-6 col-md-4 col-xl-2"><div class="card h-100"><div class="card-body"><div class="text-secondary small">Sent</div><div class="fs-4 fw-bold"><?php echo number_format($deliveryHealthMetrics['sent'] ?? 0); ?></div></div></div></div>

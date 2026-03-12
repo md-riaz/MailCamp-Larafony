@@ -94,6 +94,108 @@
             margin-bottom: 20px;
         }
 
+        .portal-hero {
+            position: relative;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at top right, rgba(79, 70, 229, 0.18), transparent 30%),
+                linear-gradient(135deg, #0f172a 0%, #1e293b 42%, #1d4ed8 100%);
+            color: #fff;
+            border: 1px solid rgba(96, 165, 250, 0.18);
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
+        }
+
+        .portal-hero::after {
+            content: '';
+            position: absolute;
+            inset: auto -30px -30px auto;
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle, rgba(255,255,255,0.18), transparent 60%);
+            pointer-events: none;
+        }
+
+        .portal-hero .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            color: rgba(255,255,255,0.9);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .portal-hero h1,
+        .portal-hero h2,
+        .portal-hero h3,
+        .portal-hero p,
+        .portal-hero .text-secondary,
+        .portal-hero .text-muted {
+            color: #fff !important;
+        }
+
+        .portal-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .portal-grid.portal-grid-4 {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .portal-metric {
+            background: linear-gradient(180deg, rgba(255,255,255,0.88), rgba(248,250,252,0.98));
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.07);
+        }
+
+        .portal-metric .metric-label {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 8px;
+        }
+
+        .portal-metric .metric-value {
+            font-size: 30px;
+            font-weight: 800;
+            line-height: 1;
+            color: var(--text);
+        }
+
+        .portal-metric .metric-note {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .portal-section-title {
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #475569;
+            margin-bottom: 12px;
+        }
+
+        .portal-surface-soft {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+        }
+
+        .portal-stack > * + * {
+            margin-top: 12px;
+        }
+
         .card h2 { margin-bottom: 10px; color: var(--text); }
         .form-group { margin-bottom: 18px; }
 
@@ -242,11 +344,20 @@
             place-items: center;
         }
 
+        @media (max-width: 992px) {
+            .portal-grid.portal-grid-4 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
         @media (max-width: 768px) {
             .container { padding: 14px; }
             .card { padding: 16px; }
             .page-header { flex-direction: column; align-items: flex-start; }
             .page-title { font-size: 1.4rem; }
+            .portal-grid.portal-grid-4 {
+                grid-template-columns: 1fr;
+            }
             table { display: block; overflow-x: auto; white-space: nowrap; }
         }
     </style>

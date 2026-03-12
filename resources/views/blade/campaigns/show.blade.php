@@ -46,6 +46,43 @@ $subtitle = 'Campaign details, delivery metrics, and next actions.';
 include $componentsPath . '/page-header.blade.php';
 ?>
 
+<div class="card portal-hero mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-end gap-4">
+            <div>
+                <div class="eyebrow mb-3">Campaign Operator Console</div>
+                <h2 class="display-6 fw-bold mb-2"><?php echo htmlspecialchars((string) $campaign->name, ENT_QUOTES, 'UTF-8'); ?></h2>
+                <p class="mb-0" style="max-width: 760px; color: rgba(255,255,255,0.84) !important;">Review readiness, watch risk posture, and inspect delivery behavior from one place before you trust this campaign in production.</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <?= $actionsHtml ?>
+            </div>
+        </div>
+        <div class="portal-grid portal-grid-4 mt-4">
+            <div class="portal-metric">
+                <div class="metric-label">Status</div>
+                <div class="metric-value" style="font-size: 22px;"><?php echo htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8'); ?></div>
+                <div class="metric-note">Current campaign lifecycle position.</div>
+            </div>
+            <div class="portal-metric">
+                <div class="metric-label">Recipients</div>
+                <div class="metric-value"><?php echo $deliveryTotal; ?></div>
+                <div class="metric-note">Imported and currently associated recipients.</div>
+            </div>
+            <div class="portal-metric">
+                <div class="metric-label">Risk level</div>
+                <div class="metric-value" style="font-size: 22px;"><?php echo htmlspecialchars(strtoupper((string) ($safety['risk_level'] ?? 'low')), ENT_QUOTES, 'UTF-8'); ?></div>
+                <div class="metric-note">Safety evaluator summary before launch.</div>
+            </div>
+            <div class="portal-metric">
+                <div class="metric-label">Delivered / Opened</div>
+                <div class="metric-value" style="font-size: 22px;"><?php echo (int) ($campaignMetrics['delivered'] ?? 0); ?> / <?php echo (int) ($campaignMetrics['opened'] ?? 0); ?></div>
+                <div class="metric-note">Quick engagement read for this campaign.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php if (!empty($notice['message'] ?? '')): ?>
     <?php
     $message = $notice['message'];
@@ -185,6 +222,7 @@ include $componentsPath . '/page-header.blade.php';
         <?php
         ob_start();
         ?>
+        <div class="portal-section-title">Campaign context</div>
         <h2 class="h5 mb-3">Campaign Info</h2>
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
@@ -206,6 +244,7 @@ include $componentsPath . '/page-header.blade.php';
         <?php
         ob_start();
         ?>
+        <div class="portal-section-title">Launch guardrails</div>
         <h2 class="h5 mb-3">Safety & Deliverability</h2>
         <div class="row g-3 mb-3">
             <div class="col-6"><div class="border rounded-3 p-3 h-100 bg-light-subtle"><div class="text-secondary small">Risk level</div><div class="fs-5 fw-bold text-<?php echo ($safety['risk_level'] ?? 'low') === 'high' ? 'danger' : (($safety['risk_level'] ?? 'low') === 'medium' ? 'warning' : 'success'); ?>"><?php echo htmlspecialchars(strtoupper((string) ($safety['risk_level'] ?? 'low')), ENT_QUOTES, 'UTF-8'); ?></div></div></div>
