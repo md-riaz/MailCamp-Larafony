@@ -1,7 +1,32 @@
 # MailCamp Phase-1 Execution Tickets
 
-Scope: Foundation for delivery observability + stable portal UX.  
-Constraint: Standard SMTP only (no provider preset UX).
+Scope: **SMTP-first campaign delivery platform** with observability, safety, and operator UX.  
+Constraint: **Standard SMTP is the primary product path.** Provider webhooks are optional integrations, not a core requirement for SMTP campaigns.
+
+## Product Truth
+
+MailCamp should be designed around this core lifecycle:
+1. campaign drafted
+2. recipients imported
+3. template validated
+4. SMTP send attempted
+5. message lifecycle recorded
+6. open tracking recorded
+7. click tracking recorded
+8. DSN/report ingestion processed when available
+9. dashboard + campaign timeline reflect real delivery state
+
+### Important architecture rule
+- **SMTP campaigns must not depend on provider webhooks to be considered complete.**
+- Provider webhook endpoints are optional integration adapters for SendGrid / SES / Mailgun style event sources.
+- For SMTP-first production, the real critical pieces are:
+  - queue/send reliability
+  - message lifecycle rows
+  - open tracking
+  - click tracking
+  - DSN / report ingestion
+  - campaign safety rules
+  - deliverability warnings
 
 ## Legend
 - Priority: P0 (must), P1 (high), P2 (nice)
@@ -39,9 +64,6 @@ Constraint: Standard SMTP only (no provider preset UX).
   - Add usage notes in comments/docblock
 - Acceptance:
   - No duplicated header/empty-state/status badge markup on core pages
-- Current notes:
-  - Shared components are in active use across dashboard/campaigns/templates/smtp/auth
-  - Formal hardening/docs pass still incomplete
 
 ### T1.2 Layout consistency QA
 - Status: `PARTIAL`
@@ -52,194 +74,198 @@ Constraint: Standard SMTP only (no provider preset UX).
   - Spacing/typography/button consistency pass on dashboard/campaigns/templates/smtp/auth
 - Acceptance:
   - Mobile/tablet/desktop views remain consistent and readable
-- Current notes:
-  - Major layout modernization exists, but no formal QA sweep is documented
 
 ---
 
-## EPIC 2 — Dashboard Architecture
+## EPIC 2 — SMTP Campaign Core
 
-### T2.1 Delivery Health cards MVP
-- Status: `VERIFY`
-- Priority: P0
-- Effort: M
-- Depends on: T7.1 (event model exists) partial mock allowed before data wiring
-- Deliverables:
-  - Cards: Sent, Delivered, Bounced, Opened, Clicked, Unsubscribed
-  - Derived metrics: Delivery rate, Open rate, CTR, CTOR
-- Acceptance:
-  - Metrics formulas applied correctly and show fallback for zero denominators
-- Current notes:
-  - Cards and derived metrics are wired to real observability queries now
-  - Needs validation with live message/event data (current live event tables are empty)
-
-### T2.2 SMTP readiness + campaign health summary
-- Status: `DONE`
-- Priority: P1
-- Effort: S
-- Depends on: None
-- Deliverables:
-  - SMTP configured/test hint
-  - Campaign status summary counts
-- Acceptance:
-  - Dashboard shows health block without breaking existing views
-
----
-
-## EPIC 3 — Campaigns Module
-
-### T3.1 Campaign detail route stabilization
-- Status: `DONE`
-- Priority: P0
-- Effort: S
-- Depends on: None
-- Deliverables:
-  - Keep stable detail URL behavior and invalid-id fallback to list
-- Acceptance:
-  - Invalid campaign link never shows hard dead-end for logged-in users
-
-### T3.2 Real-time campaign event log (MVP)
+### T2.1 Campaign launch readiness
 - Status: `PARTIAL`
 - Priority: P0
 - Effort: M
-- Depends on: T7.1, T7.2
+- Depends on: T4.1, T4.2, T6.1
 - Deliverables:
-  - Event stream panel on campaign detail (latest N events)
-  - Filter by event type
+  - launch checks for recipients, template, SMTP, and risk posture
+  - launch blocks invalid campaigns before activation
 - Acceptance:
-  - New events appear in descending timestamp order
+  - bad template or missing SMTP cannot silently launch
 - Current notes:
-  - Event stream panel exists on campaign detail
-  - Raw/filtered event API links exist
-  - In-page filtering/pagination polish still missing
-  - Needs live data to confirm operational behavior
+  - template validation, safety checks, and deliverability warnings are now in place
+  - still needs real send verification
 
-### T3.3 Campaign safety rules (autopause)
-- Status: `PARTIAL`
-- Priority: P1
-- Effort: M
-- Depends on: T7.1, T7.3
-- Deliverables:
-  - Rule engine checks bounce/spam rates
-  - Auto-pause + user notification when threshold exceeded
-- Acceptance:
-  - bounce_rate > 8% OR spam_complaints > 0.3% triggers pause
-- Current notes:
-  - Risk evaluator and launch-time guards now exist
-  - High-risk launches can be blocked and severe risk can auto-pause before activation
-  - Risk history snapshots and autopause log entries are now recorded to campaign logs
-  - Real-send verification still pending
-
----
-
-## EPIC 4 — Templates Module
-
-### T4.1 Click-tracking rewrite integration
-- Status: `VERIFY`
-- Priority: P0
-- Effort: M
-- Depends on: T7.2
-- Deliverables:
-  - Rewrite links in outgoing email body to `/click/{message_id}?url=...`
-- Acceptance:
-  - Click records stored before redirect
-- Current notes:
-  - Link rewriting service and redirect endpoint are implemented
-  - Link persistence and click event persistence are implemented
-  - Still needs controlled real-send verification
-
-### T4.2 Template variable validation helper
-- Status: `TODO`
-- Priority: P1
-- Effort: S
-- Depends on: None
-- Deliverables:
-  - Validate required vars (`unsubscribe_url` etc.) pre-send
-- Acceptance:
-  - Missing critical vars block send with actionable message
-
----
-
-## EPIC 5 — SMTP & Deliverability (Standard SMTP only)
-
-### T5.1 Message lifecycle events (queued/sent)
+### T2.2 Message lifecycle events (`queued`, `sent`)
 - Status: `VERIFY`
 - Priority: P0
 - Effort: M
 - Depends on: T7.1
 - Deliverables:
-  - Emit `queued` and `sent` events per message
-  - Persist SMTP response metadata
+  - emit `queued` and `sent` events per message
+  - persist SMTP response metadata
 - Acceptance:
-  - Each message has traceable initial lifecycle events
+  - each message has traceable initial lifecycle events
 - Current notes:
-  - Queue/send code emits lifecycle events in code
-  - Needs controlled send verification against live DB
+  - queue/send code emits lifecycle events in code
+  - needs controlled send verification against live DB
 
-### T5.2 Delivery/bounce ingestion normalization
+### T2.3 DSN / report ingestion for SMTP outcomes
 - Status: `PARTIAL`
 - Priority: P0
 - Effort: L
-- Depends on: T7.1, T7.3
+- Depends on: T7.1, T6.2
 - Deliverables:
-  - Webhook ingestion endpoints + normalization to internal event types
-  - Bounce classifier with `bounce_type`, `bounce_reason`, `smtp_code`
+  - ingest DSN/report payloads and normalize to internal event types
+  - map outcomes into `email_events`, `bounces`, and `webhooks`
 - Acceptance:
-  - Delivered/soft/hard/deferred visible in UI state mapping
+  - delivered / bounced / deferred / complaint outcomes become visible in timelines and dashboard
 - Current notes:
   - SMTP report ingestion path exists
-  - Bounce/webhook/event persistence exists in part
-  - Multi-provider normalization and full UI state mapping not finished
+  - bounce/webhook/event persistence exists in part
+  - still needs live verification and deeper outcome coverage
 
-### T5.3 Open tracking pixel endpoint
+---
+
+## EPIC 3 — Tracking & Engagement
+
+### T3.1 Open tracking pixel endpoint
 - Status: `VERIFY`
 - Priority: P0
 - Effort: M
 - Depends on: T7.2
 - Deliverables:
   - `/open/{message_id}.png` endpoint
-  - Bot/proxy filtering
+  - bot/proxy filtering
 - Acceptance:
-  - Valid opens recorded with metadata; endpoint returns transparent PNG
+  - valid opens recorded with metadata; endpoint returns transparent PNG
+
+### T3.2 Click-tracking rewrite integration
+- Status: `VERIFY`
+- Priority: P0
+- Effort: M
+- Depends on: T7.2
+- Deliverables:
+  - rewrite links in outgoing email body to `/click/{message_id}?url=...`
+- Acceptance:
+  - click records stored before redirect
+
+### T3.3 Campaign event timeline UX
+- Status: `PARTIAL`
+- Priority: P1
+- Effort: M
+- Depends on: T7.1, T7.2
+- Deliverables:
+  - campaign timeline page
+  - message timeline page
+  - filters + readable event details
+- Acceptance:
+  - operator can inspect lifecycle without using raw JSON
 - Current notes:
-  - Implemented with transparent pixel response and filtering logic
-  - Needs controlled live verification
+  - HTML timeline pages exist
+  - deeper live-data polish still pending
 
 ---
 
-## EPIC 6 — Auth/Security/Platform
+## EPIC 4 — Template & Pre-send Quality
 
-### T6.1 Webhook security + idempotency
+### T4.1 Template variable validation helper
+- Status: `PARTIAL`
+- Priority: P0
+- Effort: S
+- Depends on: None
+- Deliverables:
+  - validate required vars like `unsubscribe_url` pre-send
+  - warn on weak template quality signals
+- Acceptance:
+  - missing critical vars block send with actionable message
+- Current notes:
+  - required unsubscribe variable is enforced
+  - basic template-quality warnings exist
+
+### T4.2 Deliverability advisor (SMTP-first)
+- Status: `PARTIAL`
+- Priority: P1
+- Effort: M
+- Depends on: T2.1
+- Deliverables:
+  - sender-domain checks
+  - MX / SPF / DMARC / common-DKIM checks
+  - recommendations surfaced before launch
+- Acceptance:
+  - campaign page shows risk summary + actionable guidance
+- Current notes:
+  - DNS-based MX/SPF/DMARC/common-DKIM checks are surfaced now
+  - domain age and advanced spam/inbox scoring are still not implemented
+
+---
+
+## EPIC 5 — Safety & Protection
+
+### T5.1 Campaign safety rules (autopause)
 - Status: `PARTIAL`
 - Priority: P0
 - Effort: M
-- Depends on: T5.2
+- Depends on: T2.2, T2.3
 - Deliverables:
-  - Signature verification hooks
-  - Idempotency key handling
-  - Replay protection window
+  - rule engine checks bounce/spam rates
+  - auto-pause + user notification when threshold exceeded
 - Acceptance:
-  - Duplicate webhook payloads do not duplicate events
+  - bounce_rate > 8% OR spam_complaints > 0.3% triggers pause
 - Current notes:
-  - Idempotency handling exists in SMTP report ingestion
-  - Signature verification and stronger replay protections are still missing
+  - risk evaluator and launch-time guards exist
+  - high-risk launches can be blocked and severe risk can auto-pause before activation
+  - risk history snapshots and autopause log entries are now recorded
+  - real-send verification still pending
 
-### T6.2 Subpath compatibility audit
-- Status: `PARTIAL`
+### T5.2 Risk history + operator visibility
+- Status: `DONE`
+- Priority: P1
+- Effort: S
+- Depends on: T5.1
+- Deliverables:
+  - persist campaign safety snapshots / autopause decisions in logs
+  - expose recent risk history in campaign UI
+- Acceptance:
+  - operator can see recent safety decisions without checking DB directly
+
+---
+
+## EPIC 6 — Dashboard & Operator UX
+
+### T6.1 Delivery Health cards MVP
+- Status: `VERIFY`
+- Priority: P0
+- Effort: M
+- Depends on: T7.1
+- Deliverables:
+  - cards: queued, sent, delivered, bounced, opened, clicked, unsubscribed
+  - derived metrics: delivery rate, open rate, CTR, CTOR
+- Acceptance:
+  - metrics formulas applied correctly and show fallback for zero denominators
+
+### T6.2 Dashboard funnel + bounce breakdown
+- Status: `DONE`
+- Priority: P1
+- Effort: M
+- Depends on: T7.1
+- Deliverables:
+  - queued → sent → delivered → opened → clicked → bounced / unsubscribed funnel
+  - org-wide bounce breakdown
+- Acceptance:
+  - dashboard is usable as an operator control surface
+
+### T6.3 SMTP readiness + campaign health summary
+- Status: `DONE`
 - Priority: P1
 - Effort: S
 - Depends on: None
 - Deliverables:
-  - Verify `/mailcamp` compatibility across new endpoints/routes/redirects
+  - SMTP configured/test hint
+  - campaign status summary counts
 - Acceptance:
-  - No hardcoded root-path regressions
-- Current notes:
-  - Redirect/base-path logic exists at app layer
-  - Full endpoint audit still pending, especially for open/click/events paths
+  - dashboard shows health block without breaking existing views
 
 ---
 
-## EPIC 7 — Data Model & APIs
+## EPIC 7 — Data Model & Internal APIs
 
 ### T7.1 DB migration pack: observability core
 - Status: `DONE` (with migration-risk caveat)
@@ -247,13 +273,13 @@ Constraint: Standard SMTP only (no provider preset UX).
 - Effort: L
 - Depends on: None
 - Deliverables:
-  - Tables: `messages`, `email_events`, `links`, `bounces`, `webhooks` (plus existing relations)
-  - Indexes on `campaign_id`, `subscriber_id`, `event_type`, `timestamp`, `provider_message_id`
+  - tables: `messages`, `email_events`, `links`, `bounces`, `webhooks`
+  - indexes for campaign/message/event queries
 - Acceptance:
-  - Schema supports campaign/message/event queries at scale
+  - schema supports campaign/message/event queries at scale
 - Current notes:
-  - Live schema exists and is registered in `migrations`
-  - See `MIGRATION_AUDIT.md` for trust/risk notes
+  - live schema exists and is registered in `migrations`
+  - see `MIGRATION_AUDIT.md` for trust/risk notes
 
 ### T7.2 Events APIs
 - Status: `DONE`
@@ -264,11 +290,27 @@ Constraint: Standard SMTP only (no provider preset UX).
   - `GET /campaign/{id}/events`
   - `GET /message/{id}/events`
 - Acceptance:
-  - Paginated responses with filters and stable ordering
+  - paginated responses with filters and stable ordering
 
-### T7.3 Webhook APIs
+### T7.3 Migration discipline / deploy safety
 - Status: `PARTIAL`
-- Priority: P1
+- Priority: P0
+- Effort: M
+- Depends on: None
+- Deliverables:
+  - migration risk audit
+  - forward migration rules
+  - safe deploy guidance
+- Acceptance:
+  - future schema changes do not depend on guesswork
+
+---
+
+## EPIC 8 — Optional Provider Integrations
+
+### T8.1 Provider webhook routes + normalization scaffolds
+- Status: `PARTIAL`
+- Priority: P2
 - Effort: M
 - Depends on: T7.1
 - Deliverables:
@@ -277,85 +319,58 @@ Constraint: Standard SMTP only (no provider preset UX).
   - `POST /webhook/provider/mailgun`
   - provider-agnostic normalization layer
 - Acceptance:
-  - Provider payloads mapped to unified internal event types
+  - provider payloads mapped to unified internal event names
 - Current notes:
-  - SMTP-specific report ingestion endpoint exists
-  - SendGrid / SES / Mailgun webhook routes and normalization scaffolds now exist
-  - Full provider-specific persistence/mapping into core event tables is still pending
+  - routes and normalization scaffolds exist
+  - full persistence into core tables is still pending
 
----
-
-## EPIC 8 — Deliverability Advisor
-
-### T8.1 Advisor rules MVP
-- Status: `PARTIAL`
-- Priority: P1
-- Effort: M
-- Depends on: T5.1, T5.2, T7.1
-- Deliverables:
-  - Pre-send warnings for domain age, DKIM/SPF/DMARC status, spam-risk indicators
-- Acceptance:
-  - Campaign launch screen shows risk summary + guidance
-- Current notes:
-  - Basic pre-send warnings now exist for sender quality, template quality, recipient volume, and required unsubscribe behavior
-  - DNS-based MX/SPF/DMARC/common-DKIM checks are now surfaced on the campaign page
-  - Domain age and advanced spam/inbox scoring are still not implemented
-
-### T8.2 High-risk send gate
+### T8.2 Provider persistence adapters
 - Status: `TODO`
 - Priority: P2
-- Effort: S
-- Depends on: T8.1
+- Effort: L
+- Depends on: T8.1, T7.1
 - Deliverables:
-  - Warn/confirm gate for high-risk campaigns
+  - persist provider webhook events into `webhooks`, `email_events`, and `bounces` where applicable
 - Acceptance:
-  - User must explicitly confirm before sending high-risk campaign
+  - provider integrations behave like optional extensions, not SMTP dependencies
 
 ---
 
 ## Current Ordered Execution Plan
 
-1. Sync ticket/spec docs with reality
-2. Verify baseline migration trust and stop future schema drift
-3. Run one controlled end-to-end campaign lifecycle verification:
+1. Run one controlled end-to-end SMTP verification:
    - queue/create message rows
    - send one message
-   - verify `queued`/`sent` events
-   - verify open/click/webhook/bounce paths
-4. Polish campaign/message event UI after real data exists
-5. Complete missing P1/P0 spec gaps:
-   - T4.2
-   - T6.1
-   - T6.2
-   - T7.3
-   - T3.3
-6. Move to advisor/protection features only after live delivery flow is proven
+   - verify `queued` / `sent`
+   - verify open/click
+   - verify DSN/report ingestion
+2. Validate dashboard and campaign timelines against real data
+3. Tighten SMTP report ingestion / outcome mapping where real testing exposes gaps
+4. Finish migration/deploy discipline lock
+5. Only then expand optional provider adapters if still needed
 
 ---
 
-## Suggested sprint grouping (revised)
+## Suggested sprint grouping (SMTP-first)
 
-### Sprint 1 — Reality lock + verification
-- T7.1 validation and migration discipline
-- T5.1 controlled lifecycle verification
-- T5.3 controlled open verification
-- T4.1 controlled click verification
-- T3.1/T3.2 campaign detail verification
+### Sprint 1 — Core SMTP truth
+- controlled lifecycle verification
+- open tracking verification
+- click tracking verification
+- DSN/report verification
 
-### Sprint 2 — Outcomes + safety plumbing
-- T5.2
-- T6.1
-- T6.2
-- T7.3
+### Sprint 2 — Operator confidence
+- dashboard validation
+- campaign timeline validation
+- autopause / risk-history validation
+- final subpath verification under `/mailcamp`
 
-### Sprint 3 — Dashboard + protections
-- T2.1 real-data validation
-- T3.3
-- event UI polish
+### Sprint 3 — Deploy confidence
+- migration/deploy lock
+- checklist/spec cleanup
+- production readiness review
 
-### Sprint 4 — Advisor + UX polish
-- T8.1
-- T8.2
-- T1.1
-- T1.2
-- T4.2
+### Sprint 4 — Optional integrations
+- provider webhook persistence adapters
+- advanced deliverability scoring
+- optional future provider features
