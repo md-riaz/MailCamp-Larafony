@@ -6,6 +6,10 @@ namespace App\Services;
 
 final class SmtpDsnParser
 {
+    public function __construct(
+        private readonly BounceClassificationService $classifier = new BounceClassificationService(),
+    ) {
+    }
     /**
      * @return array{event_type:string, provider_message_id:?string, recipient:?string, smtp_code:?string, bounce_reason:?string, bounce_type:?string, metadata:array<string,mixed>}
      */
@@ -71,41 +75,34 @@ final class SmtpDsnParser
 
         if (str_starts_with($status, '5') || str_starts_with($smtpCode, '5')) {
             $result['event_type'] = 'bounced';
-            $reason = strtolower((string) ($result['bounce_reason'] ?? ''));
-            $result['bounce_type'] = $this->classifyBounce($reason, $smtpCode, hardDefault: true);
+            $classification = $this->classifier->classify($result['bounce_reason'], $smtpCode, $status, 'bounced');
+            $result['bounce_type'] = $classification['bounce_type'];
+            $result['metadata']['bounce_category'] = $classification['category'];
+            $result['metadata']['bounce_severity'] = $classification['severity'];
+            $result['bounce_reason'] = $classification['normalized_reason'];
             return $result;
         }
 
         if (str_starts_with($status, '4') || str_starts_with($smtpCode, '4')) {
             $result['event_type'] = 'deferred';
-            $reason = strtolower((string) ($result['bounce_reason'] ?? ''));
-            $result['bounce_type'] = $this->classifyBounce($reason, $smtpCode, hardDefault: false);
+            $classification = $this->classifier->classify($result['bounce_reason'], $smtpCode, $status, 'deferred');
+            $result['bounce_type'] = $classification['bounce_type'];
+            $result['metadata']['bounce_category'] = $classification['category'];
+            $result['metadata']['bounce_severity'] = $classification['severity'];
+            $result['bounce_reason'] = $classification['normalized_reason'];
             return $result;
         }
 
         // Fallback heuristics
         if (str_contains($text, 'user unknown') || str_contains($text, 'mailbox unavailable') || str_contains($text, 'no such user')) {
             $result['event_type'] = 'bounced';
-            $result['bounce_type'] = 'hard';
+            $classification = $this->classifier->classify($result['bounce_reason'] ?: 'user unknown', $smtpCode, $status, 'bounced');
+            $result['bounce_type'] = $classification['bounce_type'];
+            $result['metadata']['bounce_category'] = $classification['category'];
+            $result['metadata']['bounce_severity'] = $classification['severity'];
+            $result['bounce_reason'] = $classification['normalized_reason'];
         }
 
         return $result;
-    }
-
-    private function classifyBounce(string $reason, string $smtpCode, bool $hardDefault): string
-    {
-        if (str_contains($reason, 'spam') || str_contains($reason, 'blocked') || str_contains($reason, 'policy')) {
-            return 'blocked';
-        }
-
-        if (str_contains($reason, 'dns') || str_contains($reason, 'domain') || str_contains($reason, 'host not found')) {
-            return 'domain_error';
-        }
-
-        if (!$hardDefault || str_starts_with($smtpCode, '4')) {
-            return 'soft';
-        }
-
-        return 'hard';
     }
 }

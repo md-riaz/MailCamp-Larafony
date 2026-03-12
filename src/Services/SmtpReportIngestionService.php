@@ -123,6 +123,8 @@ final class SmtpReportIngestionService
             'smtp_code' => $parsed['smtp_code'],
             'bounce_reason' => $parsed['bounce_reason'],
             'bounce_type' => $parsed['bounce_type'],
+            'bounce_category' => $parsed['metadata']['bounce_category'] ?? null,
+            'bounce_severity' => $parsed['metadata']['bounce_severity'] ?? null,
             'extra' => $parsed['metadata'],
         ], JSON_UNESCAPED_UNICODE);
         $event->save();
@@ -141,7 +143,11 @@ final class SmtpReportIngestionService
             $bounce->bounce_type = (string) ($parsed['bounce_type'] ?? ($parsed['event_type'] === 'deferred' ? 'soft' : 'unknown'));
             $bounce->smtp_code = $parsed['smtp_code'];
             $bounce->bounce_reason = $parsed['bounce_reason'];
-            $bounce->metadata = json_encode($parsed['metadata'], JSON_UNESCAPED_UNICODE);
+            $bounce->metadata = json_encode([
+                'bounce_category' => $parsed['metadata']['bounce_category'] ?? null,
+                'bounce_severity' => $parsed['metadata']['bounce_severity'] ?? null,
+                'raw' => $parsed['metadata'],
+            ], JSON_UNESCAPED_UNICODE);
             $bounce->bounced_at = date('Y-m-d H:i:s');
             $bounce->save();
         }

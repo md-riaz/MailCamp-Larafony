@@ -183,6 +183,30 @@ final class ObservabilityService
         }, $events);
     }
 
+    /**
+     * @return array<string,int>
+     */
+    public function campaignBounceBreakdown(int $campaignId): array
+    {
+        $result = [
+            'hard' => 0,
+            'soft' => 0,
+            'blocked' => 0,
+            'domain_error' => 0,
+            'unknown' => 0,
+        ];
+
+        foreach (\App\Models\Bounce::query()->where('campaign_id', '=', $campaignId)->get() as $bounce) {
+            $type = (string) ($bounce->bounce_type ?? 'unknown');
+            if (!array_key_exists($type, $result)) {
+                $type = 'unknown';
+            }
+            $result[$type]++;
+        }
+
+        return $result;
+    }
+
     private function eventCount(int $organizationId, string $eventType): int
     {
         return EmailEvent::query()

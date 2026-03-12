@@ -12,6 +12,7 @@ $sentCount = max((int) ($campaign->sent_count ?? 0), 0);
 $failedCount = max((int) ($campaign->failed_count ?? 0), 0);
 $pendingCount = max($deliveryTotal - $sentCount - $failedCount, 0);
 $campaignMetrics = $campaignMetrics ?? [];
+$bounceBreakdown = $bounceBreakdown ?? ['hard' => 0, 'soft' => 0, 'blocked' => 0, 'domain_error' => 0, 'unknown' => 0];
 $recentEvents = $recentEvents ?? [];
 $statusLabel = ucfirst((string) $campaign->status);
 $statusClass = match ((string) $campaign->status) {
@@ -146,6 +147,14 @@ include $componentsPath . '/page-header.blade.php';
                             <div class="fs-5 fw-bold text-danger"><?php echo (int) ($campaignMetrics['bounced'] ?? 0); ?></div>
                         </div>
                     </div>
+                </div>
+                <hr>
+                <div class="row g-2">
+                    <div class="col-6 col-md-2"><div class="small text-secondary">Hard</div><div class="fw-semibold text-danger"><?php echo (int) ($bounceBreakdown['hard'] ?? 0); ?></div></div>
+                    <div class="col-6 col-md-2"><div class="small text-secondary">Soft</div><div class="fw-semibold text-warning"><?php echo (int) ($bounceBreakdown['soft'] ?? 0); ?></div></div>
+                    <div class="col-6 col-md-2"><div class="small text-secondary">Blocked</div><div class="fw-semibold text-danger"><?php echo (int) ($bounceBreakdown['blocked'] ?? 0); ?></div></div>
+                    <div class="col-6 col-md-3"><div class="small text-secondary">Domain error</div><div class="fw-semibold text-secondary"><?php echo (int) ($bounceBreakdown['domain_error'] ?? 0); ?></div></div>
+                    <div class="col-6 col-md-3"><div class="small text-secondary">Unknown</div><div class="fw-semibold"><?php echo (int) ($bounceBreakdown['unknown'] ?? 0); ?></div></div>
                 </div>
             </div>
         </div>

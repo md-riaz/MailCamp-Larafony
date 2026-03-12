@@ -155,6 +155,7 @@ class CampaignController extends Controller
             'user' => $user,
             'stats' => $campaign->getStats(),
             'campaignMetrics' => $observability->campaignMetrics($user->getOrganizationId(), $campaign->id),
+            'bounceBreakdown' => $observability->campaignBounceBreakdown($campaign->id),
             'recentEvents' => $observability->recentCampaignEvents($user->getOrganizationId(), $campaign->id, 15),
             'notice' => $this->resolveCampaignDetailNotice($request),
         ]);
