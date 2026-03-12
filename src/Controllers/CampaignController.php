@@ -233,6 +233,21 @@ class CampaignController extends Controller
             return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_locked');
         }
 
+        try {
+            /** @var \App\Models\Template|null $template */
+            $template = Template::query()->where('id', '=', $campaign->template_id)->first();
+            if (!$template) {
+                return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_template_missing');
+            }
+
+            $validation = (new \App\Services\TemplateValidationService())->validateForCampaign($template, $campaign);
+            if (!$validation['ok']) {
+                return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_template_invalid');
+            }
+        } catch (\Throwable) {
+            return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_template_invalid');
+        }
+
         $campaign->status = 'active';
         $campaign->started_at = date('Y-m-d H:i:s');
         $campaign->save();
@@ -267,6 +282,8 @@ class CampaignController extends Controller
             'missing_recipient_file' => ['type' => 'danger', 'message' => 'Choose a CSV file before importing recipients.'],
             'invalid_recipient_file' => ['type' => 'danger', 'message' => 'Recipient CSV could not be processed. Check the file format and try again.'],
             'campaign_locked' => ['type' => 'danger', 'message' => 'This campaign can no longer be changed from the detail page.'],
+            'campaign_template_missing' => ['type' => 'danger', 'message' => 'Campaign template could not be found.'],
+            'campaign_template_invalid' => ['type' => 'danger', 'message' => 'Campaign template is missing required variables such as {{unsubscribe_url}} or required recipient data.'],
             'campaign_launched' => ['type' => 'success', 'message' => 'Campaign launched. Queue processing can begin.'],
             default => null,
         };

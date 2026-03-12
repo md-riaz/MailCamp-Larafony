@@ -30,6 +30,11 @@ final class CampaignMessageLifecycleService
         $queuedCount = 0;
         $scheduledAt = $campaign->scheduled_at ?? date('Y-m-d H:i:s');
 
+        $validation = $this->validateCampaignTemplate($campaign, $template);
+        if (!$validation['ok']) {
+            throw new \RuntimeException(implode(' ', $validation['errors']));
+        }
+
         foreach ($recipients as $recipient) {
             $existingMessage = Message::query()
                 ->where('campaign_id', '=', $campaign->id)
@@ -134,6 +139,11 @@ final class CampaignMessageLifecycleService
             throw new \RuntimeException('Active SMTP settings or template are missing for campaign send.');
         }
 
+        $validation = $this->validateCampaignTemplate($campaign, $template);
+        if (!$validation['ok']) {
+            throw new \RuntimeException(implode(' ', $validation['errors']));
+        }
+
         $payload = $recipient->getCustomData();
         $subject = $template->renderSubject($payload);
         $html = $template->render($payload);
@@ -208,6 +218,14 @@ final class CampaignMessageLifecycleService
         $pass = rawurlencode($smtp->decryptPassword());
 
         return sprintf('%s://%s:%s@%s:%d', $scheme, $user, $pass, $smtp->host, (int) $smtp->port);
+    }
+
+    /**
+     * @return array{ok:bool,errors:array<int,string>,warnings:array<int,string>,variables:array<int,string>}
+     */
+    private function validateCampaignTemplate(Campaign $campaign, Template $template): array
+    {
+        return (new TemplateValidationService())->validateForCampaign($template, $campaign);
     }
 
     private function recordEvent(Message $message, string $eventType, array $metadata = []): void
