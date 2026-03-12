@@ -47,6 +47,20 @@ class EventController extends Controller
             $request->getQueryParams(),
         );
 
+        if (($request->getQueryParams()['format'] ?? 'html') !== 'json') {
+            return $this->render('events.index', [
+                'title' => 'Campaign Events',
+                'heading' => 'Campaign Event Timeline',
+                'subtitle' => 'Observability timeline for campaign #' . $campaignId,
+                'payload' => $payload,
+                'filters' => $request->getQueryParams(),
+                'contextType' => 'campaign',
+                'contextId' => $campaignId,
+                'backUrl' => '/campaigns/' . $campaignId,
+                'user' => $user,
+            ]);
+        }
+
         return $this->json($payload);
     }
 
@@ -76,6 +90,20 @@ class EventController extends Controller
             $messageId,
             $request->getQueryParams(),
         );
+
+        if (($request->getQueryParams()['format'] ?? 'html') !== 'json') {
+            return $this->render('events.index', [
+                'title' => 'Message Events',
+                'heading' => 'Message Event Timeline',
+                'subtitle' => 'Observability timeline for message #' . $messageId,
+                'payload' => $payload,
+                'filters' => $request->getQueryParams(),
+                'contextType' => 'message',
+                'contextId' => $messageId,
+                'backUrl' => '/campaigns',
+                'user' => $user,
+            ]);
+        }
 
         return $this->json($payload);
     }

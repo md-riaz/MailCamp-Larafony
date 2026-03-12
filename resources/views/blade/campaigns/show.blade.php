@@ -220,7 +220,8 @@ include $componentsPath . '/page-header.blade.php';
                 <h2 class="h5 mb-1">Recent Campaign Events</h2>
                 <p class="text-secondary small mb-0">Latest queued, sent, opened, clicked, bounce, and webhook-normalized activity.</p>
             </div>
-            <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events" class="btn btn-sm btn-outline-primary">Raw events API</a>
+            <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events" class="btn btn-sm btn-outline-primary">Open timeline</a>
+            <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events?format=json" class="btn btn-sm btn-outline-secondary">Raw events API</a>
         </div>
         <?php if (!empty($recentEvents)): ?>
         <div class="table-responsive">
@@ -266,10 +267,11 @@ include $componentsPath . '/page-header.blade.php';
         <?php ob_start(); ?>
         <h2 class="h5 mb-3">Drilldowns</h2>
         <div class="d-grid gap-2">
-            <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events" class="btn btn-outline-primary text-start">Campaign events JSON</a>
+            <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events" class="btn btn-outline-primary text-start">Campaign event timeline</a>
             <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events?event_type=clicked" class="btn btn-outline-secondary text-start">Clicked events only</a>
             <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events?event_type=opened" class="btn btn-outline-secondary text-start">Opened events only</a>
             <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events?event_type=bounced" class="btn btn-outline-secondary text-start">Bounced events only</a>
+            <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events?format=json" class="btn btn-outline-secondary text-start">Campaign events JSON</a>
         </div>
         <p class="text-secondary small mt-3 mb-0">Message-level drilldowns are linked from the event table whenever a message id exists.</p>
         <?php $contentHtml = ob_get_clean(); $className = 'h-100 mb-0'; include $componentsPath . '/table-shell.blade.php'; ?>
