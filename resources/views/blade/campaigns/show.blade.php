@@ -16,6 +16,7 @@ $bounceBreakdown = $bounceBreakdown ?? ['hard' => 0, 'soft' => 0, 'blocked' => 0
 $recentEvents = $recentEvents ?? [];
 $safety = $safety ?? ['ok' => true, 'should_pause' => false, 'risk_level' => 'low', 'errors' => [], 'warnings' => [], 'metrics' => [], 'deliverability' => ['domain' => null, 'checks' => [], 'warnings' => [], 'recommendations' => []]];
 $deliverability = $safety['deliverability'] ?? ['domain' => null, 'checks' => [], 'warnings' => [], 'recommendations' => []];
+$riskHistory = $riskHistory ?? [];
 $statusLabel = ucfirst((string) $campaign->status);
 $statusClass = match ((string) $campaign->status) {
     'sent' => 'badge-success',
@@ -284,6 +285,39 @@ include $componentsPath . '/page-header.blade.php';
         $className = 'h-100 mb-0';
         include $componentsPath . '/table-shell.blade.php';
         ?>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <?php ob_start(); ?>
+        <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+            <div>
+                <h2 class="h5 mb-1">Risk History</h2>
+                <p class="text-secondary small mb-0">Recent safety snapshots and autopause decisions for this campaign.</p>
+            </div>
+        </div>
+        <?php if (!empty($riskHistory)): ?>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead><tr><th>ID</th><th>Type</th><th>Risk</th><th>Autopause</th><th>Notes</th></tr></thead>
+                <tbody>
+                <?php foreach ($riskHistory as $entry): $data = $entry['data'] ?? []; ?>
+                    <tr>
+                        <td>#<?php echo (int) ($entry['id'] ?? 0); ?></td>
+                        <td><?php echo htmlspecialchars((string) ($entry['type'] ?? 'unknown'), ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td><?php echo htmlspecialchars(strtoupper((string) ($data['risk_level'] ?? 'unknown')), ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td><?php echo !empty($data['should_pause']) ? 'YES' : 'NO'; ?></td>
+                        <td class="small text-secondary"><?php echo htmlspecialchars(implode(' · ', array_slice(array_merge($data['errors'] ?? [], $data['warnings'] ?? []), 0, 3)) ?: '—', ENT_QUOTES, 'UTF-8'); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php else: ?>
+        <p class="text-secondary small mb-0">No risk snapshots recorded yet. Launch evaluation will populate this history.</p>
+        <?php endif; ?>
+        <?php $contentHtml = ob_get_clean(); $className = 'mb-0'; include $componentsPath . '/table-shell.blade.php'; ?>
     </div>
 </div>
 

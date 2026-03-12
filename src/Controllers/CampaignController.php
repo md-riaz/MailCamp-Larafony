@@ -11,6 +11,7 @@ use App\Models\SmtpSetting;
 use App\Models\Template;
 use App\Models\User;
 use App\ViewDto\CampaignViewDto;
+use App\Services\CampaignRiskHistoryService;
 use App\Services\CampaignSafetyService;
 use App\Services\ObservabilityService;
 use Larafony\Framework\Auth\Auth;
@@ -154,6 +155,7 @@ class CampaignController extends Controller
         /** @var Template|null $template */
         $template = Template::query()->where('id', '=', $campaign->template_id)->first();
         $smtpSetting = SmtpSetting::query()->where('organization_id', '=', $user->getOrganizationId())->first();
+        $riskHistory = new CampaignRiskHistoryService();
         $safety = (new CampaignSafetyService())->evaluate($campaign, $template, $smtpSetting);
 
         return $this->render('campaigns.show', [
@@ -163,6 +165,7 @@ class CampaignController extends Controller
             'campaignMetrics' => $observability->campaignMetrics($user->getOrganizationId(), $campaign->id),
             'bounceBreakdown' => $observability->campaignBounceBreakdown($campaign->id),
             'recentEvents' => $observability->recentCampaignEvents($user->getOrganizationId(), $campaign->id, 15),
+            'riskHistory' => $riskHistory->recent($campaign, 8),
             'safety' => $safety,
             'notice' => $this->resolveCampaignDetailNotice($request),
         ]);
@@ -255,9 +258,12 @@ class CampaignController extends Controller
 
             $smtpSetting = SmtpSetting::query()->where('organization_id', '=', $user->getOrganizationId())->first();
             $safety = (new CampaignSafetyService())->evaluate($campaign, $template, $smtpSetting);
+            $riskHistory = new CampaignRiskHistoryService();
+            $riskHistory->record($campaign, 'campaign_safety_snapshot', $safety);
             if ($safety['should_pause']) {
                 $campaign->status = 'paused';
                 $campaign->save();
+                $riskHistory->record($campaign, 'campaign_autopaused', $safety);
                 return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_autopaused');
             }
             if (!$safety['ok']) {

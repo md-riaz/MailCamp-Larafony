@@ -127,7 +127,8 @@ Constraint: Standard SMTP only (no provider preset UX).
 - Current notes:
   - Risk evaluator and launch-time guards now exist
   - High-risk launches can be blocked and severe risk can auto-pause before activation
-  - Logging + real-send verification still pending
+  - Risk history snapshots and autopause log entries are now recorded to campaign logs
+  - Real-send verification still pending
 
 ---
 
@@ -279,7 +280,8 @@ Constraint: Standard SMTP only (no provider preset UX).
   - Provider payloads mapped to unified internal event types
 - Current notes:
   - SMTP-specific report ingestion endpoint exists
-  - Provider-specific webhook family is not implemented yet
+  - SendGrid / SES / Mailgun webhook routes and normalization scaffolds now exist
+  - Full provider-specific persistence/mapping into core event tables is still pending
 
 ---
 

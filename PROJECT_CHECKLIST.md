@@ -207,6 +207,8 @@
 - [~] Keep `/mailcamp` base-path compatibility across all new endpoints
 - [~] Idempotent webhook handling + signature verification + retry safety
 - [~] Protection rules/alerts for high-risk sending behavior
+- [x] Campaign risk history snapshots and autopause log entries
+- [x] Provider webhook route scaffolds for SendGrid / SES / Mailgun
 
 ### EPIC 7 — Data Model & APIs
 - [ ] Core tables finalized: campaigns, subscribers, messages, email_events, links, bounces, webhooks
