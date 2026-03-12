@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "mailcamp-larafony": {
+      "command": "php",
+      "args": [
+        "/var/project/MailCamp-Larafony/bin/larafony",
+        "mcp:start"
+      ],
+      "env": {
+        "APP_ENV": "production"
+      }
+    }
+  }
+}
