@@ -32,8 +32,46 @@ $actionsHtml = ob_get_clean();
 include $componentsPath . '/page-header.blade.php';
 ?>
 
-<div class="card mb-4">
+<div class="card portal-hero mb-4">
     <div class="card-body">
+        <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-end gap-4">
+            <div>
+                <div class="eyebrow mb-3">Observability Timeline</div>
+                <h2 class="display-6 fw-bold mb-2"><?= htmlspecialchars((string) $heading, ENT_QUOTES, 'UTF-8') ?></h2>
+                <p class="mb-0" style="max-width: 760px; color: rgba(255,255,255,0.84) !important;">Use this timeline to inspect lifecycle events, trace message-level outcomes, and debug delivery without dropping into raw tables.</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <?= $actionsHtml ?>
+            </div>
+        </div>
+        <div class="portal-grid portal-grid-4 mt-4">
+            <div class="portal-metric">
+                <div class="metric-label">Context</div>
+                <div class="metric-value" style="font-size:22px;"><?= htmlspecialchars(strtoupper((string) $contextType), ENT_QUOTES, 'UTF-8') ?></div>
+                <div class="metric-note">Timeline context type currently being inspected.</div>
+            </div>
+            <div class="portal-metric">
+                <div class="metric-label">Context ID</div>
+                <div class="metric-value">#<?= $contextId ?></div>
+                <div class="metric-note">Target campaign/message the timeline is scoped to.</div>
+            </div>
+            <div class="portal-metric">
+                <div class="metric-label">Events returned</div>
+                <div class="metric-value"><?= count($events) ?></div>
+                <div class="metric-note">Number of rows returned for the current filter window.</div>
+            </div>
+            <div class="portal-metric">
+                <div class="metric-label">Sort / limit</div>
+                <div class="metric-value" style="font-size:22px;"><?= htmlspecialchars(strtoupper($sort), ENT_QUOTES, 'UTF-8') ?> / <?= $limit ?></div>
+                <div class="metric-note">Current query posture for timeline inspection.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card portal-surface-soft mb-4">
+    <div class="card-body">
+        <div class="portal-section-title">Timeline filters</div>
         <form method="GET" action="<?= $basePath ?>/<?= $contextType ?>/<?= $contextId ?>/events" class="row g-3 align-items-end">
             <div class="col-12 col-md-3">
                 <label for="event_type" class="form-label">Event type</label>
@@ -78,6 +116,7 @@ include $componentsPath . '/page-header.blade.php';
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
             <div>
+                <div class="portal-section-title mb-1">Event stream</div>
                 <h2 class="h5 mb-1">Timeline</h2>
                 <p class="text-secondary small mb-0">Showing page <?= max($page, 1) ?> · total events <?= $total ?></p>
             </div>

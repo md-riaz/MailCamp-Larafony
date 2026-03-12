@@ -15,6 +15,43 @@ $subtitle = 'Manage campaign drafts, launches, and delivery performance.';
 include $componentsPath . '/page-header.blade.php';
 ?>
 
+<div class="card portal-hero mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-end gap-4">
+            <div>
+                <div class="eyebrow mb-3">Campaign Workspace</div>
+                <h2 class="display-6 fw-bold mb-2">Build, review, and launch campaigns from one clean operations surface.</h2>
+                <p class="mb-0" style="max-width: 760px; color: rgba(255,255,255,0.84) !important;">Track drafts, spot risky campaigns before launch, and move from creation to delivery without losing visibility.</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <?= $actionsHtml ?>
+            </div>
+        </div>
+        <div class="portal-grid portal-grid-4 mt-4">
+            <div class="portal-metric">
+                <div class="metric-label">Visible campaigns</div>
+                <div class="metric-value"><?php echo count($campaigns ?? []); ?></div>
+                <div class="metric-note">Campaigns currently matching the active filters.</div>
+            </div>
+            <div class="portal-metric">
+                <div class="metric-label">Draft filter</div>
+                <div class="metric-value" style="font-size:22px;"><?php echo htmlspecialchars(($filters['status'] ?? '') !== '' ? ucfirst((string) $filters['status']) : 'All', ENT_QUOTES, 'UTF-8'); ?></div>
+                <div class="metric-note">Current status lens applied to the workspace list.</div>
+            </div>
+            <div class="portal-metric">
+                <div class="metric-label">Search state</div>
+                <div class="metric-value" style="font-size:22px;"><?php echo trim((string) ($filters['q'] ?? '')) !== '' ? 'Focused' : 'Open'; ?></div>
+                <div class="metric-note">Search narrows the operational campaign view.</div>
+            </div>
+            <div class="portal-metric">
+                <div class="metric-label">Sort order</div>
+                <div class="metric-value" style="font-size:22px;"><?php echo ($filters['sort'] ?? 'created_desc') === 'created_asc' ? 'Oldest' : 'Newest'; ?></div>
+                <div class="metric-note">Default ordering for campaign review and action.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php if (!empty($notice['message'] ?? '')): ?>
     <?php
     $message = $notice['message'];
@@ -23,8 +60,9 @@ include $componentsPath . '/page-header.blade.php';
     ?>
 <?php endif; ?>
 
-<div class="card mb-4">
+<div class="card portal-surface-soft mb-4">
     <div class="card-body">
+        <div class="portal-section-title">Workspace filters</div>
         <form method="GET" action="<?= $basePath ?>/campaigns" class="row g-3 align-items-end">
             <div class="col-12 col-lg-5">
                 <label for="q" class="form-label">Search campaigns</label>
@@ -60,6 +98,13 @@ include $componentsPath . '/page-header.blade.php';
 ob_start();
 if (!empty($campaigns)):
 ?>
+<div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+    <div>
+        <div class="portal-section-title mb-1">Campaign inventory</div>
+        <h2 class="h5 mb-1">Campaigns in view</h2>
+        <p class="text-secondary small mb-0">Review status, recipient load, and launch availability before opening details.</p>
+    </div>
+</div>
 <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
         <thead>
