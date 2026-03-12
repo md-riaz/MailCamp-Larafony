@@ -11,14 +11,16 @@ class Webhook extends Model
     public string $table { get => 'webhooks'; }
 
     public array $fillable = [
-        'campaign_id', 'message_id', 'subscriber_id', 'provider', 'event_type',
-        'provider_message_id', 'signature', 'idempotency_key', 'processing_status',
-        'payload', 'headers', 'processed_at',
+        'campaign_id', 'organization_id', 'message_id', 'subscriber_id', 'recipient_id',
+        'provider', 'event_type', 'provider_message_id', 'signature', 'idempotency_key',
+        'processing_status', 'payload', 'headers', 'processed_at',
     ];
 
     public ?int $campaign_id { get => $this->campaign_id ?? null; set { $this->campaign_id = $value; $this->markPropertyAsChanged('campaign_id'); } }
+    public ?int $organization_id { get => $this->organization_id ?? null; set { $this->organization_id = $value; $this->markPropertyAsChanged('organization_id'); } }
     public ?int $message_id { get => $this->message_id ?? null; set { $this->message_id = $value; $this->markPropertyAsChanged('message_id'); } }
     public ?int $subscriber_id { get => $this->subscriber_id ?? null; set { $this->subscriber_id = $value; $this->markPropertyAsChanged('subscriber_id'); } }
+    public ?int $recipient_id { get => $this->recipient_id ?? null; set { $this->recipient_id = $value; $this->markPropertyAsChanged('recipient_id'); } }
     public ?string $provider { get => $this->provider ?? 'smtp'; set { $this->provider = $value; $this->markPropertyAsChanged('provider'); } }
     public ?string $event_type { get => $this->event_type ?? null; set { $this->event_type = $value; $this->markPropertyAsChanged('event_type'); } }
     public ?string $provider_message_id { get => $this->provider_message_id ?? null; set { $this->provider_message_id = $value; $this->markPropertyAsChanged('provider_message_id'); } }

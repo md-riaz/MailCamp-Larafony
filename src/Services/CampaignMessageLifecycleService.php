@@ -65,8 +65,11 @@ final class CampaignMessageLifecycleService
 
             $message = new Message()->fill([
                 'campaign_id' => $campaign->id,
+                'organization_id' => $campaign->organization_id,
                 'recipient_id' => $recipient->id,
+                'recipient_email' => $recipient->email,
                 'status' => 'queued',
+                'provider' => 'smtp',
                 'subject' => $subject,
             ]);
             $message->save();
@@ -210,8 +213,11 @@ final class CampaignMessageLifecycleService
         $event = new EmailEvent()->fill([
             'message_id' => $message->id,
             'campaign_id' => $message->campaign_id,
+            'organization_id' => $message->organization_id,
             'subscriber_id' => $message->subscriber_id,
+            'recipient_id' => $message->recipient_id,
             'event_type' => $eventType,
+            'provider' => $message->provider ?? 'smtp',
             'timestamp' => date('Y-m-d H:i:s'),
             'provider_message_id' => $message->provider_message_id,
         ]);

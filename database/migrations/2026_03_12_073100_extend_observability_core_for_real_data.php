@@ -16,23 +16,23 @@ return new class extends Migration
 {
     public function up(): void
     {
-        $this->addColumnIfMissing('messages', 'organization_id BIGINT UNSIGNED NULL AFTER `campaign_id`');
+        $this->addColumnIfMissing('messages', 'organization_id INT(11) NULL AFTER `campaign_id`');
         $this->addColumnIfMissing('messages', 'provider VARCHAR(64) NULL AFTER `status`');
         $this->addColumnIfMissing('messages', 'recipient_email VARCHAR(255) NULL AFTER `recipient_id`');
 
-        $this->addColumnIfMissing('email_events', 'organization_id BIGINT UNSIGNED NULL AFTER `campaign_id`');
-        $this->addColumnIfMissing('email_events', 'recipient_id BIGINT UNSIGNED NULL AFTER `subscriber_id`');
+        $this->addColumnIfMissing('email_events', 'organization_id INT(11) NULL AFTER `campaign_id`');
+        $this->addColumnIfMissing('email_events', 'recipient_id INT(11) NULL AFTER `subscriber_id`');
         $this->addColumnIfMissing('email_events', 'provider VARCHAR(64) NULL AFTER `event_type`');
 
-        $this->addColumnIfMissing('links', 'organization_id BIGINT UNSIGNED NULL AFTER `campaign_id`');
-        $this->addColumnIfMissing('links', 'recipient_id BIGINT UNSIGNED NULL AFTER `subscriber_id`');
+        $this->addColumnIfMissing('links', 'organization_id INT(11) NULL AFTER `campaign_id`');
+        $this->addColumnIfMissing('links', 'recipient_id INT(11) NULL AFTER `subscriber_id`');
 
-        $this->addColumnIfMissing('bounces', 'organization_id BIGINT UNSIGNED NULL AFTER `campaign_id`');
-        $this->addColumnIfMissing('bounces', 'recipient_id BIGINT UNSIGNED NULL AFTER `subscriber_id`');
+        $this->addColumnIfMissing('bounces', 'organization_id INT(11) NULL AFTER `campaign_id`');
+        $this->addColumnIfMissing('bounces', 'recipient_id INT(11) NULL AFTER `subscriber_id`');
         $this->addColumnIfMissing('bounces', 'provider VARCHAR(64) NULL AFTER `provider_message_id`');
 
-        $this->addColumnIfMissing('webhooks', 'organization_id BIGINT UNSIGNED NULL AFTER `campaign_id`');
-        $this->addColumnIfMissing('webhooks', 'recipient_id BIGINT UNSIGNED NULL AFTER `subscriber_id`');
+        $this->addColumnIfMissing('webhooks', 'organization_id INT(11) NULL AFTER `campaign_id`');
+        $this->addColumnIfMissing('webhooks', 'recipient_id INT(11) NULL AFTER `subscriber_id`');
 
         Schema::execute('UPDATE `messages` m INNER JOIN `campaigns` c ON c.`id` = m.`campaign_id` SET m.`organization_id` = c.`organization_id` WHERE m.`organization_id` IS NULL');
         Schema::execute('UPDATE `messages` m INNER JOIN `recipients` r ON r.`id` = m.`recipient_id` SET m.`recipient_email` = r.`email` WHERE m.`recipient_email` IS NULL');
@@ -54,14 +54,14 @@ return new class extends Migration
         Schema::execute('UPDATE `webhooks` w INNER JOIN `campaigns` c ON c.`id` = w.`campaign_id` SET w.`organization_id` = c.`organization_id` WHERE w.`organization_id` IS NULL');
         Schema::execute('UPDATE `webhooks` w INNER JOIN `messages` m ON m.`id` = w.`message_id` SET w.`recipient_id` = m.`recipient_id` WHERE w.`recipient_id` IS NULL');
 
-        Schema::execute('ALTER TABLE `messages` MODIFY `organization_id` BIGINT UNSIGNED NOT NULL');
+        Schema::execute('ALTER TABLE `messages` MODIFY `organization_id` INT(11) NOT NULL');
         Schema::execute('ALTER TABLE `messages` MODIFY `provider` VARCHAR(64) NOT NULL DEFAULT "smtp"');
-        Schema::execute('ALTER TABLE `email_events` MODIFY `organization_id` BIGINT UNSIGNED NOT NULL');
+        Schema::execute('ALTER TABLE `email_events` MODIFY `organization_id` INT(11) NOT NULL');
         Schema::execute('ALTER TABLE `email_events` MODIFY `provider` VARCHAR(64) NOT NULL DEFAULT "smtp"');
-        Schema::execute('ALTER TABLE `links` MODIFY `organization_id` BIGINT UNSIGNED NOT NULL');
-        Schema::execute('ALTER TABLE `bounces` MODIFY `organization_id` BIGINT UNSIGNED NOT NULL');
+        Schema::execute('ALTER TABLE `links` MODIFY `organization_id` INT(11) NOT NULL');
+        Schema::execute('ALTER TABLE `bounces` MODIFY `organization_id` INT(11) NOT NULL');
         Schema::execute('ALTER TABLE `bounces` MODIFY `provider` VARCHAR(64) NOT NULL DEFAULT "smtp"');
-        Schema::execute('ALTER TABLE `webhooks` MODIFY `organization_id` BIGINT UNSIGNED NOT NULL');
+        Schema::execute('ALTER TABLE `webhooks` MODIFY `organization_id` INT(11) NOT NULL');
 
         $this->addIndexIfMissing('messages', 'messages_organization_id_idx', '(`organization_id`)');
         $this->addIndexIfMissing('messages', 'messages_org_campaign_status_id_idx', '(`organization_id`, `campaign_id`, `status`, `id`)');

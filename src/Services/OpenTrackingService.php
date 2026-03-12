@@ -57,8 +57,11 @@ final class OpenTrackingService
         $event = new EmailEvent()->fill([
             'message_id' => $message->id,
             'campaign_id' => $message->campaign_id,
+            'organization_id' => $message->organization_id,
             'subscriber_id' => $message->subscriber_id,
+            'recipient_id' => $message->recipient_id,
             'event_type' => 'opened',
+            'provider' => $message->provider ?? 'smtp',
             'timestamp' => $context['occurred_at'],
             'provider_message_id' => $message->provider_message_id,
             'ip_address' => $context['ip_address'],

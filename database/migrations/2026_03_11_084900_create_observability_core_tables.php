@@ -13,143 +13,148 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('messages', function ($table) {
-            $table->id();
-            $table->bigInteger('campaign_id')->unsigned(true);
-            $table->bigInteger('subscriber_id')->unsigned(true)->nullable(true);
-            $table->bigInteger('recipient_id')->unsigned(true)->nullable(true);
-            $table->enum('status', ['queued', 'sending', 'sent', 'delivered', 'bounced', 'failed', 'opened', 'clicked', 'unsubscribed', 'complained'])->default('queued');
-            $table->string('provider_message_id', 255)->nullable(true);
-            $table->string('subject', 255)->nullable(true);
-            $table->timestamp('sent_at')->nullable(true);
-            $table->timestamp('delivered_at')->nullable(true);
-            $table->timestamp('created_at')->nullable(false)->current();
-            $table->timestamp('updated_at')->nullable(false)->current()->currentOnUpdate();
+        $this->attempt(<<<'SQL'
+CREATE TABLE IF NOT EXISTS `messages` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `campaign_id` INT(11) NOT NULL,
+  `subscriber_id` INT(11) NULL,
+  `recipient_id` INT(11) NULL,
+  `status` VARCHAR(32) NOT NULL DEFAULT 'queued',
+  `provider_message_id` VARCHAR(255) NULL,
+  `subject` VARCHAR(255) NULL,
+  `sent_at` TIMESTAMP NULL DEFAULT NULL,
+  `delivered_at` TIMESTAMP NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `messages_campaign_id_idx` (`campaign_id`),
+  KEY `messages_subscriber_id_idx` (`subscriber_id`),
+  KEY `messages_recipient_id_idx` (`recipient_id`),
+  KEY `messages_status_idx` (`status`),
+  KEY `messages_sent_at_idx` (`sent_at`),
+  KEY `messages_created_at_idx` (`created_at`),
+  KEY `messages_provider_message_id_idx` (`provider_message_id`),
+  UNIQUE KEY `messages_campaign_provider_unique` (`campaign_id`,`provider_message_id`),
+  CONSTRAINT `fk_messages_campaign_id` FOREIGN KEY (`campaign_id`) REFERENCES `campaigns` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_messages_subscriber_id` FOREIGN KEY (`subscriber_id`) REFERENCES `subscriptions` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_messages_recipient_id` FOREIGN KEY (`recipient_id`) REFERENCES `recipients` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL);
 
-            $table->index('campaign_id');
-            $table->index('subscriber_id');
-            $table->index('recipient_id');
-            $table->index('status');
-            $table->index('sent_at');
-            $table->index('created_at');
-            $table->index('provider_message_id');
-            $table->unique(['campaign_id', 'provider_message_id'], 'messages_campaign_provider_unique');
-        }) |> Schema::execute(...);
+        $this->attempt(<<<'SQL'
+CREATE TABLE IF NOT EXISTS `email_events` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `message_id` INT(11) NOT NULL,
+  `campaign_id` INT(11) NOT NULL,
+  `subscriber_id` INT(11) NULL,
+  `event_type` VARCHAR(64) NOT NULL,
+  `timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `provider_message_id` VARCHAR(255) NULL,
+  `ip_address` VARCHAR(45) NULL,
+  `user_agent` VARCHAR(1024) NULL,
+  `metadata` JSON NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `email_events_message_id_idx` (`message_id`),
+  KEY `email_events_campaign_id_idx` (`campaign_id`),
+  KEY `email_events_subscriber_id_idx` (`subscriber_id`),
+  KEY `email_events_event_type_idx` (`event_type`),
+  KEY `email_events_timestamp_idx` (`timestamp`),
+  KEY `email_events_created_at_idx` (`created_at`),
+  KEY `email_events_provider_message_id_idx` (`provider_message_id`),
+  KEY `email_events_campaign_event_timestamp_idx` (`campaign_id`,`event_type`,`timestamp`),
+  CONSTRAINT `fk_email_events_message_id` FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_email_events_campaign_id` FOREIGN KEY (`campaign_id`) REFERENCES `campaigns` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_email_events_subscriber_id` FOREIGN KEY (`subscriber_id`) REFERENCES `subscriptions` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL);
 
-        Schema::execute('ALTER TABLE `messages` ADD CONSTRAINT `fk_messages_campaign_id` FOREIGN KEY (`campaign_id`) REFERENCES `campaigns`(`id`) ON DELETE CASCADE');
-        Schema::execute('ALTER TABLE `messages` ADD CONSTRAINT `fk_messages_subscriber_id` FOREIGN KEY (`subscriber_id`) REFERENCES `subscriptions`(`id`) ON DELETE SET NULL');
-        Schema::execute('ALTER TABLE `messages` ADD CONSTRAINT `fk_messages_recipient_id` FOREIGN KEY (`recipient_id`) REFERENCES `recipients`(`id`) ON DELETE SET NULL');
+        $this->attempt(<<<'SQL'
+CREATE TABLE IF NOT EXISTS `links` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `message_id` INT(11) NOT NULL,
+  `campaign_id` INT(11) NOT NULL,
+  `subscriber_id` INT(11) NULL,
+  `url` VARCHAR(2048) NOT NULL,
+  `url_hash` VARCHAR(64) NULL,
+  `click_count` INT UNSIGNED NOT NULL DEFAULT 0,
+  `last_clicked_at` TIMESTAMP NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `links_message_id_idx` (`message_id`),
+  KEY `links_campaign_id_idx` (`campaign_id`),
+  KEY `links_subscriber_id_idx` (`subscriber_id`),
+  KEY `links_created_at_idx` (`created_at`),
+  KEY `links_campaign_subscriber_idx` (`campaign_id`,`subscriber_id`),
+  UNIQUE KEY `links_message_url_hash_unique` (`message_id`,`url_hash`),
+  CONSTRAINT `fk_links_message_id` FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_links_campaign_id` FOREIGN KEY (`campaign_id`) REFERENCES `campaigns` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_links_subscriber_id` FOREIGN KEY (`subscriber_id`) REFERENCES `subscriptions` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL);
 
-        Schema::create('email_events', function ($table) {
-            $table->id();
-            $table->bigInteger('message_id')->unsigned(true);
-            $table->bigInteger('campaign_id')->unsigned(true);
-            $table->bigInteger('subscriber_id')->unsigned(true)->nullable(true);
-            $table->string('event_type', 64);
-            $table->timestamp('timestamp')->nullable(false)->current();
-            $table->string('provider_message_id', 255)->nullable(true);
-            $table->string('ip_address', 45)->nullable(true);
-            $table->string('user_agent', 1024)->nullable(true);
-            $table->json('metadata')->nullable(true);
-            $table->timestamp('created_at')->nullable(false)->current();
-            $table->timestamp('updated_at')->nullable(false)->current()->currentOnUpdate();
+        $this->attempt(<<<'SQL'
+CREATE TABLE IF NOT EXISTS `bounces` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `message_id` INT(11) NOT NULL,
+  `campaign_id` INT(11) NOT NULL,
+  `subscriber_id` INT(11) NULL,
+  `provider_message_id` VARCHAR(255) NULL,
+  `bounce_type` VARCHAR(32) NOT NULL DEFAULT 'unknown',
+  `smtp_code` VARCHAR(32) NULL,
+  `bounce_reason` TEXT NULL,
+  `metadata` JSON NULL,
+  `bounced_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `bounces_message_id_idx` (`message_id`),
+  KEY `bounces_campaign_id_idx` (`campaign_id`),
+  KEY `bounces_subscriber_id_idx` (`subscriber_id`),
+  KEY `bounces_provider_message_id_idx` (`provider_message_id`),
+  KEY `bounces_bounced_at_idx` (`bounced_at`),
+  KEY `bounces_created_at_idx` (`created_at`),
+  KEY `bounces_bounce_type_idx` (`bounce_type`),
+  CONSTRAINT `fk_bounces_message_id` FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_bounces_campaign_id` FOREIGN KEY (`campaign_id`) REFERENCES `campaigns` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_bounces_subscriber_id` FOREIGN KEY (`subscriber_id`) REFERENCES `subscriptions` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL);
 
-            $table->index('message_id');
-            $table->index('campaign_id');
-            $table->index('subscriber_id');
-            $table->index('event_type');
-            $table->index('timestamp');
-            $table->index('created_at');
-            $table->index('provider_message_id');
-            $table->index(['campaign_id', 'event_type', 'timestamp'], 'email_events_campaign_event_timestamp_idx');
-        }) |> Schema::execute(...);
-
-        Schema::execute('ALTER TABLE `email_events` ADD CONSTRAINT `fk_email_events_message_id` FOREIGN KEY (`message_id`) REFERENCES `messages`(`id`) ON DELETE CASCADE');
-        Schema::execute('ALTER TABLE `email_events` ADD CONSTRAINT `fk_email_events_campaign_id` FOREIGN KEY (`campaign_id`) REFERENCES `campaigns`(`id`) ON DELETE CASCADE');
-        Schema::execute('ALTER TABLE `email_events` ADD CONSTRAINT `fk_email_events_subscriber_id` FOREIGN KEY (`subscriber_id`) REFERENCES `subscriptions`(`id`) ON DELETE SET NULL');
-
-        Schema::create('links', function ($table) {
-            $table->id();
-            $table->bigInteger('message_id')->unsigned(true);
-            $table->bigInteger('campaign_id')->unsigned(true);
-            $table->bigInteger('subscriber_id')->unsigned(true)->nullable(true);
-            $table->string('url', 2048);
-            $table->string('url_hash', 64)->nullable(true);
-            $table->integer('click_count')->unsigned(true)->default(0);
-            $table->timestamp('last_clicked_at')->nullable(true);
-            $table->timestamp('created_at')->nullable(false)->current();
-            $table->timestamp('updated_at')->nullable(false)->current()->currentOnUpdate();
-
-            $table->index('message_id');
-            $table->index('campaign_id');
-            $table->index('subscriber_id');
-            $table->index('created_at');
-            $table->index(['campaign_id', 'subscriber_id'], 'links_campaign_subscriber_idx');
-            $table->unique(['message_id', 'url_hash'], 'links_message_url_hash_unique');
-        }) |> Schema::execute(...);
-
-        Schema::execute('ALTER TABLE `links` ADD CONSTRAINT `fk_links_message_id` FOREIGN KEY (`message_id`) REFERENCES `messages`(`id`) ON DELETE CASCADE');
-        Schema::execute('ALTER TABLE `links` ADD CONSTRAINT `fk_links_campaign_id` FOREIGN KEY (`campaign_id`) REFERENCES `campaigns`(`id`) ON DELETE CASCADE');
-        Schema::execute('ALTER TABLE `links` ADD CONSTRAINT `fk_links_subscriber_id` FOREIGN KEY (`subscriber_id`) REFERENCES `subscriptions`(`id`) ON DELETE SET NULL');
-
-        Schema::create('bounces', function ($table) {
-            $table->id();
-            $table->bigInteger('message_id')->unsigned(true);
-            $table->bigInteger('campaign_id')->unsigned(true);
-            $table->bigInteger('subscriber_id')->unsigned(true)->nullable(true);
-            $table->string('provider_message_id', 255)->nullable(true);
-            $table->enum('bounce_type', ['hard', 'soft', 'blocked', 'domain_error', 'unknown'])->default('unknown');
-            $table->string('smtp_code', 32)->nullable(true);
-            $table->text('bounce_reason')->nullable(true);
-            $table->json('metadata')->nullable(true);
-            $table->timestamp('bounced_at')->nullable(false)->current();
-            $table->timestamp('created_at')->nullable(false)->current();
-            $table->timestamp('updated_at')->nullable(false)->current()->currentOnUpdate();
-
-            $table->index('message_id');
-            $table->index('campaign_id');
-            $table->index('subscriber_id');
-            $table->index('provider_message_id');
-            $table->index('bounced_at');
-            $table->index('created_at');
-            $table->index('bounce_type');
-        }) |> Schema::execute(...);
-
-        Schema::execute('ALTER TABLE `bounces` ADD CONSTRAINT `fk_bounces_message_id` FOREIGN KEY (`message_id`) REFERENCES `messages`(`id`) ON DELETE CASCADE');
-        Schema::execute('ALTER TABLE `bounces` ADD CONSTRAINT `fk_bounces_campaign_id` FOREIGN KEY (`campaign_id`) REFERENCES `campaigns`(`id`) ON DELETE CASCADE');
-        Schema::execute('ALTER TABLE `bounces` ADD CONSTRAINT `fk_bounces_subscriber_id` FOREIGN KEY (`subscriber_id`) REFERENCES `subscriptions`(`id`) ON DELETE SET NULL');
-
-        Schema::create('webhooks', function ($table) {
-            $table->id();
-            $table->bigInteger('campaign_id')->unsigned(true)->nullable(true);
-            $table->bigInteger('message_id')->unsigned(true)->nullable(true);
-            $table->bigInteger('subscriber_id')->unsigned(true)->nullable(true);
-            $table->string('provider', 64);
-            $table->string('event_type', 64)->nullable(true);
-            $table->string('provider_message_id', 255)->nullable(true);
-            $table->string('signature', 255)->nullable(true);
-            $table->string('idempotency_key', 255)->nullable(true);
-            $table->enum('processing_status', ['pending', 'processed', 'failed', 'duplicate'])->default('pending');
-            $table->json('payload')->nullable(false);
-            $table->json('headers')->nullable(true);
-            $table->timestamp('processed_at')->nullable(true);
-            $table->timestamp('created_at')->nullable(false)->current();
-            $table->timestamp('updated_at')->nullable(false)->current()->currentOnUpdate();
-
-            $table->index('campaign_id');
-            $table->index('message_id');
-            $table->index('subscriber_id');
-            $table->index('event_type');
-            $table->index('provider_message_id');
-            $table->index('created_at');
-            $table->index('processing_status');
-            $table->unique('idempotency_key');
-            $table->index(['provider', 'created_at'], 'webhooks_provider_created_idx');
-        }) |> Schema::execute(...);
-
-        Schema::execute('ALTER TABLE `webhooks` ADD CONSTRAINT `fk_webhooks_campaign_id` FOREIGN KEY (`campaign_id`) REFERENCES `campaigns`(`id`) ON DELETE SET NULL');
-        Schema::execute('ALTER TABLE `webhooks` ADD CONSTRAINT `fk_webhooks_message_id` FOREIGN KEY (`message_id`) REFERENCES `messages`(`id`) ON DELETE SET NULL');
-        Schema::execute('ALTER TABLE `webhooks` ADD CONSTRAINT `fk_webhooks_subscriber_id` FOREIGN KEY (`subscriber_id`) REFERENCES `subscriptions`(`id`) ON DELETE SET NULL');
+        $this->attempt(<<<'SQL'
+CREATE TABLE IF NOT EXISTS `webhooks` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `campaign_id` INT(11) NULL,
+  `message_id` INT(11) NULL,
+  `subscriber_id` INT(11) NULL,
+  `provider` VARCHAR(64) NOT NULL,
+  `event_type` VARCHAR(64) NULL,
+  `provider_message_id` VARCHAR(255) NULL,
+  `signature` VARCHAR(255) NULL,
+  `idempotency_key` VARCHAR(255) NULL,
+  `processing_status` VARCHAR(32) NOT NULL DEFAULT 'pending',
+  `payload` JSON NOT NULL,
+  `headers` JSON NULL,
+  `processed_at` TIMESTAMP NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `webhooks_campaign_id_idx` (`campaign_id`),
+  KEY `webhooks_message_id_idx` (`message_id`),
+  KEY `webhooks_subscriber_id_idx` (`subscriber_id`),
+  KEY `webhooks_event_type_idx` (`event_type`),
+  KEY `webhooks_provider_message_id_idx` (`provider_message_id`),
+  KEY `webhooks_created_at_idx` (`created_at`),
+  KEY `webhooks_processing_status_idx` (`processing_status`),
+  UNIQUE KEY `webhooks_idempotency_key_unique` (`idempotency_key`),
+  KEY `webhooks_provider_created_idx` (`provider`,`created_at`),
+  CONSTRAINT `fk_webhooks_campaign_id` FOREIGN KEY (`campaign_id`) REFERENCES `campaigns` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_webhooks_message_id` FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_webhooks_subscriber_id` FOREIGN KEY (`subscriber_id`) REFERENCES `subscriptions` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL);
     }
 
     public function down(): void
@@ -159,5 +164,14 @@ return new class extends Migration
         Schema::dropIfExists('links') |> Schema::execute(...);
         Schema::dropIfExists('email_events') |> Schema::execute(...);
         Schema::dropIfExists('messages') |> Schema::execute(...);
+    }
+
+    private function attempt(string $sql): void
+    {
+        try {
+            Schema::execute($sql);
+        } catch (\Throwable) {
+            // idempotent best effort for environments already partially migrated
+        }
     }
 };

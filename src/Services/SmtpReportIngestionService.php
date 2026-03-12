@@ -48,8 +48,10 @@ final class SmtpReportIngestionService
         $webhook->payload = json_encode(['raw' => $rawPayload], JSON_UNESCAPED_UNICODE);
         $webhook->headers = json_encode(['source' => $source], JSON_UNESCAPED_UNICODE);
         $webhook->campaign_id = $message?->campaign_id;
+        $webhook->organization_id = $message?->organization_id;
         $webhook->message_id = $message?->id;
         $webhook->subscriber_id = $message?->subscriber_id;
+        $webhook->recipient_id = $message?->recipient_id;
         $webhook->processed_at = date('Y-m-d H:i:s');
         $webhook->save();
 
@@ -66,8 +68,11 @@ final class SmtpReportIngestionService
         $event = new EmailEvent();
         $event->message_id = $message->id;
         $event->campaign_id = $message->campaign_id;
+        $event->organization_id = $message->organization_id;
         $event->subscriber_id = $message->subscriber_id;
+        $event->recipient_id = $message->recipient_id;
         $event->event_type = (string) $parsed['event_type'];
+        $event->provider = $message->provider ?? 'smtp';
         $event->timestamp = date('Y-m-d H:i:s');
         $event->provider_message_id = $parsed['provider_message_id'] ?: $message->provider_message_id;
         $event->metadata = json_encode([
@@ -85,8 +90,11 @@ final class SmtpReportIngestionService
             $bounce = new Bounce();
             $bounce->message_id = $message->id;
             $bounce->campaign_id = $message->campaign_id;
+            $bounce->organization_id = $message->organization_id;
             $bounce->subscriber_id = $message->subscriber_id;
+            $bounce->recipient_id = $message->recipient_id;
             $bounce->provider_message_id = $parsed['provider_message_id'] ?: $message->provider_message_id;
+            $bounce->provider = $message->provider ?? 'smtp';
             $bounce->bounce_type = (string) ($parsed['bounce_type'] ?? ($parsed['event_type'] === 'deferred' ? 'soft' : 'unknown'));
             $bounce->smtp_code = $parsed['smtp_code'];
             $bounce->bounce_reason = $parsed['bounce_reason'];
