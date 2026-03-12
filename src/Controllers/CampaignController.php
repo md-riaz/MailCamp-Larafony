@@ -7,9 +7,11 @@ namespace App\Controllers;
 use App\DTOs\CreateCampaignDto;
 use App\Models\Campaign;
 use App\Models\Recipient;
+use App\Models\SmtpSetting;
 use App\Models\Template;
 use App\Models\User;
 use App\ViewDto\CampaignViewDto;
+use App\Services\CampaignSafetyService;
 use App\Services\ObservabilityService;
 use Larafony\Framework\Auth\Auth;
 use Larafony\Framework\Database\Base\Query\Enums\OrderDirection;
@@ -149,6 +151,10 @@ class CampaignController extends Controller
         }
 
         $observability = new ObservabilityService();
+        /** @var Template|null $template */
+        $template = Template::query()->where('id', '=', $campaign->template_id)->first();
+        $smtpSetting = SmtpSetting::query()->where('organization_id', '=', $user->getOrganizationId())->first();
+        $safety = (new CampaignSafetyService())->evaluate($campaign, $template, $smtpSetting);
 
         return $this->render('campaigns.show', [
             'campaign' => $campaign,
@@ -157,6 +163,7 @@ class CampaignController extends Controller
             'campaignMetrics' => $observability->campaignMetrics($user->getOrganizationId(), $campaign->id),
             'bounceBreakdown' => $observability->campaignBounceBreakdown($campaign->id),
             'recentEvents' => $observability->recentCampaignEvents($user->getOrganizationId(), $campaign->id, 15),
+            'safety' => $safety,
             'notice' => $this->resolveCampaignDetailNotice($request),
         ]);
     }
@@ -245,6 +252,17 @@ class CampaignController extends Controller
             if (!$validation['ok']) {
                 return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_template_invalid');
             }
+
+            $smtpSetting = SmtpSetting::query()->where('organization_id', '=', $user->getOrganizationId())->first();
+            $safety = (new CampaignSafetyService())->evaluate($campaign, $template, $smtpSetting);
+            if ($safety['should_pause']) {
+                $campaign->status = 'paused';
+                $campaign->save();
+                return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_autopaused');
+            }
+            if (!$safety['ok']) {
+                return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_high_risk');
+            }
         } catch (\Throwable) {
             return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_template_invalid');
         }
@@ -285,6 +303,8 @@ class CampaignController extends Controller
             'campaign_locked' => ['type' => 'danger', 'message' => 'This campaign can no longer be changed from the detail page.'],
             'campaign_template_missing' => ['type' => 'danger', 'message' => 'Campaign template could not be found.'],
             'campaign_template_invalid' => ['type' => 'danger', 'message' => 'Campaign template is missing required variables such as {{unsubscribe_url}} or required recipient data.'],
+            'campaign_high_risk' => ['type' => 'danger', 'message' => 'Campaign failed pre-send safety checks. Review sender, template, recipients, and deliverability warnings below.'],
+            'campaign_autopaused' => ['type' => 'danger', 'message' => 'Campaign was auto-paused because bounce or complaint risk exceeded allowed thresholds.'],
             'campaign_launched' => ['type' => 'success', 'message' => 'Campaign launched. Queue processing can begin.'],
             default => null,
         };

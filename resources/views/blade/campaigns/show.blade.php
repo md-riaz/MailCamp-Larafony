@@ -14,6 +14,7 @@ $pendingCount = max($deliveryTotal - $sentCount - $failedCount, 0);
 $campaignMetrics = $campaignMetrics ?? [];
 $bounceBreakdown = $bounceBreakdown ?? ['hard' => 0, 'soft' => 0, 'blocked' => 0, 'domain_error' => 0, 'unknown' => 0];
 $recentEvents = $recentEvents ?? [];
+$safety = $safety ?? ['ok' => true, 'should_pause' => false, 'risk_level' => 'low', 'errors' => [], 'warnings' => [], 'metrics' => []];
 $statusLabel = ucfirst((string) $campaign->status);
 $statusClass = match ((string) $campaign->status) {
     'sent' => 'badge-success',
@@ -47,6 +48,22 @@ include $componentsPath . '/page-header.blade.php';
     <?php
     $message = $notice['message'];
     $type = $notice['type'] ?? 'info';
+    include $componentsPath . '/flash-alert.blade.php';
+    ?>
+<?php endif; ?>
+
+<?php if (!empty($safety['errors'])): ?>
+    <?php
+    $message = implode(' ', $safety['errors']);
+    $type = 'danger';
+    include $componentsPath . '/flash-alert.blade.php';
+    ?>
+<?php endif; ?>
+
+<?php if (!empty($safety['warnings'])): ?>
+    <?php
+    $message = implode(' ', $safety['warnings']);
+    $type = 'warning';
     include $componentsPath . '/flash-alert.blade.php';
     ?>
 <?php endif; ?>
@@ -184,6 +201,32 @@ include $componentsPath . '/page-header.blade.php';
         ?>
     </div>
     <div class="col-12 col-xl-5">
+        <?php
+        ob_start();
+        ?>
+        <h2 class="h5 mb-3">Safety & Deliverability</h2>
+        <div class="row g-3 mb-3">
+            <div class="col-6"><div class="border rounded-3 p-3 h-100 bg-light-subtle"><div class="text-secondary small">Risk level</div><div class="fs-5 fw-bold text-<?php echo ($safety['risk_level'] ?? 'low') === 'high' ? 'danger' : (($safety['risk_level'] ?? 'low') === 'medium' ? 'warning' : 'success'); ?>"><?php echo htmlspecialchars(strtoupper((string) ($safety['risk_level'] ?? 'low')), ENT_QUOTES, 'UTF-8'); ?></div></div></div>
+            <div class="col-6"><div class="border rounded-3 p-3 h-100 bg-light-subtle"><div class="text-secondary small">Autopause</div><div class="fs-5 fw-bold"><?php echo !empty($safety['should_pause']) ? 'ARMED' : 'clear'; ?></div></div></div>
+        </div>
+        <div class="row g-2">
+            <div class="col-6"><div class="small text-secondary">Recipients</div><div class="fw-semibold"><?php echo (int) (($safety['metrics']['recipients'] ?? 0)); ?></div></div>
+            <div class="col-6"><div class="small text-secondary">Bounce rate</div><div class="fw-semibold text-danger"><?php echo htmlspecialchars((string) (($safety['metrics']['bounce_rate'] ?? 0)) . '%', ENT_QUOTES, 'UTF-8'); ?></div></div>
+            <div class="col-6"><div class="small text-secondary">Complaint rate</div><div class="fw-semibold text-danger"><?php echo htmlspecialchars((string) (($safety['metrics']['complaint_rate'] ?? 0)) . '%', ENT_QUOTES, 'UTF-8'); ?></div></div>
+            <div class="col-6"><div class="small text-secondary">Sender</div><div class="fw-semibold"><?php echo htmlspecialchars((string) (($safety['metrics']['sender_email'] ?? '—')), ENT_QUOTES, 'UTF-8'); ?></div></div>
+        </div>
+        <hr>
+        <p class="text-secondary small mb-0">Launch now checks template requirements, SMTP readiness, sender quality hints, bounce thresholds, and complaint thresholds before allowing activation.</p>
+        <?php
+        $contentHtml = ob_get_clean();
+        $className = 'h-100 mb-0';
+        include $componentsPath . '/table-shell.blade.php';
+        ?>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-xl-7">
         <?php
         ob_start();
         ?>

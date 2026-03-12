@@ -115,7 +115,7 @@ Constraint: Standard SMTP only (no provider preset UX).
   - Needs live data to confirm operational behavior
 
 ### T3.3 Campaign safety rules (autopause)
-- Status: `TODO`
+- Status: `PARTIAL`
 - Priority: P1
 - Effort: M
 - Depends on: T7.1, T7.3
@@ -124,6 +124,10 @@ Constraint: Standard SMTP only (no provider preset UX).
   - Auto-pause + user notification when threshold exceeded
 - Acceptance:
   - bounce_rate > 8% OR spam_complaints > 0.3% triggers pause
+- Current notes:
+  - Risk evaluator and launch-time guards now exist
+  - High-risk launches can be blocked and severe risk can auto-pause before activation
+  - Logging + real-send verification still pending
 
 ---
 
@@ -282,7 +286,7 @@ Constraint: Standard SMTP only (no provider preset UX).
 ## EPIC 8 — Deliverability Advisor
 
 ### T8.1 Advisor rules MVP
-- Status: `TODO`
+- Status: `PARTIAL`
 - Priority: P1
 - Effort: M
 - Depends on: T5.1, T5.2, T7.1
@@ -290,6 +294,9 @@ Constraint: Standard SMTP only (no provider preset UX).
   - Pre-send warnings for domain age, DKIM/SPF/DMARC status, spam-risk indicators
 - Acceptance:
   - Campaign launch screen shows risk summary + guidance
+- Current notes:
+  - Basic pre-send warnings now exist for sender quality, template quality, recipient volume, and required unsubscribe behavior
+  - DNS/authentication-specific checks (SPF/DKIM/DMARC/domain age) are still not implemented
 
 ### T8.2 High-risk send gate
 - Status: `TODO`

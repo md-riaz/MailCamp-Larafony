@@ -146,13 +146,13 @@
 - [ ] Document auth, retry behavior, idempotency keys, and error responses
 
 ### 14) Deliverability Advisor (Power Feature)
-- [ ] Pre-send advisor that surfaces risk warnings before campaign launch
-- [ ] Warning examples:
+- [~] Pre-send advisor that surfaces risk warnings before campaign launch
+- [~] Warning examples:
   - domain age too new
   - DKIM missing/misconfigured
   - spam score high
   - low inbox probability signal
-- [ ] Provide actionable recommendations and block/confirm gate when risk is high
+- [~] Provide actionable recommendations and block/confirm gate when risk is high
 
 ### 15) Future Advanced Features (Backlog)
 - [ ] AI spam detection
@@ -205,7 +205,7 @@
 ### EPIC 6 — Auth, Security, and Platform Stability
 - [~] Keep `/mailcamp` base-path compatibility across all new endpoints
 - [~] Idempotent webhook handling + signature verification + retry safety
-- [ ] Protection rules/alerts for high-risk sending behavior
+- [~] Protection rules/alerts for high-risk sending behavior
 
 ### EPIC 7 — Data Model & APIs
 - [ ] Core tables finalized: campaigns, subscribers, messages, email_events, links, bounces, webhooks
@@ -219,8 +219,8 @@
   - `POST /webhook/provider/mailgun`
 
 ### EPIC 8 — Deliverability Advisor & Advanced Roadmap
-- [ ] Pre-send Deliverability Advisor (warnings + actionable recommendations)
-- [ ] High-risk send gate (warn/confirm/block)
+- [~] Pre-send Deliverability Advisor (warnings + actionable recommendations)
+- [~] High-risk send gate (warn/confirm/block)
 - [ ] Future backlog:
   - AI spam detection
   - Inbox probability scoring
