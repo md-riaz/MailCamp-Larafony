@@ -30,10 +30,13 @@ ob_start();
 ?>
 <div class="d-flex gap-2 flex-wrap">
     <a href="<?= $basePath ?>/campaigns" class="btn btn-outline-secondary">Back to campaigns</a>
-    <?php if ($campaign->status === 'draft'): ?>
+    <?php if ($campaign->canEdit()): ?>
+    <a href="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/edit" class="btn btn-outline-primary">Edit campaign</a>
+    <?php endif; ?>
+    <?php if (in_array((string) $campaign->status, ['draft', 'scheduled'], true)): ?>
     <a href="#recipient-import" class="btn btn-primary">Import recipients</a>
     <?php endif; ?>
-    <?php if ($campaign->status === 'draft' && $campaign->total_recipients > 0): ?>
+    <?php if ($campaign->canStart() && $campaign->total_recipients > 0): ?>
     <form method="POST" action="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/launch" class="d-inline">
         <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to launch this campaign?')">Launch campaign</button>
     </form>

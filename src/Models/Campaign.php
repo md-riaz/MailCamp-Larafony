@@ -164,6 +164,14 @@ class Campaign extends Model
     }
 
     /**
+     * Check if campaign can still be edited structurally
+     */
+    public function canEdit(): bool
+    {
+        return in_array($this->status, ['draft', 'scheduled', 'paused', 'failed']);
+    }
+
+    /**
      * Get campaign statistics
      */
     public function getStats(): array

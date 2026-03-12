@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\DTOs\CreateCampaignDto;
+use App\DTOs\UpdateCampaignDto;
 use App\Models\Campaign;
 use App\Models\Recipient;
 use App\Models\SmtpSetting;
@@ -309,6 +310,7 @@ class CampaignController extends Controller
             'campaign_locked' => ['type' => 'danger', 'message' => 'This campaign can no longer be changed from the detail page.'],
             'campaign_template_missing' => ['type' => 'danger', 'message' => 'Campaign template could not be found.'],
             'campaign_template_invalid' => ['type' => 'danger', 'message' => 'Campaign template is missing required variables such as {{unsubscribe_url}} or required recipient data.'],
+            'campaign_updated' => ['type' => 'success', 'message' => 'Campaign settings were updated.'],
             'campaign_high_risk' => ['type' => 'danger', 'message' => 'Campaign failed pre-send safety checks. Review sender, template, recipients, and deliverability warnings below.'],
             'campaign_autopaused' => ['type' => 'danger', 'message' => 'Campaign was auto-paused because bounce or complaint risk exceeded allowed thresholds.'],
             'campaign_launched' => ['type' => 'success', 'message' => 'Campaign launched. Queue processing can begin.'],

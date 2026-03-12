@@ -130,6 +130,9 @@ if (!empty($campaigns)):
                 <td>
                     <div class="d-flex gap-2 flex-wrap">
                         <a href="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>" class="btn btn-sm btn-primary">View</a>
+                        <?php if (in_array((string) ($campaign->status ?? ''), ['draft', 'scheduled', 'paused', 'failed'], true)): ?>
+                        <a href="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        <?php endif; ?>
                         <?php if ($campaign->canLaunch): ?>
                         <form method="POST" action="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/launch" class="d-inline">
                             <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Launch this campaign?')">Launch</button>
