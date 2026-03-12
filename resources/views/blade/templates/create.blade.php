@@ -46,9 +46,16 @@ include $componentsPath . '/page-header.blade.php';
             </div>
 
             <div class="col-12">
-                <label for="html_content" class="form-label">HTML Content</label>
+                <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-2">
+                    <label for="html_content" class="form-label mb-0">HTML Content</label>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="{{name}}">{{name}}</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="{{email}}">{{email}}</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="{{unsubscribe_url}}">{{unsubscribe_url}}</button>
+                    </div>
+                </div>
                 <textarea class="form-control font-monospace" id="html_content" name="html_content" style="min-height: 320px;" required></textarea>
-                <div class="form-text">Use {{variable}} for dynamic content. Example: {{name}}, {{email}}, etc.</div>
+                <div class="form-text">Use merge variables, upload images directly, and keep unsubscribe behavior present for campaign safety.</div>
             </div>
 
             <div class="col-12 d-flex gap-2 flex-wrap">
@@ -76,6 +83,10 @@ include $componentsPath . '/page-header.blade.php';
 </div>
 
 <?php 
+$editorAssets = dirname(__DIR__, 1) . '/templates/_editor_assets.blade.php';
+ob_start();
+include $editorAssets;
+$scripts = ob_get_clean();
 $content = ob_get_clean(); 
 include dirname(__DIR__, 3) . '/resources/views/blade/layout.php'; 
 ?>

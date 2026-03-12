@@ -12,6 +12,7 @@ use Larafony\Framework\Database\Base\Query\Enums\OrderDirection;
 use Larafony\Framework\Routing\Advanced\Attributes\Route;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\UploadedFileInterface;
 
 class TemplateController extends Controller
 {
@@ -128,6 +129,56 @@ class TemplateController extends Controller
         $template->save();
 
         return $this->redirect('/templates');
+    }
+
+    #[Route('/templates/upload-image', 'POST')]
+    public function uploadImage(ServerRequestInterface $request): ResponseInterface
+    {
+        if (!Auth::check()) {
+            return $this->json(['error' => ['message' => 'Unauthorized']], 401);
+        }
+
+        /** @var \App\Models\User $user */
+        $user = User::query()->where('id', '=', Auth::id())->first();
+        $uploadedFiles = $request->getUploadedFiles();
+        $uploadedFile = $uploadedFiles['upload'] ?? $uploadedFiles['file'] ?? null;
+
+        if (!$uploadedFile instanceof UploadedFileInterface) {
+            return $this->json(['error' => ['message' => 'No image file uploaded.']], 422);
+        }
+
+        if ($uploadedFile->getError() !== UPLOAD_ERR_OK) {
+            return $this->json(['error' => ['message' => 'Upload failed.']], 422);
+        }
+
+        $clientFilename = (string) ($uploadedFile->getClientFilename() ?? '');
+        $extension = strtolower(pathinfo($clientFilename, PATHINFO_EXTENSION));
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        if (!in_array($extension, $allowedExtensions, true)) {
+            return $this->json(['error' => ['message' => 'Only jpg, png, gif, and webp images are allowed.']], 422);
+        }
+
+        if ($uploadedFile->getSize() > 5 * 1024 * 1024) {
+            return $this->json(['error' => ['message' => 'Image exceeds 5MB limit.']], 422);
+        }
+
+        $targetDir = dirname(__DIR__, 2) . '/public/uploads/templates/org-' . $user->getOrganizationId();
+        if (!is_dir($targetDir) && !mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {
+            return $this->json(['error' => ['message' => 'Failed to prepare upload directory.']], 500);
+        }
+
+        $filename = sprintf('%s.%s', bin2hex(random_bytes(16)), $extension);
+        $targetPath = $targetDir . '/' . $filename;
+        $uploadedFile->moveTo($targetPath);
+
+        $baseUrl = rtrim((string) ($_ENV['APP_URL'] ?? getenv('APP_URL') ?: ''), '/');
+        $url = $baseUrl . '/public/uploads/templates/org-' . $user->getOrganizationId() . '/' . $filename;
+
+        return $this->json([
+            'url' => $url,
+            'uploaded' => true,
+            'fileName' => $filename,
+        ]);
     }
 
     #[Route('/templates/{id}', 'DELETE')]
