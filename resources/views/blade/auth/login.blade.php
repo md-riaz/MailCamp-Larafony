@@ -6,9 +6,19 @@ $componentsPath = dirname(__DIR__, 3) . '/resources/views/blade/components';
 ?>
 
 <div class="auth-shell">
-    <div class="card w-100" style="max-width: 520px; margin: 0 auto;">
-        <h2 class="h4 mb-1">Login to MailCamp</h2>
-        <p class="text-secondary mb-4">Multi-tenant Email Campaign Manager</p>
+    <div class="card auth-hero-card w-100 mb-4" style="max-width: 900px; margin: 0 auto;">
+        <div class="row g-0 align-items-stretch">
+            <div class="col-12 col-lg-6 p-4 p-lg-5 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="eyebrow mb-3">SMTP-first Campaign Platform</div>
+                    <h2 class="display-6 fw-bold mb-3">Operate campaigns with delivery visibility, guardrails, and modern portal UX.</h2>
+                    <p class="mb-0" style="color: rgba(255,255,255,0.82) !important;">MailCamp brings campaigns, tracking, bounce intelligence, and safety checks into one operator-friendly control surface.</p>
+                </div>
+                <div class="small mt-4" style="color: rgba(255,255,255,0.72);">Login to continue into your workspace.</div>
+            </div>
+            <div class="col-12 col-lg-6 bg-white text-dark p-4 p-lg-5">
+                <h2 class="h4 mb-1">Login to MailCamp</h2>
+                <p class="text-secondary mb-4">Access your campaign workspace</p>
 
         <?php
         $message = $error ?? '';
@@ -33,9 +43,11 @@ $componentsPath = dirname(__DIR__, 3) . '/resources/views/blade/components';
             </div>
         </form>
 
-        <p class="text-center mt-4 mb-0">
-            Don't have an account? <a href="<?= $basePath ?>/register">Register here</a>
-        </p>
+                <p class="text-center mt-4 mb-0">
+                    Don't have an account? <a href="<?= $basePath ?>/register">Register here</a>
+                </p>
+            </div>
+        </div>
     </div>
 </div>
 

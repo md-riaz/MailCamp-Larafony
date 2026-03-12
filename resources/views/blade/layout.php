@@ -266,14 +266,16 @@
 
         .alert {
             padding: 14px 16px;
-            border-radius: 12px;
+            border-radius: 14px;
             margin-bottom: 18px;
             border: 1px solid transparent;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
         }
 
         .alert-success { background: #ecfdf3; color: #166534; border-color: #bbf7d0; }
-        .alert-error { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+        .alert-error, .alert-danger { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
         .alert-info { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+        .alert-warning { background: #fffbeb; color: #92400e; border-color: #fde68a; }
 
         a { color: var(--primary); text-decoration: none; }
         a:hover { text-decoration: underline; }
@@ -344,6 +346,37 @@
             place-items: center;
         }
 
+        .auth-hero-card {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(145deg, #0f172a 0%, #1d4ed8 100%);
+            color: #fff;
+            border: 1px solid rgba(96, 165, 250, 0.24);
+        }
+
+        .auth-hero-card p,
+        .auth-hero-card h1,
+        .auth-hero-card h2,
+        .auth-hero-card h3,
+        .auth-hero-card .text-secondary {
+            color: #fff !important;
+        }
+
+        .nav-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.12);
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            color: #e2e8f0;
+        }
+
+        .nav-pill strong {
+            color: #fff;
+        }
+
         @media (max-width: 992px) {
             .portal-grid.portal-grid-4 {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -367,17 +400,23 @@
     <?php if (isset($user)): ?>
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand fw-semibold" href="<?= $basePath ?>/">📧 MailCamp</a>
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <a class="navbar-brand fw-semibold mb-0" href="<?= $basePath ?>/">📧 MailCamp</a>
+                <div class="nav-pill small">
+                    <span>Workspace</span>
+                    <strong><?= htmlspecialchars($user->organization?->name ?? 'MailCamp', ENT_QUOTES, 'UTF-8') ?></strong>
+                </div>
+            </div>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mailcampNav" aria-controls="mailcampNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="mailcampNav">
-                <ul class="navbar-nav ms-auto gap-lg-2">
+                <ul class="navbar-nav ms-auto gap-lg-2 align-items-lg-center">
                     <li class="nav-item"><a class="nav-link" href="<?= $basePath ?>/">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?= $basePath ?>/campaigns">Campaigns</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?= $basePath ?>/templates">Templates</a></li>
-                    <li class="nav-item"><a class="nav-link" href="<?= $basePath ?>/smtp-settings">SMTP Settings</a></li>
-                    <li class="nav-item"><a class="nav-link" href="<?= $basePath ?>/logout">Logout</a></li>
+                    <li class="nav-item"><a class="nav-link" href="<?= $basePath ?>/smtp-settings">SMTP</a></li>
+                    <li class="nav-item"><a class="nav-link text-warning" href="<?= $basePath ?>/logout">Logout</a></li>
                 </ul>
             </div>
         </div>

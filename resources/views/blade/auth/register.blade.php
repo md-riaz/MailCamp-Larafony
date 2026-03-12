@@ -6,9 +6,19 @@ $componentsPath = dirname(__DIR__, 3) . '/resources/views/blade/components';
 ?>
 
 <div class="auth-shell">
-    <div class="card w-100" style="max-width: 520px; margin: 0 auto;">
-        <h2 class="h4 mb-1">Register Your Organization</h2>
-        <p class="text-secondary mb-4">Create an account to start sending campaigns</p>
+    <div class="card auth-hero-card w-100 mb-4" style="max-width: 980px; margin: 0 auto;">
+        <div class="row g-0 align-items-stretch">
+            <div class="col-12 col-lg-5 p-4 p-lg-5 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="eyebrow mb-3">Create Workspace</div>
+                    <h2 class="display-6 fw-bold mb-3">Set up a campaign workspace built for SMTP delivery, safety checks, and observability.</h2>
+                    <p class="mb-0" style="color: rgba(255,255,255,0.82) !important;">Register your organization once, configure SMTP properly, and manage campaigns from a portal that treats delivery as infrastructure.</p>
+                </div>
+                <div class="small mt-4" style="color: rgba(255,255,255,0.72);">This is the starting point for your operational mail stack.</div>
+            </div>
+            <div class="col-12 col-lg-7 bg-white text-dark p-4 p-lg-5">
+                <h2 class="h4 mb-1">Register Your Organization</h2>
+                <p class="text-secondary mb-4">Create an account to start sending campaigns</p>
 
         <?php
         $message = $error ?? '';
@@ -43,9 +53,11 @@ $componentsPath = dirname(__DIR__, 3) . '/resources/views/blade/components';
             </div>
         </form>
 
-        <p class="text-center mt-4 mb-0">
-            Already have an account? <a href="<?= $basePath ?>/login">Login here</a>
-        </p>
+                <p class="text-center mt-4 mb-0">
+                    Already have an account? <a href="<?= $basePath ?>/login">Login here</a>
+                </p>
+            </div>
+        </div>
     </div>
 </div>
 
