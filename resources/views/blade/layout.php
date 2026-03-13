@@ -36,53 +36,77 @@
             padding: 20px;
         }
 
-        nav {
+        .mailcamp-navbar {
             position: sticky;
             top: 0;
-            z-index: 10;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
-            backdrop-filter: blur(8px);
-            background: rgba(15, 23, 42, 0.85);
-            color: #fff;
+            z-index: 1030;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+            backdrop-filter: blur(14px);
+            background: rgba(15, 23, 42, 0.86);
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
         }
 
-        nav .container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 16px;
+        .mailcamp-navbar .container {
             padding-top: 14px;
             padding-bottom: 14px;
         }
 
-        nav h1 {
-            font-size: 1.2rem;
-            letter-spacing: 0.3px;
-            padding: 8px 12px;
-            border-radius: 999px;
-            background: rgba(37, 99, 235, 0.2);
-            border: 1px solid rgba(96, 165, 250, 0.35);
-        }
-
-        nav ul {
-            list-style: none;
-            display: flex;
-            flex-wrap: wrap;
+        .mailcamp-navbar .navbar-brand {
+            display: inline-flex;
+            align-items: center;
             gap: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: #fff;
+            padding: 0;
+            margin-right: 0;
         }
 
-        nav a {
-            color: #e2e8f0;
+        .mailcamp-navbar .navbar-brand:hover {
+            color: #fff;
             text-decoration: none;
-            padding: 8px 12px;
-            border-radius: 10px;
+        }
+
+        .mailcamp-navbar .navbar-toggler {
+            border: 1px solid rgba(148, 163, 184, 0.24);
+            border-radius: 12px;
+            padding: 8px 10px;
+            box-shadow: none;
+        }
+
+        .mailcamp-navbar .navbar-toggler:focus {
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.22);
+        }
+
+        .mailcamp-navbar .navbar-collapse {
+            margin-top: 0;
+        }
+
+        .mailcamp-navbar .nav-link {
+            color: #cbd5e1;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-weight: 600;
             transition: all 0.2s ease;
         }
 
-        nav a:hover {
+        .mailcamp-navbar .nav-link:hover,
+        .mailcamp-navbar .nav-link:focus,
+        .mailcamp-navbar .nav-link.active {
             color: #fff;
-            background: rgba(148, 163, 184, 0.2);
+            background: rgba(148, 163, 184, 0.14);
             text-decoration: none;
+        }
+
+        .mailcamp-navbar .nav-link.text-warning {
+            color: #fbbf24 !important;
+        }
+
+        .mailcamp-navbar .nav-link.text-warning:hover,
+        .mailcamp-navbar .nav-link.text-warning:focus {
+            color: #fde68a !important;
+            background: rgba(245, 158, 11, 0.12);
         }
 
         .card {
@@ -381,6 +405,24 @@
             .portal-grid.portal-grid-4 {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
+
+            .mailcamp-navbar .navbar-collapse {
+                margin-top: 14px;
+                padding: 14px;
+                border: 1px solid rgba(148, 163, 184, 0.16);
+                border-radius: 16px;
+                background: rgba(15, 23, 42, 0.96);
+            }
+
+            .mailcamp-navbar .navbar-nav {
+                gap: 8px !important;
+                align-items: stretch !important;
+            }
+
+            .mailcamp-navbar .nav-link {
+                display: block;
+                width: 100%;
+            }
         }
 
         @media (max-width: 768px) {
@@ -391,6 +433,18 @@
             .portal-grid.portal-grid-4 {
                 grid-template-columns: 1fr;
             }
+            .nav-pill {
+                width: 100%;
+                justify-content: center;
+                text-align: center;
+                padding: 10px 12px;
+            }
+            .mailcamp-navbar .navbar-brand {
+                font-size: 0.95rem;
+            }
+            .mailcamp-navbar .container {
+                row-gap: 12px;
+            }
             table { display: block; overflow-x: auto; white-space: nowrap; }
         }
     </style>
@@ -398,10 +452,20 @@
 <body>
     <?php $basePath = rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/'); ?>
     <?php if (isset($user)): ?>
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <?php
+    $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    $isActive = static function (string $path) use ($requestPath, $basePath): bool {
+        $full = $basePath . $path;
+        return $requestPath === $full || ($path !== '/' && str_starts_with($requestPath, $full . '/'));
+    };
+    ?>
+    <nav class="navbar navbar-expand-lg navbar-dark mailcamp-navbar">
         <div class="container">
             <div class="d-flex align-items-center gap-3 flex-wrap">
-                <a class="navbar-brand fw-semibold mb-0" href="<?= $basePath ?>/">📧 MailCamp</a>
+                <a class="navbar-brand" href="<?= $basePath ?>/">
+                    <span aria-hidden="true">📧</span>
+                    <span>MailCamp</span>
+                </a>
                 <div class="nav-pill small">
                     <span>Workspace</span>
                     <strong><?= htmlspecialchars($user->organization?->name ?? 'MailCamp', ENT_QUOTES, 'UTF-8') ?></strong>
@@ -412,10 +476,10 @@
             </button>
             <div class="collapse navbar-collapse" id="mailcampNav">
                 <ul class="navbar-nav ms-auto gap-lg-2 align-items-lg-center">
-                    <li class="nav-item"><a class="nav-link" href="<?= $basePath ?>/">Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" href="<?= $basePath ?>/campaigns">Campaigns</a></li>
-                    <li class="nav-item"><a class="nav-link" href="<?= $basePath ?>/templates">Templates</a></li>
-                    <li class="nav-item"><a class="nav-link" href="<?= $basePath ?>/smtp-settings">SMTP</a></li>
+                    <li class="nav-item"><a class="nav-link <?= $isActive('/') ? 'active' : '' ?>" href="<?= $basePath ?>/">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link <?= $isActive('/campaigns') ? 'active' : '' ?>" href="<?= $basePath ?>/campaigns">Campaigns</a></li>
+                    <li class="nav-item"><a class="nav-link <?= $isActive('/templates') ? 'active' : '' ?>" href="<?= $basePath ?>/templates">Templates</a></li>
+                    <li class="nav-item"><a class="nav-link <?= $isActive('/smtp-settings') ? 'active' : '' ?>" href="<?= $basePath ?>/smtp-settings">SMTP</a></li>
                     <li class="nav-item"><a class="nav-link text-warning" href="<?= $basePath ?>/logout">Logout</a></li>
                 </ul>
             </div>
