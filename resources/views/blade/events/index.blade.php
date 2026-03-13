@@ -40,9 +40,6 @@ include $componentsPath . '/page-header.blade.php';
                 <h2 class="display-6 fw-bold mb-2"><?= htmlspecialchars((string) $heading, ENT_QUOTES, 'UTF-8') ?></h2>
                 <p class="mb-0" style="max-width: 760px; color: rgba(255,255,255,0.84) !important;">Use this timeline to inspect lifecycle events, trace message-level outcomes, and debug delivery without dropping into raw tables.</p>
             </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <?= $actionsHtml ?>
-            </div>
         </div>
         <div class="portal-grid portal-grid-4 mt-4">
             <div class="portal-metric">

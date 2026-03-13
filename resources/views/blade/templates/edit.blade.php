@@ -24,9 +24,6 @@ include $componentsPath . '/page-header.blade.php';
                 <h2 class="display-6 fw-bold mb-2">Update campaign content with a real HTML authoring surface.</h2>
                 <p class="mb-0" style="max-width: 760px; color: rgba(255,255,255,0.84) !important;">This editor is now upload-ready, merge-variable aware, and better suited to serious email composition than a raw textarea.</p>
             </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <?= $actionsHtml ?>
-            </div>
         </div>
     </div>
 </div>

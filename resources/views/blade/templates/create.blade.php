@@ -24,9 +24,6 @@ include $componentsPath . '/page-header.blade.php';
                 <h2 class="display-6 fw-bold mb-2">Create campaign-ready content with merge fields and unsubscribe-safe structure.</h2>
                 <p class="mb-0" style="max-width: 760px; color: rgba(255,255,255,0.84) !important;">Templates are product assets. Build them once, keep the structure disciplined, and launch campaigns with less guesswork.</p>
             </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <?= $actionsHtml ?>
-            </div>
         </div>
     </div>
 </div>

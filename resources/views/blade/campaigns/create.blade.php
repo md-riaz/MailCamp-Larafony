@@ -26,9 +26,6 @@ include $componentsPath . '/page-header.blade.php';
                 <h2 class="display-6 fw-bold mb-2">Create a campaign shell before you import recipients, validate risk, and launch.</h2>
                 <p class="mb-0" style="max-width: 760px; color: rgba(255,255,255,0.84) !important;">The campaign creation step should stay clean: define the campaign name, attach a reusable template, then continue in the operator console for recipients, safety, and launch.</p>
             </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <?= $actionsHtml ?>
-            </div>
         </div>
         <div class="portal-grid portal-grid-4 mt-4">
             <div class="portal-metric">

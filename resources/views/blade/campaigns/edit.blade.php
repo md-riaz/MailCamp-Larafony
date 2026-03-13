@@ -25,9 +25,6 @@ include $componentsPath . '/page-header.blade.php';
                 <h2 class="display-6 fw-bold mb-2">Adjust campaign settings before execution locks the structure.</h2>
                 <p class="mb-0" style="max-width: 760px; color: rgba(255,255,255,0.84) !important;">Draft, scheduled, paused, and failed campaigns can still be updated. Once sending begins, structure must stay locked.</p>
             </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <?= $actionsHtml ?>
-            </div>
         </div>
     </div>
 </div>
