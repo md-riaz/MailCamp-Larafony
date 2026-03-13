@@ -23,9 +23,6 @@ include $componentsPath . '/page-header.blade.php';
                 <h2 class="display-6 fw-bold mb-2">Build, review, and launch campaigns from one clean operations surface.</h2>
                 <p class="mb-0" style="max-width: 760px; color: rgba(255,255,255,0.84) !important;">Track drafts, spot risky campaigns before launch, and move from creation to delivery without losing visibility.</p>
             </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <?= $actionsHtml ?>
-            </div>
         </div>
         <div class="portal-grid portal-grid-4 mt-4">
             <div class="portal-metric">

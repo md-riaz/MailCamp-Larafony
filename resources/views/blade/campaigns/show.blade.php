@@ -57,9 +57,6 @@ include $componentsPath . '/page-header.blade.php';
                 <h2 class="display-6 fw-bold mb-2"><?php echo htmlspecialchars((string) $campaign->name, ENT_QUOTES, 'UTF-8'); ?></h2>
                 <p class="mb-0" style="max-width: 760px; color: rgba(255,255,255,0.84) !important;">Review readiness, watch risk posture, and inspect delivery behavior from one place before you trust this campaign in production.</p>
             </div>
-            <div class="d-flex flex-wrap gap-2">
-                <?= $actionsHtml ?>
-            </div>
         </div>
         <div class="portal-grid portal-grid-4 mt-4">
             <div class="portal-metric">

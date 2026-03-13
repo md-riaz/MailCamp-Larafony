@@ -22,9 +22,6 @@ include $componentsPath . '/page-header.blade.php';
                 <h2 class="display-6 fw-bold mb-2">Manage reusable email templates like product assets, not loose snippets.</h2>
                 <p class="mb-0" style="max-width: 760px; color: rgba(255,255,255,0.84) !important;">Keep subjects, merge fields, and call-to-action structure consistent so campaigns launch faster and stay easier to debug.</p>
             </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <?= $actionsHtml ?>
-            </div>
         </div>
         <div class="portal-grid portal-grid-4 mt-4">
             <div class="portal-metric">

@@ -35,9 +35,6 @@ include $componentsPath . '/page-header.blade.php';
                 <h2 class="display-6 fw-bold mb-2">SMTP campaigns, safety checks, and delivery observability in one portal.</h2>
                 <p class="mb-0" style="max-width: 760px; color: rgba(255,255,255,0.84) !important;">Use this dashboard as your command center: validate sender posture, watch campaign health, and inspect real delivery events without jumping between tools.</p>
             </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <?= $actionsHtml ?>
-            </div>
         </div>
         <div class="portal-grid portal-grid-4 mt-4">
             <div class="portal-metric">
@@ -230,7 +227,7 @@ include $componentsPath . '/page-header.blade.php';
 </div>
 
 <div class="row g-3 mb-4">
-    <div class="col-12 col-xl-8">
+    <div class="col-12">
         <?php
         ob_start();
         ?>
@@ -283,26 +280,6 @@ include $componentsPath . '/page-header.blade.php';
             include $componentsPath . '/empty-state.blade.php';
             ?>
         <?php endif; ?>
-        <?php
-        $contentHtml = ob_get_clean();
-        $className = 'h-100 mb-0';
-        include $componentsPath . '/table-shell.blade.php';
-        ?>
-    </div>
-    <div class="col-12 col-xl-4">
-        <?php
-        ob_start();
-        ?>
-        <h2 class="h5 mb-3">Quick Actions</h2>
-        <div class="d-grid gap-2">
-            <a href="<?= $basePath ?>/campaigns/create" class="btn btn-success text-start">Create new campaign</a>
-            <a href="<?= $basePath ?>/templates/create" class="btn btn-primary text-start">Create template</a>
-            <a href="<?= $basePath ?>/campaigns" class="btn btn-outline-primary text-start">Review campaigns</a>
-            <?php if (isset($user) && $user->isAdmin()): ?>
-            <a href="<?= $basePath ?>/smtp-settings" class="btn btn-outline-secondary text-start">Configure SMTP</a>
-            <?php endif; ?>
-        </div>
-        <p class="text-secondary small mt-3 mb-0">Same actions, cleaner order. Create, review, then validate delivery settings before launch.</p>
         <?php
         $contentHtml = ob_get_clean();
         $className = 'h-100 mb-0';
