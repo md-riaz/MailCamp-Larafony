@@ -102,9 +102,15 @@ class CampaignController extends Controller
             ->where('organization_id', '=', $user->getOrganizationId())
             ->where('is_active', '=', 1)
             ->get();
+        $smtpSettings = SmtpSetting::query()
+            ->where('organization_id', '=', $user->getOrganizationId())
+            ->where('is_active', '=', 1)
+            ->orderBy('id')
+            ->get();
 
         return $this->render('campaigns.create', [
             'templates' => $templates,
+            'smtpSettings' => $smtpSettings,
             'user' => $user,
         ]);
     }
@@ -118,10 +124,28 @@ class CampaignController extends Controller
 
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
+        $template = Template::query()
+            ->where('organization_id', '=', $user->getOrganizationId())
+            ->where('id', '=', $dto->template_id)
+            ->where('is_active', '=', 1)
+            ->first();
+        if (!$template) {
+            return $this->redirect('/campaigns/create?notice=template_missing');
+        }
+
+        $smtpSetting = SmtpSetting::query()
+            ->where('organization_id', '=', $user->getOrganizationId())
+            ->where('id', '=', $dto->smtp_setting_id)
+            ->where('is_active', '=', 1)
+            ->first();
+        if (!$smtpSetting) {
+            return $this->redirect('/campaigns/create?notice=smtp_missing');
+        }
 
         $campaign = new Campaign()->fill([
             'organization_id' => $user->getOrganizationId(),
-            'template_id' => $dto->template_id,
+            'template_id' => $template->id,
+            'smtp_setting_id' => $smtpSetting->id,
             'name' => $dto->name,
             'status' => 'draft',
             'created_by' => $user->id,
@@ -129,6 +153,100 @@ class CampaignController extends Controller
         $campaign->save();
 
         return $this->redirect("/campaigns/{$campaign->id}");
+    }
+
+    #[Route('/campaigns/{id}/edit', 'GET')]
+    public function edit(ServerRequestInterface $request, int $id): ResponseInterface
+    {
+        if (!Auth::check()) {
+            return $this->redirect('/login');
+        }
+
+        /** @var \App\Models\User $user */
+        $user = User::query()->where('id', '=', Auth::id())->first();
+        /** @var Campaign|null $campaign */
+        $campaign = Campaign::query()->where('id', '=', $id)->first();
+
+        if (!$campaign || $campaign->organization_id !== $user->getOrganizationId()) {
+            return $this->redirect('/campaigns?notice=campaign_not_found');
+        }
+
+        if (!$campaign->canEdit()) {
+            return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_locked');
+        }
+
+        $templates = Template::query()
+            ->where('organization_id', '=', $user->getOrganizationId())
+            ->where('is_active', '=', 1)
+            ->get();
+        $smtpSettings = SmtpSetting::query()
+            ->where('organization_id', '=', $user->getOrganizationId())
+            ->where('is_active', '=', 1)
+            ->orderBy('id')
+            ->get();
+
+        return $this->render('campaigns.edit', [
+            'campaign' => $campaign,
+            'templates' => $templates,
+            'smtpSettings' => $smtpSettings,
+            'user' => $user,
+        ]);
+    }
+
+    #[Route('/campaigns/{id}', ['PUT', 'POST'])]
+    public function update(ServerRequestInterface $request, int $id, UpdateCampaignDto $dto): ResponseInterface
+    {
+        if (!Auth::check()) {
+            return $this->redirect('/login');
+        }
+
+        /** @var \App\Models\User $user */
+        $user = User::query()->where('id', '=', Auth::id())->first();
+        /** @var Campaign|null $campaign */
+        $campaign = Campaign::query()->where('id', '=', $id)->first();
+
+        if (!$campaign || $campaign->organization_id !== $user->getOrganizationId()) {
+            return $this->redirect('/campaigns?notice=campaign_not_found');
+        }
+
+        if (!$campaign->canEdit()) {
+            return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_locked');
+        }
+
+        $template = Template::query()
+            ->where('organization_id', '=', $user->getOrganizationId())
+            ->where('id', '=', $dto->template_id)
+            ->where('is_active', '=', 1)
+            ->first();
+        if (!$template) {
+            return $this->redirect('/campaigns/' . $campaign->id . '/edit?notice=template_missing');
+        }
+
+        $smtpSetting = SmtpSetting::query()
+            ->where('organization_id', '=', $user->getOrganizationId())
+            ->where('id', '=', $dto->smtp_setting_id)
+            ->where('is_active', '=', 1)
+            ->first();
+        if (!$smtpSetting) {
+            return $this->redirect('/campaigns/' . $campaign->id . '/edit?notice=smtp_missing');
+        }
+
+        $campaign->name = $dto->name;
+        $campaign->template_id = $template->id;
+        $campaign->smtp_setting_id = $smtpSetting->id;
+
+        $scheduledAt = trim((string) ($dto->scheduled_at ?? ''));
+        $scheduledTimestamp = $scheduledAt !== '' ? strtotime($scheduledAt) : false;
+        $campaign->scheduled_at = $scheduledTimestamp ? date('Y-m-d H:i:s', $scheduledTimestamp) : null;
+        if ($campaign->scheduled_at !== null && in_array((string) $campaign->status, ['draft', 'paused'], true)) {
+            $campaign->status = 'scheduled';
+        } elseif ($campaign->scheduled_at === null && (string) $campaign->status === 'scheduled') {
+            $campaign->status = 'draft';
+        }
+
+        $campaign->save();
+
+        return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_updated');
     }
 
     #[Route('/campaigns/<id:\\d+>', 'GET')]
@@ -155,7 +273,19 @@ class CampaignController extends Controller
         $observability = new ObservabilityService();
         /** @var Template|null $template */
         $template = Template::query()->where('id', '=', $campaign->template_id)->first();
-        $smtpSetting = SmtpSetting::query()->where('organization_id', '=', $user->getOrganizationId())->first();
+        $smtpSetting = null;
+        if ($campaign->smtp_setting_id) {
+            $smtpSetting = SmtpSetting::query()
+                ->where('id', '=', $campaign->smtp_setting_id)
+                ->where('organization_id', '=', $user->getOrganizationId())
+                ->first();
+        }
+        if (!$smtpSetting) {
+            $smtpSetting = SmtpSetting::query()
+                ->where('organization_id', '=', $user->getOrganizationId())
+                ->where('is_active', '=', 1)
+                ->first();
+        }
         $riskHistory = new CampaignRiskHistoryService();
         $safety = (new CampaignSafetyService())->evaluate($campaign, $template, $smtpSetting);
 
@@ -168,6 +298,8 @@ class CampaignController extends Controller
             'recentEvents' => $observability->recentCampaignEvents($user->getOrganizationId(), $campaign->id, 15),
             'riskHistory' => $riskHistory->recent($campaign, 8),
             'safety' => $safety,
+            'smtpSetting' => $smtpSetting,
+            'template' => $template,
             'notice' => $this->resolveCampaignDetailNotice($request),
         ]);
     }
@@ -257,7 +389,27 @@ class CampaignController extends Controller
                 return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_template_invalid');
             }
 
-            $smtpSetting = SmtpSetting::query()->where('organization_id', '=', $user->getOrganizationId())->first();
+            $smtpSetting = null;
+            if ($campaign->smtp_setting_id) {
+                $smtpSetting = SmtpSetting::query()
+                    ->where('id', '=', $campaign->smtp_setting_id)
+                    ->where('organization_id', '=', $user->getOrganizationId())
+                    ->where('is_active', '=', 1)
+                    ->first();
+            }
+            if (!$smtpSetting) {
+                $smtpSetting = SmtpSetting::query()
+                    ->where('organization_id', '=', $user->getOrganizationId())
+                    ->where('is_active', '=', 1)
+                    ->first();
+                if ($smtpSetting && !$campaign->smtp_setting_id) {
+                    $campaign->smtp_setting_id = $smtpSetting->id;
+                    $campaign->save();
+                }
+            }
+            if (!$smtpSetting) {
+                return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_smtp_missing');
+            }
             $safety = (new CampaignSafetyService())->evaluate($campaign, $template, $smtpSetting);
             $riskHistory = new CampaignRiskHistoryService();
             $riskHistory->record($campaign, 'campaign_safety_snapshot', $safety);
@@ -314,6 +466,7 @@ class CampaignController extends Controller
             'campaign_high_risk' => ['type' => 'danger', 'message' => 'Campaign failed pre-send safety checks. Review sender, template, recipients, and deliverability warnings below.'],
             'campaign_autopaused' => ['type' => 'danger', 'message' => 'Campaign was auto-paused because bounce or complaint risk exceeded allowed thresholds.'],
             'campaign_launched' => ['type' => 'success', 'message' => 'Campaign launched. Queue processing can begin.'],
+            'campaign_smtp_missing' => ['type' => 'danger', 'message' => 'Select an active SMTP account for this campaign before launching.'],
             default => null,
         };
     }

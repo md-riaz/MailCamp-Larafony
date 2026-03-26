@@ -4,6 +4,8 @@ ob_start();
 $basePath = rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/');
 $componentsPath = dirname(__DIR__, 3) . '/resources/views/blade/components';
 $templates = $templates ?? [];
+$smtpSettings = $smtpSettings ?? [];
+$noticeKey = (string) ($_GET['notice'] ?? '');
 
 ob_start();
 ?>
@@ -52,9 +54,31 @@ include $componentsPath . '/page-header.blade.php';
     </div>
 </div>
 
+<?php if (!empty($noticeKey)): ?>
+    <?php
+    $noticeMessage = match ($noticeKey) {
+        'smtp_missing' => 'Select an active SMTP account before creating a campaign.',
+        'template_missing' => 'Choose a valid template from your organization.',
+        default => ''
+    };
+    if ($noticeMessage !== '') {
+        $message = $noticeMessage;
+        $type = 'danger';
+        include $componentsPath . '/flash-alert.blade.php';
+    }
+    ?>
+<?php endif; ?>
+
 <?php if (empty($templates)): ?>
     <?php
     $message = 'No active templates are available yet. Create a template first so campaigns can start with reusable content.';
+    $type = 'warning';
+    include $componentsPath . '/flash-alert.blade.php';
+    ?>
+<?php endif; ?>
+<?php if (empty($smtpSettings)): ?>
+    <?php
+    $message = 'Add at least one active SMTP account so campaigns can choose the correct sender.';
     $type = 'warning';
     include $componentsPath . '/flash-alert.blade.php';
     ?>
@@ -87,8 +111,23 @@ include $componentsPath . '/page-header.blade.php';
                         <?php endif; ?>
                     </div>
 
+                    <div class="col-12">
+                        <label for="smtp_setting_id" class="form-label">SMTP Account</label>
+                        <select class="form-select" id="smtp_setting_id" name="smtp_setting_id" required <?php echo empty($smtpSettings) ? 'disabled' : ''; ?>>
+                            <option value="">-- Select an SMTP account --</option>
+                            <?php if (!empty($smtpSettings)): foreach ($smtpSettings as $smtp): ?>
+                            <option value="<?php echo $smtp->id; ?>"><?php echo htmlspecialchars($smtp->from_email . ' @ ' . $smtp->host, ENT_QUOTES, 'UTF-8'); ?></option>
+                            <?php endforeach; endif; ?>
+                        </select>
+                        <?php if (empty($smtpSettings)): ?>
+                        <div class="form-text text-danger">Add an active SMTP account first in <a href="<?= $basePath ?>/smtp-settings">SMTP Settings</a>.</div>
+                        <?php else: ?>
+                        <div class="form-text">Pick which SMTP connection this campaign should use. Manage accounts in <a href="<?= $basePath ?>/smtp-settings">SMTP Settings</a>.</div>
+                        <?php endif; ?>
+                    </div>
+
                     <div class="col-12 d-flex gap-2 flex-wrap">
-                        <button type="submit" class="btn btn-success" <?php echo empty($templates) ? 'disabled' : ''; ?>>Create Campaign</button>
+                        <button type="submit" class="btn btn-success" <?php echo empty($templates) || empty($smtpSettings) ? 'disabled' : ''; ?>>Create Campaign</button>
                         <a href="<?= $basePath ?>/campaigns" class="btn btn-outline-secondary">Cancel</a>
                     </div>
                 </form>

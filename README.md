@@ -10,7 +10,9 @@ Built with modern PHP 8.5+ features including property hooks, attributes, and as
 - **SMTP Configuration**: Each organization configures its own SMTP settings (host, port, encryption, credentials)
 - **Role-based Access Control**: Admin, Manager, and User roles with different permissions
 - **Template Designer**: Create HTML email templates with variable placeholders ({{variable}})
+- **Rich HTML Editor**: Build templates with a full HTML editor, merge tags, and inline image uploads
 - **Campaign Management**: Create, schedule, and launch email campaigns
+- **Multiple SMTP Accounts**: Save several SMTP connections and select the right sender per campaign
 - **Recipient Import**: Import recipients via CSV files with custom data fields
 - **Queue System**: Database-backed queue with throttling for deliverability
 - **Tracking & Analytics**: Track email opens, clicks, bounces, and failures
@@ -134,7 +136,7 @@ After running the seeder, you can login with:
 
 3. **Create Templates**: Design email templates with HTML and use variables like `{{name}}`, `{{email}}`, etc.
 
-4. **Create Campaign**: Create a new campaign and select a template.
+4. **Create Campaign**: Create a new campaign, select a template, and pick which SMTP account to send from.
 
 5. **Import Recipients**: Upload a CSV file with recipient data (email, name, custom fields).
 

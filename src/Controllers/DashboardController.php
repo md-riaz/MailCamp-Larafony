@@ -68,6 +68,7 @@ class DashboardController extends Controller
 
         $smtpSetting = SmtpSetting::query()
             ->where('organization_id', '=', $organization_id)
+            ->where('is_active', '=', 1)
             ->first();
 
         $stats = [
