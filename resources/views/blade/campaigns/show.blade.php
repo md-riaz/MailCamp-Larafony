@@ -17,6 +17,10 @@ $recentEvents = $recentEvents ?? [];
 $safety = $safety ?? ['ok' => true, 'should_pause' => false, 'risk_level' => 'low', 'errors' => [], 'warnings' => [], 'metrics' => [], 'deliverability' => ['domain' => null, 'checks' => [], 'warnings' => [], 'recommendations' => []]];
 $deliverability = $safety['deliverability'] ?? ['domain' => null, 'checks' => [], 'warnings' => [], 'recommendations' => []];
 $riskHistory = $riskHistory ?? [];
+$smtpSetting = $smtpSetting ?? null;
+$template = $template ?? null;
+$smtpLabel = $smtpSetting ? ($smtpSetting->from_email . ' @ ' . $smtpSetting->host) : 'Not selected';
+$templateLabel = $template?->name ?? '—';
 $statusLabel = ucfirst((string) $campaign->status);
 $statusClass = match ((string) $campaign->status) {
     'sent' => 'badge-success',
@@ -228,6 +232,8 @@ include $componentsPath . '/page-header.blade.php';
             <table class="table table-sm align-middle mb-0">
                 <tr><th style="width:220px;">Campaign ID</th><td><?php echo $campaign->id; ?></td></tr>
                 <tr><th>Status</th><td><?php echo htmlspecialchars((string) $campaign->status, ENT_QUOTES, 'UTF-8'); ?></td></tr>
+                <tr><th>Template</th><td><?php echo htmlspecialchars($templateLabel, ENT_QUOTES, 'UTF-8'); ?></td></tr>
+                <tr><th>SMTP Account</th><td><?php echo htmlspecialchars($smtpLabel, ENT_QUOTES, 'UTF-8'); ?></td></tr>
                 <tr><th>Created</th><td><?php echo $createdText; ?></td></tr>
                 <tr><th>Started</th><td><?php echo $startedText; ?></td></tr>
                 <tr><th>Completed</th><td><?php echo $completedText; ?></td></tr>

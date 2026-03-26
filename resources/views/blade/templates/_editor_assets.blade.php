@@ -61,6 +61,7 @@ $editorUploadUrl = $basePath . '/templates/upload-image';
             }
         })
         .then(editor => {
+            window.mailcampEditor = editor;
             const variableButtons = document.querySelectorAll('[data-insert-variable]');
             variableButtons.forEach(button => {
                 button.addEventListener('click', () => {

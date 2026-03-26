@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Models\EmailEvent;
+use App\Models\SmtpSetting;
 use Larafony\Framework\Database\ORM\Attributes\BelongsTo;
 use Larafony\Framework\Database\ORM\Attributes\HasMany;
 use Larafony\Framework\Database\ORM\Model;
@@ -14,7 +15,7 @@ class Campaign extends Model
     public string $table { get => 'campaigns'; }
 
     public array $fillable = [
-        'organization_id', 'template_id', 'name', 'status', 
+        'organization_id', 'template_id', 'smtp_setting_id', 'name', 'status', 
         'scheduled_at', 'started_at', 'completed_at',
         'total_recipients', 'sent_count', 'failed_count', 'created_by'
     ];
@@ -32,6 +33,14 @@ class Campaign extends Model
         set {
             $this->template_id = $value;
             $this->markPropertyAsChanged('template_id');
+        }
+    }
+
+    public ?int $smtp_setting_id {
+        get => $this->smtp_setting_id ?? null;
+        set {
+            $this->smtp_setting_id = $value;
+            $this->markPropertyAsChanged('smtp_setting_id');
         }
     }
 
@@ -122,6 +131,14 @@ class Campaign extends Model
         local_key: 'id'
     )]
     public ?Template $template { get => $this->relations->getRelation('template'); }
+
+    // BelongsTo relationship: Campaign uses a specific SMTP setting
+    #[BelongsTo(
+        related: SmtpSetting::class,
+        foreign_key: 'smtp_setting_id',
+        local_key: 'id'
+    )]
+    public ?SmtpSetting $smtpSetting { get => $this->relations->getRelation('smtpSetting'); }
 
     // BelongsTo relationship: Campaign belongs to User (creator)
     #[BelongsTo(

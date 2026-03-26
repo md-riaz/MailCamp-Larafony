@@ -35,6 +35,27 @@ final class CampaignMessageLifecycleService
             throw new \RuntimeException(implode(' ', $validation['errors']));
         }
 
+        /** @var SmtpSetting|null $smtp */
+        $smtp = SmtpSetting::query()
+            ->where('organization_id', '=', $campaign->organization_id)
+            ->where('id', '=', $campaign->smtp_setting_id)
+            ->where('is_active', '=', 1)
+            ->first();
+        if (!$smtp) {
+            $smtp = SmtpSetting::query()
+                ->where('organization_id', '=', $campaign->organization_id)
+                ->where('is_active', '=', 1)
+                ->first();
+            if ($smtp && !$campaign->smtp_setting_id) {
+                $campaign->smtp_setting_id = $smtp->id;
+                $campaign->save();
+            }
+        }
+
+        if (!$smtp || !$smtp->validate()) {
+            throw new \RuntimeException('Active SMTP settings are missing for campaign send.');
+        }
+
         foreach ($recipients as $recipient) {
             $existingMessage = Message::query()
                 ->where('campaign_id', '=', $campaign->id)
@@ -132,8 +153,19 @@ final class CampaignMessageLifecycleService
         /** @var SmtpSetting|null $smtp */
         $smtp = SmtpSetting::query()
             ->where('organization_id', '=', $campaign->organization_id)
+            ->where('id', '=', $campaign->smtp_setting_id)
             ->where('is_active', '=', 1)
             ->first();
+        if (!$smtp) {
+            $smtp = SmtpSetting::query()
+                ->where('organization_id', '=', $campaign->organization_id)
+                ->where('is_active', '=', 1)
+                ->first();
+            if ($smtp && !$campaign->smtp_setting_id) {
+                $campaign->smtp_setting_id = $smtp->id;
+                $campaign->save();
+            }
+        }
 
         if (!$template || !$smtp || !$smtp->validate()) {
             throw new \RuntimeException('Active SMTP settings or template are missing for campaign send.');

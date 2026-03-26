@@ -17,5 +17,8 @@ class UpdateCampaignDto extends FormRequest
     #[IsValidated]
     public protected(set) int $template_id;
 
+    #[IsValidated]
+    public protected(set) int $smtp_setting_id;
+
     public protected(set) ?string $scheduled_at = null;
 }

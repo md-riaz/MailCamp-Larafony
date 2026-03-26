@@ -7,6 +7,7 @@ namespace App\Database\Seeders;
 use App\Models\Campaign;
 use App\Models\Organization;
 use App\Models\Recipient;
+use App\Models\SmtpSetting;
 use App\Models\Template;
 use App\Models\User;
 
@@ -33,6 +34,10 @@ class CampaignSeeder
         // Get templates
         $welcomeTemplate = Template::query()->where('name', '=', 'Welcome Email')->first();
         $newsletterTemplate = Template::query()->where('name', '=', 'Newsletter - Monthly Update')->first();
+        $activeSmtp = SmtpSetting::query()
+            ->where('organization_id', '=', $defaultOrg->id)
+            ->where('is_active', '=', 1)
+            ->first();
         
         if (!$welcomeTemplate || !$newsletterTemplate) {
             echo "   ⚠ Templates not found - please run TemplateSeeder first\n";
@@ -111,6 +116,7 @@ class CampaignSeeder
             $campaign->started_at = $campaignData['started_at'];
             $campaign->completed_at = $campaignData['completed_at'];
             $campaign->created_by = (int)$adminUser->id;
+            $campaign->smtp_setting_id = $activeSmtp?->id;
             $campaign->save();
             $count++;
             echo "   ✓ {$campaignData['name']} created (ID: {$campaign->id}, Status: {$campaignData['status']})\n";
