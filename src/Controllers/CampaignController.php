@@ -124,14 +124,14 @@ class CampaignController extends Controller
 
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
-        $template = Template::query()
-            ->where('organization_id', '=', $user->getOrganizationId())
-            ->where('id', '=', $dto->template_id)
-            ->where('is_active', '=', 1)
-            ->first();
-        if (!$template) {
-            return $this->redirect('/campaigns/create?notice=template_missing');
+
+        $subject = trim((string) ($dto->subject ?? ''));
+        $html = (string) ($dto->html_content ?? '');
+        if ($subject === '' || trim(strip_tags($html)) === '') {
+            return $this->redirect('/campaigns/create?notice=content_missing');
         }
+
+        $saveAsTemplate = (bool) ($dto->save_as_template ?? false);
 
         $smtpSetting = SmtpSetting::query()
             ->where('organization_id', '=', $user->getOrganizationId())
@@ -141,6 +141,17 @@ class CampaignController extends Controller
         if (!$smtpSetting) {
             return $this->redirect('/campaigns/create?notice=smtp_missing');
         }
+
+        $templateName = $saveAsTemplate ? ($subject !== '' ? $subject : $dto->name) : 'Campaign Draft: ' . $dto->name;
+        $template = new Template()->fill([
+            'organization_id' => $user->getOrganizationId(),
+            'name' => $templateName,
+            'subject' => $subject,
+            'html_content' => $html,
+            'is_active' => $saveAsTemplate ? 1 : 0,
+        ]);
+        $template->variables = json_encode($template->parseVariables());
+        $template->save();
 
         $campaign = new Campaign()->fill([
             'organization_id' => $user->getOrganizationId(),

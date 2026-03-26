@@ -6,6 +6,12 @@ $componentsPath = dirname(__DIR__, 3) . '/resources/views/blade/components';
 $templates = $templates ?? [];
 $smtpSettings = $smtpSettings ?? [];
 $noticeKey = (string) ($_GET['notice'] ?? '');
+$templatesJson = json_encode(array_map(static fn($t) => [
+    'id' => $t->id,
+    'name' => $t->name,
+    'subject' => $t->subject,
+    'html_content' => $t->html_content,
+], $templates), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
 ob_start();
 ?>
@@ -59,6 +65,7 @@ include $componentsPath . '/page-header.blade.php';
     $noticeMessage = match ($noticeKey) {
         'smtp_missing' => 'Select an active SMTP account before creating a campaign.',
         'template_missing' => 'Choose a valid template from your organization.',
+        'content_missing' => 'Subject and HTML content are required to create a campaign.',
         default => ''
     };
     if ($noticeMessage !== '') {
@@ -96,19 +103,39 @@ include $componentsPath . '/page-header.blade.php';
                         <div class="form-text">Use a name operators can recognize later in timelines, reports, and send verification.</div>
                     </div>
 
-                    <div class="col-12">
-                        <label for="template_id" class="form-label">Select Template</label>
-                        <select class="form-select" id="template_id" name="template_id" required>
-                            <option value="">-- Select a template --</option>
-                            <?php if (!empty($templates)): foreach ($templates as $template): ?>
+                    <div class="col-12 col-md-8">
+                        <label for="subject" class="form-label">Email Subject</label>
+                        <input type="text" class="form-control" id="subject" name="subject" placeholder="Use {{name}} for personalization" required>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label for="template_loader" class="form-label">Start from template (optional)</label>
+                        <select class="form-select" id="template_loader">
+                            <option value="">-- Choose to prefill --</option>
+                            <?php foreach ($templates as $template): ?>
                             <option value="<?php echo $template->id; ?>"><?php echo htmlspecialchars($template->name); ?></option>
-                            <?php endforeach; endif; ?>
+                            <?php endforeach; ?>
                         </select>
-                        <?php if (empty($templates)): ?>
-                        <div class="form-text">No templates available. <a href="<?= $basePath ?>/templates/create">Create a template first</a>.</div>
-                        <?php else: ?>
-                        <div class="form-text">Choose a reusable template now. You’ll import recipients and run safety checks from the campaign detail page next.</div>
-                        <?php endif; ?>
+                        <div class="form-text">Selecting a template will prefill the editor; you can edit freely.</div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-2">
+                            <label for="html_content" class="form-label mb-0">HTML Content</label>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="{{name}}">{{name}}</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="{{email}}">{{email}}</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="{{unsubscribe_url}}">{{unsubscribe_url}}</button>
+                            </div>
+                        </div>
+                        <textarea class="form-control font-monospace" id="html_content" name="html_content" style="min-height: 320px;" required></textarea>
+                        <div class="form-text">Compose the campaign body. Template selection only pre-fills this editor.</div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="1" id="save_as_template" name="save_as_template" checked>
+                            <label class="form-check-label" for="save_as_template">Save this HTML as a reusable template (uses subject as name)</label>
+                        </div>
                     </div>
 
                     <div class="col-12">
@@ -127,7 +154,7 @@ include $componentsPath . '/page-header.blade.php';
                     </div>
 
                     <div class="col-12 d-flex gap-2 flex-wrap">
-                        <button type="submit" class="btn btn-success" <?php echo empty($templates) || empty($smtpSettings) ? 'disabled' : ''; ?>>Create Campaign</button>
+                        <button type="submit" class="btn btn-success" <?php echo empty($smtpSettings) ? 'disabled' : ''; ?>>Create Campaign</button>
                         <a href="<?= $basePath ?>/campaigns" class="btn btn-outline-secondary">Cancel</a>
                     </div>
                 </form>
@@ -164,6 +191,40 @@ include $componentsPath . '/page-header.blade.php';
 </div>
 
 <?php 
-$content = ob_get_clean(); 
+$editorAssets = dirname(__DIR__, 1) . '/templates/_editor_assets.blade.php';
+ob_start();
+include $editorAssets;
+?>
+<script>
+(function() {
+    const templates = <?php echo $templatesJson ?: '[]'; ?>;
+    const selector = document.getElementById('template_loader');
+    const subjectInput = document.getElementById('subject');
+    const textarea = document.getElementById('html_content');
+
+    if (!selector) return;
+
+    selector.addEventListener('change', function() {
+        const templateId = this.value;
+        const chosen = templates.find(t => String(t.id) === String(templateId));
+        if (!chosen) {
+            return;
+        }
+
+        if (subjectInput) {
+            subjectInput.value = chosen.subject || '';
+        }
+
+        if (window.mailcampEditor) {
+            window.mailcampEditor.setData(chosen.html_content || '');
+        } else if (textarea) {
+            textarea.value = chosen.html_content || '';
+        }
+    });
+})();
+</script>
+<?php
+$scripts = ob_get_clean();
+$content = ob_get_clean();
 include dirname(__DIR__, 3) . '/resources/views/blade/layout.php'; 
 ?>

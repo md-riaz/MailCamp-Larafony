@@ -15,7 +15,14 @@ class CreateCampaignDto extends FormRequest
     public protected(set) string $name;
 
     #[IsValidated]
-    public protected(set) int $template_id;
+    #[MinLength(3)]
+    public protected(set) string $subject;
+
+    #[IsValidated]
+    #[MinLength(10)]
+    public protected(set) string $html_content;
+
+    public protected(set) bool $save_as_template = false;
 
     #[IsValidated]
     public protected(set) int $smtp_setting_id;
