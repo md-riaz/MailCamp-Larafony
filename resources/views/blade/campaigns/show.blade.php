@@ -18,7 +18,15 @@ $safety = $safety ?? ['ok' => true, 'should_pause' => false, 'risk_level' => 'lo
 $deliverability = $safety['deliverability'] ?? ['domain' => null, 'checks' => [], 'warnings' => [], 'recommendations' => []];
 $riskHistory = $riskHistory ?? [];
 $smtpSetting = $smtpSetting ?? null;
+$smtpSettings = $smtpSettings ?? [];
 $template = $template ?? null;
+$templates = $templates ?? [];
+$templatesJson = json_encode(array_map(static fn($t) => [
+    'id' => $t->id,
+    'name' => $t->name,
+    'subject' => $t->subject,
+    'html_content' => $t->html_content,
+], $templates), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 $smtpLabel = $smtpSetting ? ($smtpSetting->from_email . ' @ ' . $smtpSetting->host) : 'Not selected';
 $templateLabel = $template?->name ?? '—';
 $statusLabel = ucfirst((string) $campaign->status);
@@ -29,17 +37,13 @@ $statusClass = match ((string) $campaign->status) {
     'failed' => 'badge-danger',
     default => 'badge-muted',
 };
+$canEdit = $campaign->canEdit();
+$workspaceMode = $canEdit || (string) ($_GET['workspace'] ?? '') === 'edit';
 
 ob_start();
 ?>
 <div class="d-flex gap-2 flex-wrap">
     <a href="<?= $basePath ?>/campaigns" class="btn btn-outline-secondary">Back to campaigns</a>
-    <?php if ($campaign->canEdit()): ?>
-    <a href="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/edit" class="btn btn-outline-primary">Edit campaign</a>
-    <?php endif; ?>
-    <?php if (in_array((string) $campaign->status, ['draft', 'scheduled'], true)): ?>
-    <a href="#recipient-import" class="btn btn-primary">Import recipients</a>
-    <?php endif; ?>
     <?php if ($campaign->canStart() && $campaign->total_recipients > 0): ?>
     <form method="POST" action="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/launch" class="d-inline">
         <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to launch this campaign?')">Launch campaign</button>
@@ -49,42 +53,22 @@ ob_start();
 <?php
 $actionsHtml = ob_get_clean();
 $title = (string) $campaign->name;
-$subtitle = 'Campaign details, delivery metrics, and next actions.';
+$subtitle = $canEdit
+    ? 'Draft and refine the campaign here, then import recipients, schedule, and launch from the same workspace.'
+    : 'Campaign delivery details, metrics, and recent activity.';
 include $componentsPath . '/page-header.blade.php';
 ?>
 
-<div class="card portal-hero mb-4">
-    <div class="card-body">
-        <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-end gap-4">
-            <div>
-                <div class="eyebrow mb-3">Campaign Operator Console</div>
-                <h2 class="display-6 fw-bold mb-2"><?php echo htmlspecialchars((string) $campaign->name, ENT_QUOTES, 'UTF-8'); ?></h2>
-                <p class="mb-0" style="max-width: 760px; color: rgba(255,255,255,0.84) !important;">Review readiness, watch risk posture, and inspect delivery behavior from one place before you trust this campaign in production.</p>
-            </div>
-        </div>
-        <div class="portal-grid portal-grid-4 mt-4">
-            <div class="portal-metric">
-                <div class="metric-label">Status</div>
-                <div class="metric-value" style="font-size: 22px;"><?php echo htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8'); ?></div>
-                <div class="metric-note">Current campaign lifecycle position.</div>
-            </div>
-            <div class="portal-metric">
-                <div class="metric-label">Recipients</div>
-                <div class="metric-value"><?php echo $deliveryTotal; ?></div>
-                <div class="metric-note">Imported and currently associated recipients.</div>
-            </div>
-            <div class="portal-metric">
-                <div class="metric-label">Risk level</div>
-                <div class="metric-value" style="font-size: 22px;"><?php echo htmlspecialchars(strtoupper((string) ($safety['risk_level'] ?? 'low')), ENT_QUOTES, 'UTF-8'); ?></div>
-                <div class="metric-note">Safety evaluator summary before launch.</div>
-            </div>
-            <div class="portal-metric">
-                <div class="metric-label">Delivered / Opened</div>
-                <div class="metric-value" style="font-size: 22px;"><?php echo (int) ($campaignMetrics['delivered'] ?? 0); ?> / <?php echo (int) ($campaignMetrics['opened'] ?? 0); ?></div>
-                <div class="metric-note">Quick engagement read for this campaign.</div>
-            </div>
-        </div>
-    </div>
+<div class="d-flex flex-wrap align-items-center gap-3 mb-4">
+    <?php
+    $label = $statusLabel;
+    $class = $statusClass;
+    include $componentsPath . '/status-badge.blade.php';
+    ?>
+    <span class="text-secondary small">Recipients: <?php echo $deliveryTotal; ?></span>
+    <span class="text-secondary small">Sent: <?php echo $sentCount; ?></span>
+    <span class="text-secondary small">Failed: <?php echo $failedCount; ?></span>
+    <span class="text-secondary small">SMTP: <?php echo htmlspecialchars($smtpLabel, ENT_QUOTES, 'UTF-8'); ?></span>
 </div>
 
 <?php if (!empty($notice['message'] ?? '')): ?>
@@ -112,133 +96,135 @@ include $componentsPath . '/page-header.blade.php';
 <?php endif; ?>
 
 <div class="row g-3 mb-4">
-    <div class="col-12 col-lg-6">
+    <div class="col-12 col-xl-8">
+        <?php if ($canEdit): ?>
         <div class="card h-100">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-                    <div>
-                        <h2 class="h5 mb-1">Overview</h2>
-                        <p class="text-secondary small mb-0">Current status and delivery readiness.</p>
+                <form method="POST" action="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>" class="row g-3">
+                    <input type="hidden" name="_method" value="PUT">
+
+                    <div class="col-12 col-md-6">
+                        <label for="name" class="form-label">Campaign Name</label>
+                        <input type="text" class="form-control" id="name" name="name" value="<?= htmlspecialchars((string) $campaign->name, ENT_QUOTES, 'UTF-8') ?>" required>
                     </div>
-                    <?php
-                    $label = $statusLabel;
-                    $class = $statusClass;
-                    include $componentsPath . '/status-badge.blade.php';
-                    ?>
-                </div>
-                <div class="row g-3">
-                    <div class="col-6">
-                        <div class="border rounded-3 p-3 h-100 bg-light-subtle">
-                            <div class="text-secondary small">Recipients</div>
-                            <div class="fs-4 fw-bold"><?php echo $deliveryTotal; ?></div>
-                        </div>
+                    <div class="col-12 col-md-6">
+                        <label for="smtp_setting_id" class="form-label">SMTP Account</label>
+                        <select class="form-select" id="smtp_setting_id" name="smtp_setting_id" required <?php echo empty($smtpSettings) ? 'disabled' : ''; ?>>
+                            <option value="">-- Select an SMTP account --</option>
+                            <?php foreach ($smtpSettings as $smtp): ?>
+                            <option value="<?php echo $smtp->id; ?>" <?php echo (int) $campaign->smtp_setting_id === (int) $smtp->id ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($smtp->from_email . ' @ ' . $smtp->host, ENT_QUOTES, 'UTF-8'); ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
-                    <div class="col-6">
-                        <div class="border rounded-3 p-3 h-100 bg-light-subtle">
-                            <div class="text-secondary small">Pending</div>
-                            <div class="fs-4 fw-bold"><?php echo $pendingCount; ?></div>
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <p class="text-secondary small mb-0">
-                            <?php if ($campaign->status === 'draft' && $deliveryTotal === 0): ?>
-                            This draft still needs recipients before it can be launched.
-                            <?php elseif ($campaign->status === 'draft'): ?>
-                            This draft has recipients and is ready for launch.
-                            <?php elseif ($campaign->status === 'failed'): ?>
-                            Delivery issues were recorded for this campaign. Review failed counts before the next send.
-                            <?php else: ?>
-                            Delivery progress is shown below using the currently available campaign data.
-                            <?php endif; ?>
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-lg-6">
-        <div class="card h-100">
-            <div class="card-body">
-                <h2 class="h5 mb-3">Delivery Metrics</h2>
-                <div class="row g-3 mb-3">
-                    <div class="col-6 col-md-4">
-                        <div class="border rounded-3 p-3 h-100 bg-light-subtle">
-                            <div class="text-secondary small">Sent</div>
-                            <div class="fs-4 fw-bold text-success"><?php echo $sentCount; ?></div>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-4">
-                        <div class="border rounded-3 p-3 h-100 bg-light-subtle">
-                            <div class="text-secondary small">Failed</div>
-                            <div class="fs-4 fw-bold text-danger"><?php echo $failedCount; ?></div>
-                        </div>
+
+                    <div class="col-12 col-md-8">
+                        <label for="subject" class="form-label">Email Subject</label>
+                        <input type="text" class="form-control" id="subject" name="subject" value="<?= htmlspecialchars((string) ($template?->subject ?? ''), ENT_QUOTES, 'UTF-8') ?>" required>
                     </div>
                     <div class="col-12 col-md-4">
-                        <div class="border rounded-3 p-3 h-100 bg-light-subtle">
-                            <div class="text-secondary small">Pending</div>
-                            <div class="fs-4 fw-bold"><?php echo $pendingCount; ?></div>
-                        </div>
+                        <label for="template_loader" class="form-label">Prefill from template</label>
+                        <select class="form-select" id="template_loader">
+                            <option value="">-- Optional prefill --</option>
+                            <?php foreach ($templates as $availableTemplate): ?>
+                            <option value="<?php echo $availableTemplate->id; ?>"><?php echo htmlspecialchars($availableTemplate->name, ENT_QUOTES, 'UTF-8'); ?></option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
-                </div>
-                <div class="row g-3">
-                    <div class="col-6 col-md-3">
-                        <div class="border rounded-3 p-3 h-100">
-                            <div class="text-secondary small">Delivered</div>
-                            <div class="fs-5 fw-bold text-success"><?php echo (int) ($campaignMetrics['delivered'] ?? 0); ?></div>
+
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-2">
+                            <label for="html_content" class="form-label mb-0">HTML Content</label>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="{{name}}">{{name}}</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="{{email}}">{{email}}</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="{{unsubscribe_url}}">{{unsubscribe_url}}</button>
+                            </div>
                         </div>
+                        <textarea class="form-control font-monospace" id="html_content" name="html_content" style="min-height: 360px;" required><?= htmlspecialchars((string) ($template?->html_content ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>
                     </div>
-                    <div class="col-6 col-md-3">
-                        <div class="border rounded-3 p-3 h-100">
-                            <div class="text-secondary small">Opened</div>
-                            <div class="fs-5 fw-bold text-info"><?php echo (int) ($campaignMetrics['opened'] ?? 0); ?></div>
-                            <div class="text-muted small"><?php echo $campaignMetrics['open_rate'] ?? 0; ?>%</div>
-                        </div>
+
+                    <div class="col-12 col-md-6">
+                        <label for="scheduled_at" class="form-label">Scheduled At</label>
+                        <input type="datetime-local" class="form-control" id="scheduled_at" name="scheduled_at" value="<?= !empty($campaign->scheduled_at) ? htmlspecialchars(date('Y-m-d\TH:i', strtotime((string) $campaign->scheduled_at)), ENT_QUOTES, 'UTF-8') : '' ?>">
                     </div>
-                    <div class="col-6 col-md-3">
-                        <div class="border rounded-3 p-3 h-100">
-                            <div class="text-secondary small">Clicked</div>
-                            <div class="fs-5 fw-bold text-primary"><?php echo (int) ($campaignMetrics['clicked'] ?? 0); ?></div>
-                            <div class="text-muted small"><?php echo $campaignMetrics['ctr'] ?? 0; ?>% CTR</div>
-                        </div>
+
+                    <div class="col-12 d-flex gap-2 flex-wrap">
+                        <button type="submit" class="btn btn-primary" <?php echo empty($smtpSettings) ? 'disabled' : ''; ?>>Save campaign</button>
+                        <?php if ($campaign->canStart() && $campaign->total_recipients > 0): ?>
+                        <button type="submit" formaction="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/launch" formmethod="POST" class="btn btn-success" onclick="return confirm('Are you sure you want to launch this campaign?')">Launch now</button>
+                        <?php endif; ?>
                     </div>
-                    <div class="col-6 col-md-3">
-                        <div class="border rounded-3 p-3 h-100">
-                            <div class="text-secondary small">Bounced</div>
-                            <div class="fs-5 fw-bold text-danger"><?php echo (int) ($campaignMetrics['bounced'] ?? 0); ?></div>
-                        </div>
-                    </div>
-                </div>
-                <hr>
-                <div class="row g-2">
-                    <div class="col-6 col-md-2"><div class="small text-secondary">Hard</div><div class="fw-semibold text-danger"><?php echo (int) ($bounceBreakdown['hard'] ?? 0); ?></div></div>
-                    <div class="col-6 col-md-2"><div class="small text-secondary">Soft</div><div class="fw-semibold text-warning"><?php echo (int) ($bounceBreakdown['soft'] ?? 0); ?></div></div>
-                    <div class="col-6 col-md-2"><div class="small text-secondary">Blocked</div><div class="fw-semibold text-danger"><?php echo (int) ($bounceBreakdown['blocked'] ?? 0); ?></div></div>
-                    <div class="col-6 col-md-3"><div class="small text-secondary">Domain error</div><div class="fw-semibold text-secondary"><?php echo (int) ($bounceBreakdown['domain_error'] ?? 0); ?></div></div>
-                    <div class="col-6 col-md-3"><div class="small text-secondary">Unknown</div><div class="fw-semibold"><?php echo (int) ($bounceBreakdown['unknown'] ?? 0); ?></div></div>
-                </div>
+                </form>
             </div>
         </div>
-    </div>
-</div>
-
-<div class="row g-3 mb-4">
-    <div class="col-12 col-xl-7">
+        <?php else: ?>
         <?php
         ob_start();
         ?>
-        <div class="portal-section-title">Campaign context</div>
-        <h2 class="h5 mb-3">Campaign Info</h2>
-        <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0">
-                <tr><th style="width:220px;">Campaign ID</th><td><?php echo $campaign->id; ?></td></tr>
-                <tr><th>Status</th><td><?php echo htmlspecialchars((string) $campaign->status, ENT_QUOTES, 'UTF-8'); ?></td></tr>
-                <tr><th>Template</th><td><?php echo htmlspecialchars($templateLabel, ENT_QUOTES, 'UTF-8'); ?></td></tr>
-                <tr><th>SMTP Account</th><td><?php echo htmlspecialchars($smtpLabel, ENT_QUOTES, 'UTF-8'); ?></td></tr>
-                <tr><th>Created</th><td><?php echo $createdText; ?></td></tr>
-                <tr><th>Started</th><td><?php echo $startedText; ?></td></tr>
-                <tr><th>Completed</th><td><?php echo $completedText; ?></td></tr>
-                <tr><th>Total Recipients</th><td><?php echo $deliveryTotal; ?></td></tr>
-            </table>
+        <h2 class="h5 mb-3">Campaign Content</h2>
+        <div class="mb-3">
+            <div class="text-secondary small">Subject</div>
+            <div class="fw-semibold"><?= htmlspecialchars((string) ($template?->subject ?? '—'), ENT_QUOTES, 'UTF-8') ?></div>
+        </div>
+        <div class="border rounded-3 p-3 bg-light-subtle" style="min-height: 220px;">
+            <?= (string) ($template?->html_content ?? '<span class="text-secondary">No HTML content available.</span>') ?>
+        </div>
+        <?php
+        $contentHtml = ob_get_clean();
+        $className = 'h-100 mb-0';
+        include $componentsPath . '/table-shell.blade.php';
+        ?>
+        <?php endif; ?>
+    </div>
+
+    <div class="col-12 col-xl-4">
+        <?php
+        ob_start();
+        ?>
+        <h2 class="h5 mb-3">Workspace</h2>
+        <div class="small text-secondary mb-3">Keep the campaign moving from one place: content, sender, schedule, recipients, and launch readiness.</div>
+        <div class="row g-3 mb-3">
+            <div class="col-6">
+                <div class="border rounded-3 p-3 h-100 bg-light-subtle">
+                    <div class="text-secondary small">Template</div>
+                    <div class="fw-semibold"><?= htmlspecialchars($templateLabel, ENT_QUOTES, 'UTF-8') ?></div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="border rounded-3 p-3 h-100 bg-light-subtle">
+                    <div class="text-secondary small">Pending</div>
+                    <div class="fw-semibold"><?php echo $pendingCount; ?></div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="border rounded-3 p-3 h-100 bg-light-subtle">
+                    <div class="text-secondary small">Risk</div>
+                    <div class="fw-semibold"><?php echo htmlspecialchars(strtoupper((string) ($safety['risk_level'] ?? 'low')), ENT_QUOTES, 'UTF-8'); ?></div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="border rounded-3 p-3 h-100 bg-light-subtle">
+                    <div class="text-secondary small">Started</div>
+                    <div class="fw-semibold small"><?php echo htmlspecialchars($startedText, ENT_QUOTES, 'UTF-8'); ?></div>
+                </div>
+            </div>
+        </div>
+
+        <?php if ($canEdit): ?>
+        <form id="recipient-import" method="POST" action="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/recipients" enctype="multipart/form-data" class="border rounded-3 p-3 mb-3">
+            <label for="recipients_file" class="form-label">Import recipients CSV</label>
+            <input type="file" class="form-control mb-2" id="recipients_file" name="recipients_file" accept=".csv" required>
+            <div class="form-text mb-3">Format: email,name,custom_field1,custom_field2,...</div>
+            <button type="submit" class="btn btn-outline-primary w-100" <?php echo !$canEdit ? 'disabled' : ''; ?>>Import recipients</button>
+        </form>
+        <?php endif; ?>
+
+        <div class="small text-secondary">
+            <div><strong>Created:</strong> <?php echo htmlspecialchars($createdText, ENT_QUOTES, 'UTF-8'); ?></div>
+            <div><strong>Completed:</strong> <?php echo htmlspecialchars($completedText, ENT_QUOTES, 'UTF-8'); ?></div>
+            <div><strong>Sender:</strong> <?php echo htmlspecialchars($smtpLabel, ENT_QUOTES, 'UTF-8'); ?></div>
         </div>
         <?php
         $contentHtml = ob_get_clean();
@@ -246,84 +232,55 @@ include $componentsPath . '/page-header.blade.php';
         include $componentsPath . '/table-shell.blade.php';
         ?>
     </div>
-    <div class="col-12 col-xl-5">
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-xl-6">
         <?php
         ob_start();
         ?>
-        <div class="portal-section-title">Launch guardrails</div>
+        <h2 class="h5 mb-3">Delivery Metrics</h2>
+        <div class="row g-3 mb-3">
+            <div class="col-4"><div class="border rounded-3 p-3 h-100 bg-light-subtle"><div class="text-secondary small">Sent</div><div class="fs-4 fw-bold text-success"><?php echo $sentCount; ?></div></div></div>
+            <div class="col-4"><div class="border rounded-3 p-3 h-100 bg-light-subtle"><div class="text-secondary small">Failed</div><div class="fs-4 fw-bold text-danger"><?php echo $failedCount; ?></div></div></div>
+            <div class="col-4"><div class="border rounded-3 p-3 h-100 bg-light-subtle"><div class="text-secondary small">Pending</div><div class="fs-4 fw-bold"><?php echo $pendingCount; ?></div></div></div>
+        </div>
+        <div class="row g-3">
+            <div class="col-6 col-md-3"><div class="border rounded-3 p-3 h-100"><div class="text-secondary small">Delivered</div><div class="fs-5 fw-bold text-success"><?php echo (int) ($campaignMetrics['delivered'] ?? 0); ?></div></div></div>
+            <div class="col-6 col-md-3"><div class="border rounded-3 p-3 h-100"><div class="text-secondary small">Opened</div><div class="fs-5 fw-bold text-info"><?php echo (int) ($campaignMetrics['opened'] ?? 0); ?></div></div></div>
+            <div class="col-6 col-md-3"><div class="border rounded-3 p-3 h-100"><div class="text-secondary small">Clicked</div><div class="fs-5 fw-bold text-primary"><?php echo (int) ($campaignMetrics['clicked'] ?? 0); ?></div></div></div>
+            <div class="col-6 col-md-3"><div class="border rounded-3 p-3 h-100"><div class="text-secondary small">Bounced</div><div class="fs-5 fw-bold text-danger"><?php echo (int) ($campaignMetrics['bounced'] ?? 0); ?></div></div></div>
+        </div>
+        <?php
+        $contentHtml = ob_get_clean();
+        $className = 'h-100 mb-0';
+        include $componentsPath . '/table-shell.blade.php';
+        ?>
+    </div>
+    <div class="col-12 col-xl-6">
+        <?php
+        ob_start();
+        ?>
         <h2 class="h5 mb-3">Safety & Deliverability</h2>
         <div class="row g-3 mb-3">
-            <div class="col-6"><div class="border rounded-3 p-3 h-100 bg-light-subtle"><div class="text-secondary small">Risk level</div><div class="fs-5 fw-bold text-<?php echo ($safety['risk_level'] ?? 'low') === 'high' ? 'danger' : (($safety['risk_level'] ?? 'low') === 'medium' ? 'warning' : 'success'); ?>"><?php echo htmlspecialchars(strtoupper((string) ($safety['risk_level'] ?? 'low')), ENT_QUOTES, 'UTF-8'); ?></div></div></div>
-            <div class="col-6"><div class="border rounded-3 p-3 h-100 bg-light-subtle"><div class="text-secondary small">Autopause</div><div class="fs-5 fw-bold"><?php echo !empty($safety['should_pause']) ? 'ARMED' : 'clear'; ?></div></div></div>
-        </div>
-        <div class="row g-2">
-            <div class="col-6"><div class="small text-secondary">Recipients</div><div class="fw-semibold"><?php echo (int) (($safety['metrics']['recipients'] ?? 0)); ?></div></div>
-            <div class="col-6"><div class="small text-secondary">Bounce rate</div><div class="fw-semibold text-danger"><?php echo htmlspecialchars((string) (($safety['metrics']['bounce_rate'] ?? 0)) . '%', ENT_QUOTES, 'UTF-8'); ?></div></div>
-            <div class="col-6"><div class="small text-secondary">Complaint rate</div><div class="fw-semibold text-danger"><?php echo htmlspecialchars((string) (($safety['metrics']['complaint_rate'] ?? 0)) . '%', ENT_QUOTES, 'UTF-8'); ?></div></div>
-            <div class="col-6"><div class="small text-secondary">Sender</div><div class="fw-semibold"><?php echo htmlspecialchars((string) (($safety['metrics']['sender_email'] ?? '—')), ENT_QUOTES, 'UTF-8'); ?></div></div>
-        </div>
-        <hr>
-        <hr>
-        <div class="small text-secondary mb-2">DNS deliverability checks for <?php echo htmlspecialchars((string) ($deliverability['domain'] ?? 'sender domain'), ENT_QUOTES, 'UTF-8'); ?></div>
-        <div class="row g-2 mb-3">
-            <?php foreach (($deliverability['checks'] ?? []) as $checkName => $check): ?>
-            <div class="col-6 col-md-3">
-                <div class="border rounded-3 p-2 h-100 bg-light-subtle">
-                    <div class="text-secondary small text-uppercase"><?php echo htmlspecialchars((string) $checkName, ENT_QUOTES, 'UTF-8'); ?></div>
-                    <div class="fw-semibold text-<?php echo ($check['status'] ?? 'warn') === 'pass' ? 'success' : 'warning'; ?>"><?php echo htmlspecialchars(strtoupper((string) ($check['status'] ?? 'warn')), ENT_QUOTES, 'UTF-8'); ?></div>
-                </div>
-            </div>
-            <?php endforeach; ?>
+            <div class="col-6"><div class="border rounded-3 p-3 h-100 bg-light-subtle"><div class="text-secondary small">Risk level</div><div class="fw-semibold"><?php echo htmlspecialchars(strtoupper((string) ($safety['risk_level'] ?? 'low')), ENT_QUOTES, 'UTF-8'); ?></div></div></div>
+            <div class="col-6"><div class="border rounded-3 p-3 h-100 bg-light-subtle"><div class="text-secondary small">Autopause</div><div class="fw-semibold"><?php echo !empty($safety['should_pause']) ? 'ARMED' : 'CLEAR'; ?></div></div></div>
         </div>
         <?php if (!empty($deliverability['recommendations'])): ?>
         <div class="small text-secondary">
-            <strong>Recommendations:</strong>
+            <strong>Recommendations</strong>
             <ul class="mb-0 mt-2">
                 <?php foreach ($deliverability['recommendations'] as $recommendation): ?>
                 <li><?php echo htmlspecialchars((string) $recommendation, ENT_QUOTES, 'UTF-8'); ?></li>
                 <?php endforeach; ?>
             </ul>
         </div>
-        <?php endif; ?>
-        <p class="text-secondary small mt-3 mb-0">Launch now checks template requirements, SMTP readiness, sender quality hints, DNS deliverability posture, bounce thresholds, and complaint thresholds before allowing activation.</p>
+        <?php else: ?>
         <?php
-        $contentHtml = ob_get_clean();
-        $className = 'h-100 mb-0';
-        include $componentsPath . '/table-shell.blade.php';
+        $message = 'No additional deliverability recommendations are currently available.';
+        $actionHtml = '';
+        include $componentsPath . '/empty-state.blade.php';
         ?>
-    </div>
-</div>
-
-<div class="row g-3 mb-4">
-    <div class="col-12 col-xl-7">
-        <?php
-        ob_start();
-        ?>
-        <h2 class="h5 mb-3">Actions</h2>
-        <div class="d-grid gap-2">
-            <?php if ($campaign->status === 'draft' && $campaign->total_recipients > 0): ?>
-            <form method="POST" action="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/launch">
-                <button type="submit" class="btn btn-success w-100" onclick="return confirm('Are you sure you want to launch this campaign?')">Launch campaign</button>
-            </form>
-            <?php endif; ?>
-
-            <?php if ($campaign->status === 'draft'): ?>
-            <form id="recipient-import" method="POST" action="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/recipients" enctype="multipart/form-data" class="row g-3 border rounded-3 p-3 mx-0">
-                <div class="col-12 px-0">
-                    <label for="recipients_file" class="form-label">Import recipients CSV</label>
-                    <input type="file" class="form-control" id="recipients_file" name="recipients_file" accept=".csv" required>
-                    <div class="form-text">Format: email,name,custom_field1,custom_field2,...</div>
-                </div>
-                <div class="col-12 px-0">
-                    <button type="submit" class="btn btn-primary">Import recipients</button>
-                </div>
-            </form>
-            <?php endif; ?>
-
-            <a href="<?= $basePath ?>/campaigns" class="btn btn-outline-secondary text-start">Back to campaigns</a>
-        </div>
-        <?php if ($campaign->status === 'draft' && $campaign->total_recipients === 0): ?>
-        <p class="text-secondary small mt-3 mb-0">Import recipients first. Launch stays hidden until the campaign has recipients.</p>
         <?php endif; ?>
         <?php
         $contentHtml = ob_get_clean();
@@ -334,14 +291,9 @@ include $componentsPath . '/page-header.blade.php';
 </div>
 
 <div class="row g-3 mb-4">
-    <div class="col-12">
+    <div class="col-12 col-xl-6">
         <?php ob_start(); ?>
-        <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
-            <div>
-                <h2 class="h5 mb-1">Risk History</h2>
-                <p class="text-secondary small mb-0">Recent safety snapshots and autopause decisions for this campaign.</p>
-            </div>
-        </div>
+        <h2 class="h5 mb-3">Risk History</h2>
         <?php if (!empty($riskHistory)): ?>
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
@@ -360,39 +312,28 @@ include $componentsPath . '/page-header.blade.php';
             </table>
         </div>
         <?php else: ?>
-        <p class="text-secondary small mb-0">No risk snapshots recorded yet. Launch evaluation will populate this history.</p>
+        <?php
+        $message = 'No risk snapshots recorded yet. Launch evaluation will populate this history.';
+        $actionHtml = '';
+        include $componentsPath . '/empty-state.blade.php';
+        ?>
         <?php endif; ?>
         <?php $contentHtml = ob_get_clean(); $className = 'mb-0'; include $componentsPath . '/table-shell.blade.php'; ?>
     </div>
-</div>
-
-<div class="row g-3 mb-4">
-    <div class="col-12 col-xl-8">
+    <div class="col-12 col-xl-6">
         <?php ob_start(); ?>
-        <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
-            <div>
-                <h2 class="h5 mb-1">Recent Campaign Events</h2>
-                <p class="text-secondary small mb-0">Latest queued, sent, opened, clicked, bounce, and webhook-normalized activity.</p>
-            </div>
-            <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events" class="btn btn-sm btn-outline-primary">Open timeline</a>
-            <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events?format=json" class="btn btn-sm btn-outline-secondary">Raw events API</a>
-        </div>
+        <h2 class="h5 mb-3">Recent Campaign Events</h2>
         <?php if (!empty($recentEvents)): ?>
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead>
-                    <tr><th>When</th><th>Event</th><th>Message</th><th>Recipient</th><th>Details</th></tr>
+                    <tr><th>When</th><th>Event</th><th>Recipient</th><th>Details</th></tr>
                 </thead>
                 <tbody>
                 <?php foreach ($recentEvents as $event): ?>
                     <tr>
                         <td><?php echo htmlspecialchars((string) ($event['timestamp'] ?? '—'), ENT_QUOTES, 'UTF-8'); ?></td>
                         <td><span class="badge bg-light text-dark border"><?php echo htmlspecialchars((string) ($event['event_type'] ?? 'unknown'), ENT_QUOTES, 'UTF-8'); ?></span></td>
-                        <td>
-                            <?php if (!empty($event['message_id'])): ?>
-                            <a href="<?= $basePath ?>/message/<?php echo (int) $event['message_id']; ?>/events">#<?php echo (int) $event['message_id']; ?></a>
-                            <?php else: ?>—<?php endif; ?>
-                        </td>
                         <td><?php echo !empty($event['recipient_id']) ? '#' . (int) $event['recipient_id'] : '—'; ?></td>
                         <td class="small text-secondary">
                             <?php
@@ -413,25 +354,57 @@ include $componentsPath . '/page-header.blade.php';
             </table>
         </div>
         <?php else: ?>
-        <p class="text-secondary small mb-0">No campaign events recorded yet. Launch and send to start building the timeline.</p>
+        <?php
+        $message = 'No campaign events recorded yet. Launch and send to start building the timeline.';
+        $actionHtml = '';
+        include $componentsPath . '/empty-state.blade.php';
+        ?>
         <?php endif; ?>
-        <?php $contentHtml = ob_get_clean(); $className = 'h-100 mb-0'; include $componentsPath . '/table-shell.blade.php'; ?>
-    </div>
-    <div class="col-12 col-xl-4">
-        <?php ob_start(); ?>
-        <h2 class="h5 mb-3">Drilldowns</h2>
-        <div class="d-grid gap-2">
-            <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events" class="btn btn-outline-primary text-start">Campaign event timeline</a>
-            <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events?event_type=clicked" class="btn btn-outline-secondary text-start">Clicked events only</a>
-            <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events?event_type=opened" class="btn btn-outline-secondary text-start">Opened events only</a>
-            <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events?event_type=bounced" class="btn btn-outline-secondary text-start">Bounced events only</a>
-            <a href="<?= $basePath ?>/campaign/<?php echo $campaign->id; ?>/events?format=json" class="btn btn-outline-secondary text-start">Campaign events JSON</a>
-        </div>
-        <p class="text-secondary small mt-3 mb-0">Message-level drilldowns are linked from the event table whenever a message id exists.</p>
         <?php $contentHtml = ob_get_clean(); $className = 'h-100 mb-0'; include $componentsPath . '/table-shell.blade.php'; ?>
     </div>
 </div>
 
 <?php
+$editorAssets = dirname(__DIR__, 1) . '/templates/_editor_assets.blade.php';
+ob_start();
+if ($canEdit) {
+    include $editorAssets;
+}
+?>
+<script>
+(function() {
+    if (!<?php echo $canEdit ? 'true' : 'false'; ?>) {
+        return;
+    }
+
+    const templates = <?php echo $templatesJson ?: '[]'; ?>;
+    const selector = document.getElementById('template_loader');
+    const subjectInput = document.getElementById('subject');
+    const textarea = document.getElementById('html_content');
+
+    if (!selector) {
+        return;
+    }
+
+    selector.addEventListener('change', function() {
+        const chosen = templates.find(t => String(t.id) === String(this.value));
+        if (!chosen) {
+            return;
+        }
+
+        if (subjectInput) {
+            subjectInput.value = chosen.subject || '';
+        }
+
+        if (window.mailcampEditor) {
+            window.mailcampEditor.setData(chosen.html_content || '');
+        } else if (textarea) {
+            textarea.value = chosen.html_content || '';
+        }
+    });
+})();
+</script>
+<?php
+$scripts = ob_get_clean();
 $content = ob_get_clean();
 include dirname(__DIR__, 3) . '/resources/views/blade/layout.php';

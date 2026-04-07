@@ -144,16 +144,14 @@ class CampaignController extends Controller
             return $this->redirect('/campaigns/create?notice=smtp_missing');
         }
 
-        $templateName = $saveAsTemplate ? ($subject !== '' ? $subject : $dto->name) : 'Campaign Draft: ' . $dto->name;
-        $template = new Template()->fill([
-            'organization_id' => $user->getOrganizationId(),
-            'name' => $templateName,
-            'subject' => $subject,
-            'html_content' => $html,
-            'is_active' => $saveAsTemplate ? 1 : 0,
-        ]);
-        $template->variables = json_encode($template->parseVariables());
-        $template->save();
+        $template = $this->syncCampaignTemplate(
+            user: $user,
+            campaignName: $dto->name,
+            subject: $subject,
+            html: $html,
+            template: null,
+            saveAsTemplate: $saveAsTemplate,
+        );
 
         $campaign = new Campaign()->fill([
             'organization_id' => $user->getOrganizationId(),
@@ -188,22 +186,7 @@ class CampaignController extends Controller
             return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_locked');
         }
 
-        $templates = Template::query()
-            ->where('organization_id', '=', $user->getOrganizationId())
-            ->where('is_active', '=', 1)
-            ->get();
-        $smtpSettings = SmtpSetting::query()
-            ->where('organization_id', '=', $user->getOrganizationId())
-            ->where('is_active', '=', 1)
-            ->orderBy('id')
-            ->get();
-
-        return $this->render('campaigns.edit', [
-            'campaign' => $campaign,
-            'templates' => $templates,
-            'smtpSettings' => $smtpSettings,
-            'user' => $user,
-        ]);
+        return $this->redirect('/campaigns/' . $campaign->id . '?workspace=edit');
     }
 
     #[Route('/campaigns/{id}', ['PUT', 'POST'])]
@@ -226,13 +209,10 @@ class CampaignController extends Controller
             return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_locked');
         }
 
-        $template = Template::query()
-            ->where('organization_id', '=', $user->getOrganizationId())
-            ->where('id', '=', $dto->template_id)
-            ->where('is_active', '=', 1)
-            ->first();
-        if (!$template) {
-            return $this->redirect('/campaigns/' . $campaign->id . '/edit?notice=template_missing');
+        $subject = trim((string) ($dto->subject ?? ''));
+        $html = (string) ($dto->html_content ?? '');
+        if ($subject === '' || trim(strip_tags($html)) === '') {
+            return $this->redirect('/campaigns/' . $campaign->id . '?notice=content_missing');
         }
 
         $smtpSetting = SmtpSetting::query()
@@ -241,12 +221,29 @@ class CampaignController extends Controller
             ->where('is_active', '=', 1)
             ->first();
         if (!$smtpSetting) {
-            return $this->redirect('/campaigns/' . $campaign->id . '/edit?notice=smtp_missing');
+            return $this->redirect('/campaigns/' . $campaign->id . '?notice=smtp_missing');
+        }
+
+        /** @var Template|null $template */
+        $template = Template::query()
+            ->where('id', '=', $campaign->template_id)
+            ->where('organization_id', '=', $user->getOrganizationId())
+            ->first();
+        if (!$template) {
+            return $this->redirect('/campaigns/' . $campaign->id . '?notice=template_missing');
         }
 
         $campaign->name = $dto->name;
-        $campaign->template_id = $template->id;
         $campaign->smtp_setting_id = $smtpSetting->id;
+
+        $this->syncCampaignTemplate(
+            user: $user,
+            campaignName: $dto->name,
+            subject: $subject,
+            html: $html,
+            template: $template,
+            saveAsTemplate: (bool) ($template->is_active ?? false),
+        );
 
         $scheduledAt = trim((string) ($dto->scheduled_at ?? ''));
         $scheduledTimestamp = $scheduledAt !== '' ? strtotime($scheduledAt) : false;
@@ -302,6 +299,16 @@ class CampaignController extends Controller
         $riskHistory = new CampaignRiskHistoryService();
         $safety = (new CampaignSafetyService())->evaluate($campaign, $template, $smtpSetting);
 
+        $templates = Template::query()
+            ->where('organization_id', '=', $user->getOrganizationId())
+            ->where('is_active', '=', 1)
+            ->get();
+        $smtpSettings = SmtpSetting::query()
+            ->where('organization_id', '=', $user->getOrganizationId())
+            ->where('is_active', '=', 1)
+            ->orderBy('id')
+            ->get();
+
         return $this->render('campaigns.show', [
             'campaign' => $campaign,
             'user' => $user,
@@ -312,7 +319,9 @@ class CampaignController extends Controller
             'riskHistory' => $riskHistory->recent($campaign, 8),
             'safety' => $safety,
             'smtpSetting' => $smtpSetting,
+            'smtpSettings' => $smtpSettings,
             'template' => $template,
+            'templates' => $templates,
             'notice' => $this->resolveCampaignDetailNotice($request),
         ]);
     }
@@ -490,6 +499,9 @@ class CampaignController extends Controller
             'campaign_locked' => ['type' => 'danger', 'message' => 'This campaign can no longer be changed from the detail page.'],
             'campaign_template_missing' => ['type' => 'danger', 'message' => 'Campaign template could not be found.'],
             'campaign_template_invalid' => ['type' => 'danger', 'message' => 'Campaign template is missing required variables such as {{unsubscribe_url}} or required recipient data.'],
+            'template_missing' => ['type' => 'danger', 'message' => 'The backing template for this campaign could not be found.'],
+            'smtp_missing' => ['type' => 'danger', 'message' => 'Select an active SMTP account before saving this campaign.'],
+            'content_missing' => ['type' => 'danger', 'message' => 'Subject and HTML content are required to save this campaign.'],
             'campaign_updated' => ['type' => 'success', 'message' => 'Campaign settings were updated.'],
             'campaign_high_risk' => ['type' => 'danger', 'message' => 'Campaign failed pre-send safety checks. Review sender, template, recipients, and deliverability warnings below.'],
             'campaign_autopaused' => ['type' => 'danger', 'message' => 'Campaign was auto-paused because bounce or complaint risk exceeded allowed thresholds.'],
@@ -499,6 +511,27 @@ class CampaignController extends Controller
             'campaign_smtp_missing' => ['type' => 'danger', 'message' => 'Select an active SMTP account for this campaign before launching.'],
             default => null,
         };
+    }
+
+    private function syncCampaignTemplate(User $user, string $campaignName, string $subject, string $html, ?Template $template, bool $saveAsTemplate): Template
+    {
+        $subject = trim($subject);
+        $html = (string) $html;
+
+        if ($subject === '' || trim(strip_tags($html)) === '') {
+            throw new \RuntimeException('Subject and HTML content are required.');
+        }
+
+        $template ??= new Template();
+        $template->organization_id = $user->getOrganizationId();
+        $template->name = $saveAsTemplate ? $subject : 'Campaign Draft: ' . $campaignName;
+        $template->subject = $subject;
+        $template->html_content = $html;
+        $template->is_active = $saveAsTemplate ? 1 : 0;
+        $template->variables = json_encode($template->parseVariables());
+        $template->save();
+
+        return $template;
     }
 
     /**
