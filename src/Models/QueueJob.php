@@ -12,9 +12,17 @@ class QueueJob extends Model
     public string $table { get => 'queue_jobs'; }
 
     public array $fillable = [
-        'campaign_id', 'recipient_id', 'status', 'attempts', 
-        'error_message', 'scheduled_at', 'processed_at'
+        'organization_id', 'campaign_id', 'recipient_id', 'payload', 'status',
+        'attempts', 'available_at', 'reserved_at', 'completed_at'
     ];
+
+    public ?int $organization_id {
+        get => $this->organization_id ?? null;
+        set {
+            $this->organization_id = $value;
+            $this->markPropertyAsChanged('organization_id');
+        }
+    }
 
     public ?int $campaign_id {
         get => $this->campaign_id ?? null;
@@ -29,6 +37,14 @@ class QueueJob extends Model
         set {
             $this->recipient_id = $value;
             $this->markPropertyAsChanged('recipient_id');
+        }
+    }
+
+    public ?string $payload {
+        get => $this->payload ?? null;
+        set {
+            $this->payload = $value;
+            $this->markPropertyAsChanged('payload');
         }
     }
 
@@ -48,27 +64,27 @@ class QueueJob extends Model
         }
     }
 
-    public ?string $error_message {
-        get => $this->error_message ?? null;
+    public ?string $available_at {
+        get => $this->available_at ?? null;
         set {
-            $this->error_message = $value;
-            $this->markPropertyAsChanged('error_message');
+            $this->available_at = $value;
+            $this->markPropertyAsChanged('available_at');
         }
     }
 
-    public ?string $scheduled_at {
-        get => $this->scheduled_at ?? null;
+    public ?string $reserved_at {
+        get => $this->reserved_at ?? null;
         set {
-            $this->scheduled_at = $value;
-            $this->markPropertyAsChanged('scheduled_at');
+            $this->reserved_at = $value;
+            $this->markPropertyAsChanged('reserved_at');
         }
     }
 
-    public ?string $processed_at {
-        get => $this->processed_at ?? null;
+    public ?string $completed_at {
+        get => $this->completed_at ?? null;
         set {
-            $this->processed_at = $value;
-            $this->markPropertyAsChanged('processed_at');
+            $this->completed_at = $value;
+            $this->markPropertyAsChanged('completed_at');
         }
     }
 

@@ -26,8 +26,5 @@ return [
     |
     */
 
-    // Example scheduled jobs (uncomment to use):
-    // App\Jobs\ProcessQueueJob::class => CronSchedule::EVERY_MINUTE,
-    // App\Jobs\CleanupLogsJob::class => CronSchedule::DAILY,
-    // App\Jobs\SendScheduledCampaignsJob::class => CronSchedule::EVERY_MINUTE,
+    App\Jobs\SendQueuedCampaignMessagesJob::class => CronSchedule::EVERY_MINUTE,
 ];

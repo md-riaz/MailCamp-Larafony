@@ -117,20 +117,44 @@ final class CampaignMessageLifecycleService
 
     public function sendQueuedMessages(?int $campaignId = null, int $limit = 0): int
     {
-        $query = Message::query()->where('status', '=', 'queued');
+        $query = QueueJob::query()
+            ->where('status', '=', 'pending')
+            ->where('available_at', '<=', date('Y-m-d H:i:s'));
+
         if ($campaignId !== null) {
             $query->where('campaign_id', '=', $campaignId);
         }
 
-        $messages = $query->orderBy('id')->get();
+        $queueJobs = $query->orderBy('available_at')->get();
         $sent = 0;
 
-        foreach ($messages as $message) {
-            $this->sendQueuedMessage($message);
-            $sent++;
-
+        foreach ($queueJobs as $queueJob) {
             if ($limit > 0 && $sent >= $limit) {
                 break;
+            }
+
+            $queueJob->status = 'processing';
+            $queueJob->reserved_at = date('Y-m-d H:i:s');
+            $queueJob->attempts = (int) $queueJob->attempts + 1;
+            $queueJob->save();
+
+            /** @var Message|null $message */
+            $message = Message::query()
+                ->where('campaign_id', '=', $queueJob->campaign_id)
+                ->where('recipient_id', '=', $queueJob->recipient_id)
+                ->where('status', '=', 'queued')
+                ->first();
+
+            if (!$message) {
+                $this->markQueueJobFailed($queueJob);
+                continue;
+            }
+
+            try {
+                $this->sendQueuedMessage($message);
+                $sent++;
+            } catch (\Throwable $exception) {
+                $this->markMessageSendFailed($queueJob, $message, $exception);
             }
         }
 
@@ -212,17 +236,11 @@ final class CampaignMessageLifecycleService
             $queueJob->status = 'completed';
             $queueJob->completed_at = $sentAt;
             $queueJob->reserved_at = $queueJob->reserved_at ?? $sentAt;
-            $queueJob->attempts = (int) $queueJob->attempts + 1;
             $queueJob->save();
         }
 
         $campaign->sent_count = (int) $campaign->sent_count + 1;
-        if ($campaign->sent_count >= (int) $campaign->total_recipients && (int) $campaign->total_recipients > 0) {
-            $campaign->status = 'sent';
-            $campaign->completed_at = $sentAt;
-        } else {
-            $campaign->status = 'sending';
-        }
+        $this->refreshCampaignStatusAfterAttempt($campaign, $sentAt);
         $campaign->save();
 
         $this->recordEvent($message, 'sent', [
@@ -236,6 +254,67 @@ final class CampaignMessageLifecycleService
             'provider_message_id' => $result->providerMessageId,
             'recipient_email' => $recipient->email,
         ]);
+    }
+
+    private function markMessageSendFailed(QueueJob $queueJob, Message $message, \Throwable $exception): void
+    {
+        $failedAt = date('Y-m-d H:i:s');
+
+        $queueJob->status = 'failed';
+        $queueJob->completed_at = $failedAt;
+        $queueJob->save();
+
+        $message->status = 'failed';
+        $message->save();
+
+        /** @var Campaign|null $campaign */
+        $campaign = Campaign::query()->where('id', '=', $message->campaign_id)->first();
+        if ($campaign) {
+            $campaign->failed_count = (int) $campaign->failed_count + 1;
+            $this->refreshCampaignStatusAfterAttempt($campaign, $failedAt);
+            $campaign->save();
+        }
+
+        $this->recordEvent($message, 'failed', [
+            'queue_job_id' => $queueJob->id,
+            'error' => $exception->getMessage(),
+            'failed_at' => $failedAt,
+        ]);
+    }
+
+    private function markQueueJobFailed(QueueJob $queueJob): void
+    {
+        $failedAt = date('Y-m-d H:i:s');
+        $queueJob->status = 'failed';
+        $queueJob->completed_at = $failedAt;
+        $queueJob->save();
+
+        /** @var Campaign|null $campaign */
+        $campaign = Campaign::query()->where('id', '=', $queueJob->campaign_id)->first();
+        if ($campaign) {
+            $campaign->failed_count = (int) $campaign->failed_count + 1;
+            $this->refreshCampaignStatusAfterAttempt($campaign, $failedAt);
+            $campaign->save();
+        }
+    }
+
+    private function refreshCampaignStatusAfterAttempt(Campaign $campaign, string $processedAt): void
+    {
+        $remainingJobs = QueueJob::query()
+            ->where('campaign_id', '=', $campaign->id)
+            ->where('status', '!=', 'completed')
+            ->where('status', '!=', 'failed')
+            ->count();
+
+        if ($remainingJobs > 0) {
+            $campaign->status = (int) $campaign->sent_count > 0 ? 'sending' : 'active';
+            return;
+        }
+
+        $campaign->completed_at = $processedAt;
+        $campaign->status = (int) $campaign->sent_count >= (int) $campaign->total_recipients && (int) $campaign->total_recipients > 0
+            ? 'sent'
+            : 'failed';
     }
 
     private function buildDsn(SmtpSetting $smtp): string

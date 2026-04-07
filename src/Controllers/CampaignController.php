@@ -7,14 +7,16 @@ namespace App\Controllers;
 use App\DTOs\CreateCampaignDto;
 use App\DTOs\UpdateCampaignDto;
 use App\Models\Campaign;
+use App\Models\QueueJob;
 use App\Models\Recipient;
 use App\Models\SmtpSetting;
 use App\Models\Template;
 use App\Models\User;
-use App\ViewDto\CampaignViewDto;
+use App\Services\CampaignMessageLifecycleService;
 use App\Services\CampaignRiskHistoryService;
 use App\Services\CampaignSafetyService;
 use App\Services\ObservabilityService;
+use App\ViewDto\CampaignViewDto;
 use Larafony\Framework\Auth\Auth;
 use Larafony\Framework\Database\Base\Query\Enums\OrderDirection;
 use Larafony\Framework\Routing\Advanced\Attributes\Route;
@@ -437,8 +439,23 @@ class CampaignController extends Controller
             return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_template_invalid');
         }
 
+        $existingQueuedJobs = QueueJob::query()
+            ->where('campaign_id', '=', $campaign->id)
+            ->where('status', '=', 'pending')
+            ->count();
+
+        try {
+            $queuedCount = (new CampaignMessageLifecycleService())->queueCampaign($campaign);
+        } catch (\Throwable) {
+            return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_queue_failed');
+        }
+
+        if ($queuedCount === 0 && $existingQueuedJobs === 0) {
+            return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_queue_empty');
+        }
+
         $campaign->status = 'active';
-        $campaign->started_at = date('Y-m-d H:i:s');
+        $campaign->started_at = $campaign->started_at ?? date('Y-m-d H:i:s');
         $campaign->save();
 
         return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_launched');
@@ -476,6 +493,8 @@ class CampaignController extends Controller
             'campaign_updated' => ['type' => 'success', 'message' => 'Campaign settings were updated.'],
             'campaign_high_risk' => ['type' => 'danger', 'message' => 'Campaign failed pre-send safety checks. Review sender, template, recipients, and deliverability warnings below.'],
             'campaign_autopaused' => ['type' => 'danger', 'message' => 'Campaign was auto-paused because bounce or complaint risk exceeded allowed thresholds.'],
+            'campaign_queue_empty' => ['type' => 'danger', 'message' => 'Campaign could not be launched because it has no queued recipients to send.'],
+            'campaign_queue_failed' => ['type' => 'danger', 'message' => 'Campaign launch passed validation, but queueing failed. Try again after checking queue storage.'],
             'campaign_launched' => ['type' => 'success', 'message' => 'Campaign launched. Queue processing can begin.'],
             'campaign_smtp_missing' => ['type' => 'danger', 'message' => 'Select an active SMTP account for this campaign before launching.'],
             default => null,
