@@ -2,75 +2,102 @@
 $basePath = rtrim(parse_url($_ENV['APP_URL'] ?? getenv('APP_URL') ?: '', PHP_URL_PATH) ?? '', '/');
 $editorUploadUrl = $basePath . '/templates/upload-image';
 ?>
-<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<style>
+.merge-variable-chip {
+    border: 1px solid #d0d7e2;
+    background: #f8fafc;
+    color: #334155;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 600;
+}
+
+.merge-variable-chip:hover {
+    background: #eef2ff;
+    border-color: #c7d2fe;
+    color: #312e81;
+}
+
+.editor-toolbar-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.editor-helper-text {
+    color: #64748b;
+    font-size: 12px;
+}
+
+.cke_contents {
+    min-height: 520px;
+}
+</style>
+<script src="https://cdn.ckeditor.com/4.22.1/full-all/ckeditor.js"></script>
 <script>
 (function () {
     const textarea = document.querySelector('#html_content');
-    if (!textarea || typeof ClassicEditor === 'undefined') {
+    if (!textarea || typeof CKEDITOR === 'undefined') {
         return;
     }
 
-    class SimpleUploadAdapter {
-        constructor(loader) {
-            this.loader = loader;
-        }
+    const label = document.querySelector('label[for="html_content"]');
+    if (label && !document.getElementById('editor-helper-text')) {
+        const toolbarRow = document.createElement('div');
+        toolbarRow.className = 'editor-toolbar-row';
+        toolbarRow.id = 'editor-helper-text';
 
-        upload() {
-            return this.loader.file.then(file => new Promise((resolve, reject) => {
-                const data = new FormData();
-                data.append('upload', file);
+        const left = document.createElement('div');
+        left.className = 'editor-helper-text';
+        left.textContent = 'Visual editor with source dialog, code snippet, image upload, and merge-variable insert.';
 
-                fetch('<?= htmlspecialchars($editorUploadUrl, ENT_QUOTES, 'UTF-8') ?>', {
-                    method: 'POST',
-                    body: data,
-                    credentials: 'same-origin'
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.error) {
-                        reject(result.error.message || 'Upload failed');
-                        return;
-                    }
-
-                    resolve({ default: result.url });
-                })
-                .catch(error => reject(error?.message || 'Upload failed'));
-            }));
-        }
-
-        abort() {}
+        toolbarRow.appendChild(left);
+        label.parentElement.insertAdjacentElement('afterend', toolbarRow);
     }
 
-    function UploadAdapterPlugin(editor) {
-        editor.plugins.get('FileRepository').createUploadAdapter = loader => new SimpleUploadAdapter(loader);
-    }
+    CKEDITOR.dtd.$removeEmpty.span = false;
+    CKEDITOR.dtd.$removeEmpty.i = false;
+    CKEDITOR.config.versionCheck = false;
 
-    ClassicEditor
-        .create(textarea, {
-            extraPlugins: [UploadAdapterPlugin],
-            toolbar: [
-                'undo', 'redo', '|',
-                'heading', '|',
-                'bold', 'italic', 'link', '|',
-                'bulletedList', 'numberedList', '|',
-                'insertTable', 'blockQuote', 'imageUpload', '|',
-                'htmlEmbed'
-            ],
-            table: {
-                contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
-            }
-        })
-        .then(editor => {
-            window.mailcampEditor = editor;
-            const variableButtons = document.querySelectorAll('[data-insert-variable]');
-            variableButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    editor.model.change(writer => {
-                        editor.model.insertContent(writer.createText(button.getAttribute('data-insert-variable') || ''));
-                    });
-                });
-            });
-        })
-        .catch(error => console.error('CKEditor initialization failed', error));
+    const editor = CKEDITOR.replace('html_content', {
+        versionCheck: false,
+        height: 520,
+        allowedContent: true,
+        extraAllowedContent: '*(*);*{*}',
+        removeButtons: '',
+        extraPlugins: 'codesnippet,colorbutton,font,sourcedialog,justify',
+        removePlugins: 'exportpdf,scayt,wsc,uploadimage,image2',
+        toolbar: [
+            { name: 'document', items: ['Source', 'Sourcedialog', '-', 'Preview'] },
+            { name: 'clipboard', items: ['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo'] },
+            { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike', '-', 'RemoveFormat'] },
+            { name: 'colors', items: ['TextColor', 'BGColor'] },
+            { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'] },
+            { name: 'links', items: ['Link', 'Unlink'] },
+            { name: 'insert', items: ['Image', 'Table', 'HorizontalRule', 'SpecialChar', 'CodeSnippet'] },
+            { name: 'styles', items: ['Format', 'Font', 'FontSize'] },
+            { name: 'tools', items: ['Maximize'] }
+        ],
+        codeSnippet_theme: 'monokai_sublime',
+        filebrowserUploadUrl: '<?= htmlspecialchars($editorUploadUrl, ENT_QUOTES, 'UTF-8') ?>',
+        filebrowserImageUploadUrl: '<?= htmlspecialchars($editorUploadUrl, ENT_QUOTES, 'UTF-8') ?>',
+        uploadUrl: '<?= htmlspecialchars($editorUploadUrl, ENT_QUOTES, 'UTF-8') ?>'
+    });
+
+    window.mailcampEditor = editor;
+
+    const variableButtons = document.querySelectorAll('[data-insert-variable]');
+    variableButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const token = button.getAttribute('data-insert-variable') || '';
+            editor.focus();
+            editor.insertText(token);
+        });
+    });
 })();
 </script>
