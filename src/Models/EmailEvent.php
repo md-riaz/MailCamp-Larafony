@@ -28,4 +28,14 @@ class EmailEvent extends Model
     public ?string $ip_address { get => $this->ip_address ?? null; set { $this->ip_address = $value; $this->markPropertyAsChanged('ip_address'); } }
     public ?string $user_agent { get => $this->user_agent ?? null; set { $this->user_agent = $value; $this->markPropertyAsChanged('user_agent'); } }
     public ?string $metadata { get => $this->metadata ?? null; set { $this->metadata = $value; $this->markPropertyAsChanged('metadata'); } }
+
+    public function getMetadataArray(): array
+    {
+        return json_decode((string) $this->metadata, true) ?: [];
+    }
+
+    public function setMetadataArray(array $metadata): void
+    {
+        $this->metadata = json_encode($metadata, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
 }

@@ -7,7 +7,9 @@ $filters = $filters ?? ['q' => '', 'status' => '', 'sort' => 'created_desc'];
 
 ob_start();
 ?>
+<?php if ($user->role === 'Admin' || $user->role === 'Superadmin'): ?>
 <a href="<?= $basePath ?>/campaigns/create" class="btn btn-success">+ Create Campaign</a>
+<?php endif; ?>
 <?php
 $actionsHtml = ob_get_clean();
 $title = 'Email Campaigns';
@@ -127,7 +129,7 @@ if (!empty($campaigns)):
                 <td>
                     <div class="d-flex gap-2 flex-wrap">
                         <a href="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>" class="btn btn-sm btn-primary">View</a>
-                        <?php if (in_array((string) ($campaign->status ?? ''), ['draft', 'scheduled', 'paused', 'failed'], true)): ?>
+                        <?php if (($user->role === 'Admin' || $user->role === 'Superadmin') && in_array((string) ($campaign->status ?? ''), ['draft', 'scheduled', 'paused', 'failed'], true)): ?>
                         <a href="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
                         <?php endif; ?>
                         <?php if ($campaign->canLaunch): ?>

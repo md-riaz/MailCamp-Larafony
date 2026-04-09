@@ -16,7 +16,7 @@ class CreateSmtpSettingDto extends FormRequest
     public protected(set) string $host;
 
     #[IsValidated]
-    public protected(set) int $port;
+    public protected(set) string|int $port;
 
     #[IsValidated]
     public protected(set) string $encryption;

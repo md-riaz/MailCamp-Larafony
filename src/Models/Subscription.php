@@ -12,11 +12,11 @@ class Subscription extends Model
     public string $table { get => 'subscriptions'; }
 
     public array $fillable = [
-        'organization_id', 'email', 'name', 'status', 'token', 
-        'subscribed_at', 'unsubscribed_at'
+        'email', 'name', 'status', 'unsubscribe_token',
+        'subscription_date', 'unsubscribe_date'
     ];
 
-    public ?int $organization_id {
+    
         get => $this->organization_id ?? null;
         set {
             $this->organization_id = $value;
@@ -48,27 +48,27 @@ class Subscription extends Model
         }
     }
 
-    public ?string $token {
-        get => $this->token ?? null;
+    public ?string $unsubscribe_token {
+        get => $this->unsubscribe_token ?? null;
         set {
-            $this->token = $value;
-            $this->markPropertyAsChanged('token');
+            $this->unsubscribe_token = $value;
+            $this->markPropertyAsChanged('unsubscribe_token');
         }
     }
 
-    public ?string $subscribed_at {
-        get => $this->subscribed_at ?? null;
+    public ?string $subscription_date {
+        get => $this->subscription_date ?? null;
         set {
-            $this->subscribed_at = $value;
-            $this->markPropertyAsChanged('subscribed_at');
+            $this->subscription_date = $value;
+            $this->markPropertyAsChanged('subscription_date');
         }
     }
 
-    public ?string $unsubscribed_at {
-        get => $this->unsubscribed_at ?? null;
+    public ?string $unsubscribe_date {
+        get => $this->unsubscribe_date ?? null;
         set {
-            $this->unsubscribed_at = $value;
-            $this->markPropertyAsChanged('unsubscribed_at');
+            $this->unsubscribe_date = $value;
+            $this->markPropertyAsChanged('unsubscribe_date');
         }
     }
 
@@ -79,15 +79,52 @@ class Subscription extends Model
     )]
     public ?Organization $organization { get => $this->relations->getRelation('organization'); }
 
-    public static function generateToken(): string
+    public static function generateToken(int $organizationId, int $smtpId, string $email): string
     {
-        return bin2hex(random_bytes(32));
+        $payload = [
+            'smtpId' => $smtpId,
+            'email' => strtolower(trim($email)),
+        ];
+
+        return rtrim(strtr(base64_encode(json_encode($payload, JSON_UNESCAPED_SLASHES)), '+/', '-_'), '=');
     }
 
-    public function unsubscribe(): void
+    /**
+     * @return array{organizationId:int,smtpId:int,email:string}|null
+     */
+    public static function decodeToken(string $token): ?array
+    {
+        $padded = str_pad(strtr($token, '-_', '+/'), (int) ceil(strlen($token) / 4) * 4, '=', STR_PAD_RIGHT);
+        $decoded = json_decode((string) base64_decode($padded, true), true);
+        if (!is_array($decoded)) {
+            return null;
+        }
+
+        $organizationId = (int) ($decoded['organizationId'] ?? 0);
+        $smtpId = (int) ($decoded['smtpId'] ?? 0);
+        $email = strtolower(trim((string) ($decoded['email'] ?? '')));
+        if ($organizationId <= 0 || $smtpId <= 0 || $email === '') {
+            return null;
+        }
+
+        return [
+            'organizationId' => $organizationId,
+            'smtpId' => $smtpId,
+            'email' => $email,
+        ];
+    }
+
+
+
+    public function ensureToken(int $organizationId, int $smtpId): void
+    {
+        $this->unsubscribe_token = self::generateToken($organizationId, $smtpId, (string) $this->email);
+    }
+
+    public function markGloballyUnsubscribed(): void
     {
         $this->status = 'unsubscribed';
-        $this->unsubscribed_at = date('Y-m-d H:i:s');
+        $this->unsubscribe_date = date('Y-m-d H:i:s');
         $this->save();
     }
 }

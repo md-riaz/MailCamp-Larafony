@@ -60,6 +60,7 @@ class ConsoleServiceProvider extends ServiceProvider
         $discovery = new CommandDiscovery();
         $commandsDir = __DIR__ . '/../Commands';
         $discovery->discover($commandsDir, 'Larafony\\Framework\\Console\\Commands');
+        $registry->register('create:audience', \App\Console\Commands\CreateAudienceCommand::class);
         foreach ($discovery->commands as $name => $class) {
             $registry->register($name, $class);
         }

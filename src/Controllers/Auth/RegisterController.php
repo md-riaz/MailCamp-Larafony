@@ -52,15 +52,28 @@ class RegisterController extends Controller
         ]);
         $org->save();
 
+        $baseUsername = trim(strtolower(preg_replace('/[^A-Za-z0-9_]+/', '_', strstr($dto->email, '@', true) ?: $dto->name)), '_');
+        if ($baseUsername === '') {
+            $baseUsername = 'user';
+        }
+
+        $username = $baseUsername;
+        $suffix = 1;
+        while (User::query()->where('username', '=', $username)->first()) {
+            $suffix++;
+            $username = $baseUsername . '_' . $suffix;
+        }
+
         $user = new User();
         $user->email = $dto->email;
+        $user->username = $username;
         $user->password = $dto->password;
         $user->is_active = 1;
         $user->save();
 
         $profile = new UserProfile();
-        $profile->user_id = $user->id;
-        $profile->organization_id = $org->id;
+        $profile->user_id = (int) $user->id;
+        $profile->organization_id = (int) $org->id;
         $profile->name = $dto->name;
         $profile->save();
 

@@ -38,7 +38,7 @@ $editorUploadUrl = $basePath . '/templates/upload-image';
     min-height: 520px;
 }
 </style>
-<script src="https://cdn.ckeditor.com/4.22.1/full-all/ckeditor.js"></script>
+<script src="/js/ckeditor_fullpage_build.js"></script>
 <script>
 (function () {
     const textarea = document.querySelector('#html_content');
@@ -54,7 +54,7 @@ $editorUploadUrl = $basePath . '/templates/upload-image';
 
         const left = document.createElement('div');
         left.className = 'editor-helper-text';
-        left.textContent = 'Visual editor with source dialog, code snippet, image upload, and merge-variable insert.';
+        left.textContent = 'Full-document HTML editor with source mode, image upload, and merge-variable insert. Paste complete HTML including <html>, <head>, and <body>.';
 
         toolbarRow.appendChild(left);
         label.parentElement.insertAdjacentElement('afterend', toolbarRow);
@@ -67,13 +67,14 @@ $editorUploadUrl = $basePath . '/templates/upload-image';
     const editor = CKEDITOR.replace('html_content', {
         versionCheck: false,
         height: 520,
+        fullPage: true,
         allowedContent: true,
         extraAllowedContent: '*(*);*{*}',
         removeButtons: '',
-        extraPlugins: 'codesnippet,colorbutton,font,sourcedialog,justify',
+        extraPlugins: 'codesnippet,colorbutton,font,justify,fullpage',
         removePlugins: 'exportpdf,scayt,wsc,uploadimage,image2',
         toolbar: [
-            { name: 'document', items: ['Source', 'Sourcedialog', '-', 'Preview'] },
+            { name: 'document', items: ['Source', '-', 'Preview'] },
             { name: 'clipboard', items: ['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo'] },
             { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike', '-', 'RemoveFormat'] },
             { name: 'colors', items: ['TextColor', 'BGColor'] },

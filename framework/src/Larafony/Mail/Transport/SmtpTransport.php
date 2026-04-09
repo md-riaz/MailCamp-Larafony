@@ -94,12 +94,36 @@ final class SmtpTransport implements TransportContract
         $headers[] = 'Subject: ' . $message->subject;
         $headers = [...$headers, ...$message->headers];
         $headers[] = 'MIME-Version: 1.0';
+
+        $htmlBody = $message->htmlBody ?? '';
+        $textBody = $message->textBody;
+
+        if ($textBody !== null && trim($textBody) !== '') {
+            $boundary = '=_larafony_' . bin2hex(random_bytes(12));
+            $headers[] = 'Content-Type: multipart/alternative; boundary="' . $boundary . '"';
+
+            $parts = [];
+            $parts[] = '--' . $boundary;
+            $parts[] = 'Content-Type: text/plain; charset=UTF-8';
+            $parts[] = 'Content-Transfer-Encoding: quoted-printable';
+            $parts[] = '';
+            $parts[] = quoted_printable_encode($textBody);
+            $parts[] = '';
+            $parts[] = '--' . $boundary;
+            $parts[] = 'Content-Type: text/html; charset=UTF-8';
+            $parts[] = 'Content-Transfer-Encoding: quoted-printable';
+            $parts[] = '';
+            $parts[] = quoted_printable_encode($htmlBody);
+            $parts[] = '';
+            $parts[] = '--' . $boundary . '--';
+
+            return implode("\r\n", $headers) . "\r\n\r\n" . implode("\r\n", $parts);
+        }
+
         $headers[] = 'Content-Type: text/html; charset=UTF-8';
         $headers[] = 'Content-Transfer-Encoding: quoted-printable';
 
-        $body = quoted_printable_encode($message->htmlBody ?? '');
-
-        return implode("\r\n", $headers) . "\r\n\r\n" . $body;
+        return implode("\r\n", $headers) . "\r\n\r\n" . quoted_printable_encode($htmlBody);
     }
 
     private function disconnect(): void

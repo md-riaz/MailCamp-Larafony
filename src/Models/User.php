@@ -18,8 +18,16 @@ class User extends Authenticable
 {
     public string $table { get => 'users'; }
 
-    public array $fillable = ['email', 'username', 'password', 'is_active'];
+    public array $fillable = ['email', 'username', 'password', 'is_active', 'role'];
     public array $hidden = ['password', 'remember_token', 'password_reset_token'];
+
+    public ?string $role {
+        get => $this->role;
+        set {
+            $this->role = $value;
+            $this->markPropertyAsChanged('role');
+        }
+    }
 
     private ?UserProfile $_profile = null;
 
@@ -69,18 +77,18 @@ class User extends Authenticable
     }
 
     /**
-     * Check if user has admin role (using framework's RBAC)
+     * Check if user has admin role
      */
     public function isAdmin(): bool
     {
-        return $this->hasRole('admin');
+        return in_array($this->role, ['Admin', 'Superadmin'], true);
     }
 
     /**
-     * Check if user has manager or admin role (using framework's RBAC)
+     * Check if user has manager or admin role
      */
     public function isManager(): bool
     {
-        return $this->hasRole('admin') || $this->hasRole('manager');
+        return in_array($this->role, ['Admin', 'Superadmin'], true);
     }
 }

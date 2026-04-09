@@ -29,6 +29,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Inter-message Delay
+    |--------------------------------------------------------------------------
+    |
+    | Fixed delay in seconds between consecutive email sends within the queue
+    | worker. When set to 0, the system falls back to the hourly throttle and
+    | derives a minimum spacing automatically.
+    |
+    */
+    'send_delay_seconds' => (float) EnvReader::read('QUEUE_SEND_DELAY_SECONDS', '0'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Queue Connections
     |--------------------------------------------------------------------------
     |

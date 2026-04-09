@@ -28,7 +28,8 @@ final class Email
             if ($this->replyTo !== null) {
                 $headers[] = 'Reply-To: ' . $this->replyTo;
             }
-            return $headers;
+
+            return [...$headers, ...$this->customHeaders];
         }
     }
     /**
@@ -45,6 +46,7 @@ final class Email
         public private(set) ?string $subject = null,
         public private(set) ?string $htmlBody = null,
         public private(set) ?string $textBody = null,
+        public private(set) array $customHeaders = [],
     ) {
     }
 
@@ -86,5 +88,10 @@ final class Email
     public function text(string $text): self
     {
         return clone($this, ['textBody' => $text]);
+    }
+
+    public function header(string $name, string $value): self
+    {
+        return clone($this, ['customHeaders' => [...$this->customHeaders, $name . ': ' . $value]]);
     }
 }

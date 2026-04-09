@@ -8,6 +8,7 @@ use App\Models\Bounce;
 use App\Models\EmailEvent;
 use App\Models\Message;
 use App\Models\Recipient;
+use App\Models\RecipientSuppression;
 use App\Models\Subscription;
 use App\Models\Webhook;
 
@@ -150,7 +151,11 @@ final class SmtpReportIngestionService
             ], JSON_UNESCAPED_UNICODE);
             $bounce->bounced_at = date('Y-m-d H:i:s');
             $bounce->save();
+
+            $this->upsertSuppression($message, 'bounced', 'smtp-report');
         }
+
+
 
         return [
             'received' => 1,
@@ -231,4 +236,6 @@ final class SmtpReportIngestionService
             $message->save();
         }
     }
+
+
 }

@@ -69,7 +69,7 @@ include $componentsPath . '/page-header.blade.php';
 
                     <div class="col-12 col-md-8">
                         <label for="subject" class="form-label">Email Subject</label>
-                        <input type="text" class="form-control" id="subject" name="subject" placeholder="Use {{name}} for personalization" required>
+                        <input type="text" class="form-control" id="subject" name="subject" placeholder="Use &#123;&#123;name&#125;&#125; for personalization" required>
                     </div>
                     <div class="col-12 col-md-4">
                         <label for="template_loader" class="form-label">Start from template</label>
@@ -84,13 +84,14 @@ include $componentsPath . '/page-header.blade.php';
                     <div class="col-12">
                         <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-2">
                             <label for="html_content" class="form-label mb-0">HTML Content</label>
-                            <div class="d-flex gap-2 flex-wrap">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="{{name}}">{{name}}</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="{{email}}">{{email}}</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="{{unsubscribe_url}}">{{unsubscribe_url}}</button>
+                            <div class="d-flex gap-2 flex-wrap align-items-center">
+                                <button type="button" class="merge-variable-chip" data-insert-variable="&#123;&#123;name&#125;&#125;">&#123;&#123;name&#125;&#125;</button>
+                                <button type="button" class="merge-variable-chip" data-insert-variable="&#123;&#123;email&#125;&#125;">&#123;&#123;email&#125;&#125;</button>
+                                <button type="button" class="merge-variable-chip" data-insert-variable="&#123;&#123;unsubscribe_url&#125;&#125;">&#123;&#123;unsubscribe_url&#125;&#125;</button>
+                                <span class="text-secondary small">Click a badge to insert it at the cursor.</span>
                             </div>
                         </div>
-                        <textarea class="form-control font-monospace" id="html_content" name="html_content" style="min-height: 320px;" required></textarea>
+                        <textarea class="form-control font-monospace" id="html_content" name="html_content" style="min-height: 520px;" required></textarea>
                         <div class="form-text">Edit freely here. The campaign will keep its own backing template and can still be reused later if you choose.</div>
                     </div>
 
@@ -116,8 +117,12 @@ include $componentsPath . '/page-header.blade.php';
         <h2 class="h5 mb-3">Quick start</h2>
         <div class="small text-secondary mb-3">Keep the first step focused: choose sender, draft the message, then continue in the campaign workspace for recipients, scheduling, and launch.</div>
         <div class="d-grid gap-2">
-            <a href="<?= $basePath ?>/smtp-settings" class="btn btn-outline-secondary text-start">Manage SMTP accounts</a>
-            <a href="<?= $basePath ?>/templates" class="btn btn-outline-secondary text-start">Browse templates</a>
+            <?php if ($user->role === 'Admin' || $user->role === 'Superadmin'): ?>
+<a href="<?= $basePath ?>/smtp-settings" class="btn btn-outline-secondary text-start">Manage SMTP accounts</a>
+<?php endif; ?>
+            <?php if ($user->role === 'Admin' || $user->role === 'Superadmin'): ?>
+<a href="<?= $basePath ?>/templates" class="btn btn-outline-secondary text-start">Browse templates</a>
+<?php endif; ?>
         </div>
         <?php
         $contentHtml = ob_get_clean();
@@ -128,7 +133,7 @@ include $componentsPath . '/page-header.blade.php';
 </div>
 
 <?php
-$editorAssets = dirname(__DIR__, 1) . '/templates/_editor_assets.blade.php';
+$editorAssets = dirname(__DIR__, 3) . '/resources/views/blade/templates/_editor_assets.blade.php';
 ob_start();
 include $editorAssets;
 ?>

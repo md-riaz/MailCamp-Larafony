@@ -39,19 +39,19 @@ include $componentsPath . '/page-header.blade.php';
 
             <div class="col-12">
                 <label for="subject" class="form-label">Email Subject</label>
-                <input type="text" class="form-control" id="subject" name="subject" placeholder="Use {{variable}} for dynamic content" required>
+                <input type="text" class="form-control" id="subject" name="subject" placeholder="Use &#123;&#123;variable&#125;&#125; for dynamic content" required>
             </div>
 
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-2">
                     <label for="html_content" class="form-label mb-0">HTML Content</label>
                     <div class="d-flex gap-2 flex-wrap">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="{{name}}">{{name}}</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="{{email}}">{{email}}</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="{{unsubscribe_url}}">{{unsubscribe_url}}</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="&#123;&#123;name&#125;&#125;">&#123;&#123;name&#125;&#125;</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="&#123;&#123;email&#125;&#125;">&#123;&#123;email&#125;&#125;</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="&#123;&#123;unsubscribe_url&#125;&#125;">&#123;&#123;unsubscribe_url&#125;&#125;</button>
                     </div>
                 </div>
-                <textarea class="form-control font-monospace" id="html_content" name="html_content" style="min-height: 320px;" required></textarea>
+                <textarea class="form-control font-monospace" id="html_content" name="html_content" style="min-height: 520px;" required></textarea>
                 <div class="form-text">Use merge variables, upload images directly, and keep unsubscribe behavior present for campaign safety.</div>
             </div>
 
@@ -69,18 +69,18 @@ include $componentsPath . '/page-header.blade.php';
         <h2 class="h5 mb-3">Example Template</h2>
 <pre class="bg-light rounded p-3 border small mb-0">&lt;html&gt;
 &lt;body&gt;
-    &lt;h1&gt;Hello {{name}}!&lt;/h1&gt;
+    &lt;h1&gt;Hello &#123;&#123;name&#125;&#125;!&lt;/h1&gt;
     &lt;p&gt;Thank you for subscribing to our newsletter.&lt;/p&gt;
-    &lt;p&gt;Your email address is: {{email}}&lt;/p&gt;
+    &lt;p&gt;Your email address is: &#123;&#123;email&#125;&#125;&lt;/p&gt;
     &lt;p&gt;Best regards,&lt;br&gt;The Team&lt;/p&gt;
-    &lt;p&gt;&lt;small&gt;&lt;a href="{{unsubscribe_url}}"&gt;Unsubscribe&lt;/a&gt;&lt;/small&gt;&lt;/p&gt;
+    &lt;p&gt;&lt;small&gt;&lt;a href="&#123;&#123;unsubscribe_url&#125;&#125;"&gt;Unsubscribe&lt;/a&gt;&lt;/small&gt;&lt;/p&gt;
 &lt;/body&gt;
 &lt;/html&gt;</pre>
     </div>
 </div>
 
 <?php 
-$editorAssets = dirname(__DIR__, 1) . '/templates/_editor_assets.blade.php';
+$editorAssets = dirname(__DIR__, 3) . '/resources/views/blade/templates/_editor_assets.blade.php';
 ob_start();
 include $editorAssets;
 $scripts = ob_get_clean();

@@ -46,9 +46,15 @@ final class SessionManager
             $this->started = true;
             return true;
         }
+
         session_name('PHPSESSID');
         session_set_cookie_params($this->options);
         session_set_save_handler($this->handler, true);
+
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+
         $this->started = true;
         return true;
     }

@@ -23,7 +23,7 @@ class UpdateCampaignDto extends FormRequest
     public protected(set) string $html_content;
 
     #[IsValidated]
-    public protected(set) int $smtp_setting_id;
+    public protected(set) string $smtp_setting_id;
 
     public protected(set) ?string $scheduled_at = null;
 }

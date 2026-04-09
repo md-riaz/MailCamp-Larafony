@@ -134,7 +134,21 @@ class TemplateController extends Controller
     #[Route('/templates/upload-image', 'POST')]
     public function uploadImage(ServerRequestInterface $request): ResponseInterface
     {
+        $ckEditorFuncNum = (string) (($request->getQueryParams()['CKEditorFuncNum'] ?? ''));
+        $respondForCkeditor4 = static function (string $message, string $url = '', int $status = 200): ResponseInterface {
+            $safeMessage = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
+            $safeUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+            $safeFuncNum = htmlspecialchars((string) (($_GET['CKEditorFuncNum'] ?? '')), ENT_QUOTES, 'UTF-8');
+            return new \Laminas\Diactoros\Response\HtmlResponse(
+                '<script>window.parent.CKEDITOR.tools.callFunction(' . $safeFuncNum . ', ' . json_encode($safeUrl) . ', ' . json_encode($safeMessage) . ');</script>',
+                $status
+            );
+        };
+
         if (!Auth::check()) {
+            if ($ckEditorFuncNum !== '') {
+                return $respondForCkeditor4('Unauthorized', '', 401);
+            }
             return $this->json(['error' => ['message' => 'Unauthorized']], 401);
         }
 
@@ -144,10 +158,16 @@ class TemplateController extends Controller
         $uploadedFile = $uploadedFiles['upload'] ?? $uploadedFiles['file'] ?? null;
 
         if (!$uploadedFile instanceof UploadedFileInterface) {
+            if ($ckEditorFuncNum !== '') {
+                return $respondForCkeditor4('No image file uploaded.', '', 422);
+            }
             return $this->json(['error' => ['message' => 'No image file uploaded.']], 422);
         }
 
         if ($uploadedFile->getError() !== UPLOAD_ERR_OK) {
+            if ($ckEditorFuncNum !== '') {
+                return $respondForCkeditor4('Upload failed.', '', 422);
+            }
             return $this->json(['error' => ['message' => 'Upload failed.']], 422);
         }
 
@@ -155,15 +175,24 @@ class TemplateController extends Controller
         $extension = strtolower(pathinfo($clientFilename, PATHINFO_EXTENSION));
         $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         if (!in_array($extension, $allowedExtensions, true)) {
+            if ($ckEditorFuncNum !== '') {
+                return $respondForCkeditor4('Only jpg, png, gif, and webp images are allowed.', '', 422);
+            }
             return $this->json(['error' => ['message' => 'Only jpg, png, gif, and webp images are allowed.']], 422);
         }
 
         if ($uploadedFile->getSize() > 5 * 1024 * 1024) {
+            if ($ckEditorFuncNum !== '') {
+                return $respondForCkeditor4('Image exceeds 5MB limit.', '', 422);
+            }
             return $this->json(['error' => ['message' => 'Image exceeds 5MB limit.']], 422);
         }
 
         $targetDir = dirname(__DIR__, 2) . '/public/uploads/templates/org-' . $user->getOrganizationId();
         if (!is_dir($targetDir) && !mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {
+            if ($ckEditorFuncNum !== '') {
+                return $respondForCkeditor4('Failed to prepare upload directory.', '', 500);
+            }
             return $this->json(['error' => ['message' => 'Failed to prepare upload directory.']], 500);
         }
 
@@ -173,6 +202,10 @@ class TemplateController extends Controller
 
         $baseUrl = rtrim((string) ($_ENV['APP_URL'] ?? getenv('APP_URL') ?: ''), '/');
         $url = $baseUrl . '/public/uploads/templates/org-' . $user->getOrganizationId() . '/' . $filename;
+
+        if ($ckEditorFuncNum !== '') {
+            return $respondForCkeditor4('Image uploaded successfully.', $url);
+        }
 
         return $this->json([
             'url' => $url,
