@@ -21,10 +21,10 @@ final class MailUserInfo
     public static function fromString(string $userInfo): self
     {
         if (! str_contains($userInfo, ':')) {
-            return new self($userInfo, null);
+            return new self(rawurldecode($userInfo), null);
         }
 
         [$username, $password] = explode(':', $userInfo, 2);
-        return new self($username, $password);
+        return new self(rawurldecode($username), rawurldecode($password));
     }
 }

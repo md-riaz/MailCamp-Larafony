@@ -32,6 +32,11 @@ final readonly class SmtpCommand implements \Stringable
         return new self('AUTH LOGIN');
     }
 
+    public static function startTls(): self
+    {
+        return new self('STARTTLS');
+    }
+
     public static function username(string $username): self
     {
         return new self(base64_encode($username));

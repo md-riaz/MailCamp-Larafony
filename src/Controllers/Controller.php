@@ -12,14 +12,9 @@ class Controller extends \Larafony\Framework\Web\Controller
     public function __construct(ContainerContract $container)
     {
         parent::__construct($container);
-
-        // Keep session active at app layer (without patching framework files).
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
-        }
     }
 
-    public function redirect(string $url, int $status = 301): ResponseInterface
+    public function redirect(string $url, int $status = 302): ResponseInterface
     {
         if (str_starts_with($url, '/') && !str_starts_with($url, '//')) {
             $appUrl = $_ENV['APP_URL'] ?? getenv('APP_URL') ?: '';

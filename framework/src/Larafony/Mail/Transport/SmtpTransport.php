@@ -31,13 +31,22 @@ final class SmtpTransport implements TransportContract
 
     private function connect(): void
     {
+        $encryption = $this->config->encryption?->value;
+
         $this->connection = SmtpConnection::create(
             $this->config->host,
-            $this->config->port->value
+            $this->config->port->value,
+            $encryption,
         );
 
         $this->readResponse();
         $this->executeCommand(SmtpCommand::ehlo());
+
+        if ($encryption === 'tls') {
+            $this->executeCommand(SmtpCommand::startTls());
+            $this->connection->enableTls($this->config->host);
+            $this->executeCommand(SmtpCommand::ehlo());
+        }
     }
 
     private function authenticate(): void

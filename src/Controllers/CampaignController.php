@@ -137,7 +137,7 @@ class CampaignController extends Controller
 
         $smtpSetting = SmtpSetting::query()
             ->where('organization_id', '=', $user->getOrganizationId())
-            ->where('id', '=', $dto->smtp_setting_id)
+            ->where('id', '=', (int) $dto->smtp_setting_id)
             ->where('is_active', '=', 1)
             ->first();
         if (!$smtpSetting) {
@@ -153,14 +153,13 @@ class CampaignController extends Controller
             saveAsTemplate: $saveAsTemplate,
         );
 
-        $campaign = new Campaign()->fill([
-            'organization_id' => $user->getOrganizationId(),
-            'template_id' => $template->id,
-            'smtp_setting_id' => $smtpSetting->id,
-            'name' => $dto->name,
-            'status' => 'draft',
-            'created_by' => $user->id,
-        ]);
+        $campaign = new Campaign();
+        $campaign->organization_id = (int) $user->getOrganizationId();
+        $campaign->template_id = (int) $template->id;
+        $campaign->smtp_setting_id = (int) $smtpSetting->id;
+        $campaign->name = $dto->name;
+        $campaign->status = 'draft';
+        $campaign->created_by = (int) $user->id;
         $campaign->save();
 
         return $this->redirect("/campaigns/{$campaign->id}");
@@ -217,7 +216,7 @@ class CampaignController extends Controller
 
         $smtpSetting = SmtpSetting::query()
             ->where('organization_id', '=', $user->getOrganizationId())
-            ->where('id', '=', $dto->smtp_setting_id)
+            ->where('id', '=', (int) $dto->smtp_setting_id)
             ->where('is_active', '=', 1)
             ->first();
         if (!$smtpSetting) {
@@ -351,14 +350,21 @@ class CampaignController extends Controller
             return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_locked');
         }
 
-        $uploadedFiles = $request->getUploadedFiles();
-        $uploadedFile = $uploadedFiles['recipients_file'] ?? null;
-        if (!$uploadedFile instanceof UploadedFileInterface) {
-            return $this->redirect('/campaigns/' . $campaign->id . '?notice=missing_recipient_file');
-        }
+        $body = $request->getParsedBody();
+        $manualRecipients = is_array($body) ? trim((string) ($body['manual_recipients'] ?? '')) : '';
 
         try {
-            $result = $this->storeRecipientsFromCsv($campaign, $uploadedFile);
+            if ($manualRecipients !== '') {
+                $result = $this->storeRecipientsFromText($campaign, $manualRecipients);
+            } else {
+                $uploadedFiles = $request->getUploadedFiles();
+                $uploadedFile = $uploadedFiles['recipients_file'] ?? null;
+                if (!$uploadedFile instanceof UploadedFileInterface) {
+                    return $this->redirect('/campaigns/' . $campaign->id . '?notice=missing_recipient_file');
+                }
+
+                $result = $this->storeRecipientsFromCsv($campaign, $uploadedFile);
+            }
         } catch (\Throwable $exception) {
             return $this->redirect('/campaigns/' . $campaign->id . '?notice=invalid_recipient_file');
         }
@@ -632,6 +638,57 @@ class CampaignController extends Controller
      * @param array<string,string> $record
      * @return array<string,string>
      */
+    private function storeRecipientsFromText(Campaign $campaign, string $manualRecipients): array
+    {
+        $lines = preg_split('/[\r\n,;]+/', $manualRecipients) ?: [];
+        $imported = 0;
+        $skipped = 0;
+        $seenEmails = [];
+
+        $existingRecipients = Recipient::query()->where('campaign_id', '=', $campaign->id)->get();
+        foreach ($existingRecipients as $existingRecipient) {
+            $email = strtolower(trim((string) ($existingRecipient->email ?? '')));
+            if ($email !== '') {
+                $seenEmails[$email] = true;
+            }
+        }
+
+        foreach ($lines as $line) {
+            $email = strtolower(trim($line));
+            if ($email === '') {
+                continue;
+            }
+
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $skipped++;
+                continue;
+            }
+
+            if (isset($seenEmails[$email])) {
+                $skipped++;
+                continue;
+            }
+
+            $recipient = new Recipient()->fill([
+                'organization_id' => $campaign->organization_id,
+                'campaign_id' => $campaign->id,
+                'email' => $email,
+                'name' => null,
+                'status' => 'pending',
+                'custom_data' => json_encode([], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            ]);
+            $recipient->save();
+
+            $seenEmails[$email] = true;
+            $imported++;
+        }
+
+        $campaign->total_recipients = count($seenEmails);
+        $campaign->save();
+
+        return ['imported' => $imported, 'skipped' => $skipped];
+    }
+
     private function extractCustomRecipientFields(array $record): array
     {
         unset($record['email'], $record['name']);

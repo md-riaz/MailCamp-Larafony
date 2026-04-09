@@ -44,7 +44,7 @@ ob_start();
 ?>
 <div class="d-flex gap-2 flex-wrap">
     <a href="<?= $basePath ?>/campaigns" class="btn btn-outline-secondary">Back to campaigns</a>
-    <?php if ($campaign->canStart() && $campaign->total_recipients > 0): ?>
+    <?php if (($user->role === 'Admin' || $user->role === 'Superadmin') && $campaign->canStart() && $campaign->total_recipients > 0): ?>
     <form method="POST" action="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/launch" class="d-inline">
         <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to launch this campaign?')">Launch campaign</button>
     </form>
@@ -136,13 +136,14 @@ include $componentsPath . '/page-header.blade.php';
                     <div class="col-12">
                         <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-2">
                             <label for="html_content" class="form-label mb-0">HTML Content</label>
-                            <div class="d-flex gap-2 flex-wrap">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="{{name}}">{{name}}</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="{{email}}">{{email}}</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" data-insert-variable="{{unsubscribe_url}}">{{unsubscribe_url}}</button>
+                            <div class="d-flex gap-2 flex-wrap align-items-center">
+                                <button type="button" class="merge-variable-chip" data-insert-variable="&#123;&#123;name&#125;&#125;">&#123;&#123;name&#125;&#125;</button>
+                                <button type="button" class="merge-variable-chip" data-insert-variable="&#123;&#123;email&#125;&#125;">&#123;&#123;email&#125;&#125;</button>
+                                <button type="button" class="merge-variable-chip" data-insert-variable="&#123;&#123;unsubscribe_url&#125;&#125;">&#123;&#123;unsubscribe_url&#125;&#125;</button>
+                                <span class="text-secondary small">Click a badge to insert it at the cursor.</span>
                             </div>
                         </div>
-                        <textarea class="form-control font-monospace" id="html_content" name="html_content" style="min-height: 360px;" required><?= htmlspecialchars((string) ($template?->html_content ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>
+                        <textarea class="form-control font-monospace" id="html_content" name="html_content" style="min-height: 560px;" required><?= htmlspecialchars((string) ($template?->html_content ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>
                     </div>
 
                     <div class="col-12 col-md-6">
@@ -213,11 +214,18 @@ include $componentsPath . '/page-header.blade.php';
         </div>
 
         <?php if ($canEdit): ?>
-        <form id="recipient-import" method="POST" action="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/recipients" enctype="multipart/form-data" class="border rounded-3 p-3 mb-3">
+        <form id="recipient-import" method="POST" action="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/recipients" class="border rounded-3 p-3 mb-3">
+            <label for="manual_recipients" class="form-label">Recipients</label>
+            <textarea class="form-control mb-2" id="manual_recipients" name="manual_recipients" rows="5" placeholder="mdriaz@alpha.net.bd, second@example.com&#10;third@example.com"></textarea>
+            <div class="form-text mb-3">Paste comma-separated or newline-separated email addresses.</div>
+            <button type="submit" class="btn btn-outline-primary w-100" <?php echo !$canEdit ? 'disabled' : ''; ?>>Import typed recipients</button>
+        </form>
+
+        <form id="recipient-import-csv" method="POST" action="<?= $basePath ?>/campaigns/<?php echo $campaign->id; ?>/recipients" enctype="multipart/form-data" class="border rounded-3 p-3 mb-3">
             <label for="recipients_file" class="form-label">Import recipients CSV</label>
-            <input type="file" class="form-control mb-2" id="recipients_file" name="recipients_file" accept=".csv" required>
+            <input type="file" class="form-control mb-2" id="recipients_file" name="recipients_file" accept=".csv">
             <div class="form-text mb-3">Format: email,name,custom_field1,custom_field2,...</div>
-            <button type="submit" class="btn btn-outline-primary w-100" <?php echo !$canEdit ? 'disabled' : ''; ?>>Import recipients</button>
+            <button type="submit" class="btn btn-outline-secondary w-100" <?php echo !$canEdit ? 'disabled' : ''; ?>>Import CSV recipients</button>
         </form>
         <?php endif; ?>
 
@@ -344,6 +352,7 @@ include $componentsPath . '/page-header.blade.php';
                                 if (!empty($metadata['clicked_url'])) { $details[] = 'URL click'; }
                                 if (!empty($metadata['smtp_code'])) { $details[] = 'SMTP ' . $metadata['smtp_code']; }
                                 if (!empty($metadata['tracking_source'])) { $details[] = $metadata['tracking_source']; }
+                                if (!empty($metadata['error'])) { $details[] = $metadata['error']; }
                             }
                             echo htmlspecialchars($details !== [] ? implode(' · ', $details) : '—', ENT_QUOTES, 'UTF-8');
                             ?>
@@ -365,7 +374,7 @@ include $componentsPath . '/page-header.blade.php';
 </div>
 
 <?php
-$editorAssets = dirname(__DIR__, 1) . '/templates/_editor_assets.blade.php';
+$editorAssets = dirname(__DIR__, 3) . '/resources/views/blade/templates/_editor_assets.blade.php';
 ob_start();
 if ($canEdit) {
     include $editorAssets;
