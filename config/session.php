@@ -29,7 +29,7 @@ return [
     | session files will be stored. Only used with FileSessionHandler.
     |
     */
-    'path' => EnvReader::read('SESSION_PATH', sys_get_temp_dir() . '/sessions'),
+    'path' => EnvReader::read('SESSION_PATH', __DIR__ . '/../storage/sessions'),
 
     /*
     |--------------------------------------------------------------------------
