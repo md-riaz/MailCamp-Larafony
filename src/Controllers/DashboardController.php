@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Middleware\AuthMiddleware;
 use App\Models\Campaign;
 use App\Models\Recipient;
 use App\Models\SmtpSetting;
@@ -12,10 +13,12 @@ use App\Models\User;
 use App\Services\ObservabilityService;
 use Larafony\Framework\Auth\Auth;
 use Larafony\Framework\Database\Base\Query\Enums\OrderDirection;
+use Larafony\Framework\Routing\Advanced\Attributes\Middleware;
 use Larafony\Framework\Routing\Advanced\Attributes\Route;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+#[Middleware(beforeGlobal: [AuthMiddleware::class])]
 class DashboardController extends Controller
 {
     private readonly ObservabilityService $observability;
@@ -29,10 +32,6 @@ class DashboardController extends Controller
     #[Route('/', 'GET')]
     public function index(ServerRequestInterface $request): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->redirect('/login');
-        }
-
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
         $organization_id = $user->getOrganizationId();

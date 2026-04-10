@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\DTOs\CreateCampaignDto;
 use App\DTOs\UpdateCampaignDto;
+use App\Middleware\AuthMiddleware;
 use App\Models\Campaign;
 use App\Models\QueueJob;
 use App\Models\Recipient;
@@ -20,11 +21,13 @@ use App\Services\TemplateValidationService;
 use App\ViewDto\CampaignViewDto;
 use Larafony\Framework\Auth\Auth;
 use Larafony\Framework\Database\Base\Query\Enums\OrderDirection;
+use Larafony\Framework\Routing\Advanced\Attributes\Middleware;
 use Larafony\Framework\Routing\Advanced\Attributes\Route;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 
+#[Middleware(beforeGlobal: [AuthMiddleware::class])]
 class CampaignController extends Controller
 {
     private const int PER_PAGE = 25;
@@ -50,10 +53,6 @@ class CampaignController extends Controller
     #[Route('/campaigns', 'GET')]
     public function index(ServerRequestInterface $request): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->redirect('/login');
-        }
-
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
 
@@ -116,10 +115,6 @@ class CampaignController extends Controller
     #[Route('/campaigns/create', 'GET')]
     public function create(ServerRequestInterface $request): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->redirect('/login');
-        }
-
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
         $templates = Template::query()
@@ -142,10 +137,6 @@ class CampaignController extends Controller
     #[Route('/campaigns', 'POST')]
     public function store(CreateCampaignDto $dto): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->redirect('/login');
-        }
-
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
 
@@ -190,10 +181,6 @@ class CampaignController extends Controller
     #[Route('/campaigns/{id}/edit', 'GET')]
     public function edit(ServerRequestInterface $request, int $id): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->redirect('/login');
-        }
-
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
         /** @var Campaign|null $campaign */
@@ -213,10 +200,6 @@ class CampaignController extends Controller
     #[Route('/campaigns/{id}', ['PUT', 'POST'])]
     public function update(ServerRequestInterface $request, int $id, UpdateCampaignDto $dto): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->redirect('/login');
-        }
-
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
         /** @var Campaign|null $campaign */
@@ -283,10 +266,6 @@ class CampaignController extends Controller
     #[Route('/campaigns/<id:\\d+>', 'GET')]
     public function show(ServerRequestInterface $request, string $id): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->redirect('/login');
-        }
-
         $campaignId = (int) $id;
         if ($campaignId <= 0) {
             return $this->redirect('/campaigns?notice=invalid_campaign_link');
@@ -350,10 +329,6 @@ class CampaignController extends Controller
     #[Route('/campaigns/<id:\\d+>/recipients', 'POST')]
     public function importRecipients(ServerRequestInterface $request, string $id): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->redirect('/login');
-        }
-
         $campaignId = (int) $id;
         if ($campaignId <= 0) {
             return $this->redirect('/campaigns?notice=invalid_campaign_link');
@@ -405,10 +380,6 @@ class CampaignController extends Controller
     #[Route('/campaigns/<id:\\d+>/launch', 'POST')]
     public function launch(ServerRequestInterface $request, string $id): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->json(['error' => 'Unauthorized'], 401);
-        }
-
         $campaignId = (int) $id;
         if ($campaignId <= 0) {
             return $this->redirect('/campaigns?notice=invalid_campaign_link');

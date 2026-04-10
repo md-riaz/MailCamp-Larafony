@@ -5,16 +5,19 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\DTOs\CreateSmtpSettingDto;
+use App\Middleware\AuthMiddleware;
 use App\Models\Campaign;
 use App\Models\SmtpSetting;
 use App\Models\User;
 use Larafony\Framework\Auth\Auth;
 use Larafony\Framework\Database\Base\Query\Enums\OrderDirection;
 use Larafony\Framework\Database\Schema;
+use Larafony\Framework\Routing\Advanced\Attributes\Middleware;
 use Larafony\Framework\Routing\Advanced\Attributes\Route;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+#[Middleware(beforeGlobal: [AuthMiddleware::class])]
 class SmtpSettingController extends Controller
 {
     private const int PER_PAGE = 25;
@@ -27,10 +30,6 @@ class SmtpSettingController extends Controller
     #[Route('/smtp-settings', 'GET')]
     public function index(ServerRequestInterface $request): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->redirect('/login');
-        }
-
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
 
@@ -74,10 +73,6 @@ class SmtpSettingController extends Controller
     #[Route('/smtp-settings', 'POST')]
     public function store(CreateSmtpSettingDto $dto): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->redirect('/login');
-        }
-
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
 
@@ -101,10 +96,6 @@ class SmtpSettingController extends Controller
     #[Route('/smtp-settings/{id}/activate', 'POST')]
     public function activate(ServerRequestInterface $request, int $id): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->redirect('/login');
-        }
-
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
         /** @var SmtpSetting|null $smtpSetting */
@@ -126,10 +117,6 @@ class SmtpSettingController extends Controller
     #[Route('/smtp-settings/{id}/deactivate', 'POST')]
     public function deactivate(ServerRequestInterface $request, int $id): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->redirect('/login');
-        }
-
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
         /** @var SmtpSetting|null $smtpSetting */
@@ -151,10 +138,6 @@ class SmtpSettingController extends Controller
     #[Route('/smtp-settings/{id}/delete', 'POST')]
     public function destroy(ServerRequestInterface $request, int $id): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->redirect('/login');
-        }
-
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
         /** @var SmtpSetting|null $smtpSetting */

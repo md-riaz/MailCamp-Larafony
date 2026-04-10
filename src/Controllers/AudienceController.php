@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\DTOs\CreateAudienceDto;
+use App\Middleware\AuthMiddleware;
 use App\Services\AudienceService;
+use Larafony\Framework\Routing\Advanced\Attributes\Middleware;
 use Larafony\Framework\Routing\Advanced\Attributes\Route;
 use Larafony\Framework\Web\Application;
 use Psr\Http\Message\ResponseInterface;
 
+#[Middleware(beforeGlobal: [AuthMiddleware::class])]
 final class AudienceController extends Controller
 {
     private readonly AudienceService $audienceService;

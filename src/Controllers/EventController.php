@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Middleware\AuthMiddleware;
 use App\Models\Campaign;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\ObservabilityService;
 use Larafony\Framework\Auth\Auth;
+use Larafony\Framework\Routing\Advanced\Attributes\Middleware;
 use Larafony\Framework\Routing\Advanced\Attributes\Route;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+#[Middleware(beforeGlobal: [AuthMiddleware::class])]
 class EventController extends Controller
 {
     private readonly ObservabilityService $observability;
@@ -26,10 +29,6 @@ class EventController extends Controller
     #[Route('/campaign/{id}/events', 'GET')]
     public function campaignEvents(ServerRequestInterface $request, string $id): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->json(['error' => 'Unauthorized'], 401);
-        }
-
         $campaignId = (int) $id;
         if ($campaignId <= 0) {
             return $this->json(['error' => 'Invalid campaign id'], 422);
@@ -70,10 +69,6 @@ class EventController extends Controller
     #[Route('/message/{id}/events', 'GET')]
     public function messageEvents(ServerRequestInterface $request, string $id): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->json(['error' => 'Unauthorized'], 401);
-        }
-
         $messageId = (int) $id;
         if ($messageId <= 0) {
             return $this->json(['error' => 'Invalid message id'], 422);

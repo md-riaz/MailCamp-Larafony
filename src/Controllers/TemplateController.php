@@ -5,15 +5,18 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\DTOs\CreateTemplateDto;
+use App\Middleware\AuthMiddleware;
 use App\Models\Template;
 use App\Models\User;
 use Larafony\Framework\Auth\Auth;
 use Larafony\Framework\Database\Base\Query\Enums\OrderDirection;
+use Larafony\Framework\Routing\Advanced\Attributes\Middleware;
 use Larafony\Framework\Routing\Advanced\Attributes\Route;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 
+#[Middleware(beforeGlobal: [AuthMiddleware::class])]
 class TemplateController extends Controller
 {
     private const int PER_PAGE = 25;
@@ -26,10 +29,6 @@ class TemplateController extends Controller
     #[Route('/templates', 'GET')]
     public function index(ServerRequestInterface $request): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->redirect('/login');
-        }
-
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
 
@@ -57,10 +56,6 @@ class TemplateController extends Controller
     #[Route('/templates/create', 'GET')]
     public function create(ServerRequestInterface $request): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->redirect('/login');
-        }
-
         return $this->render('templates.create', [
             'user' => Auth::user(),
         ]);
@@ -69,10 +64,6 @@ class TemplateController extends Controller
     #[Route('/templates', 'POST')]
     public function store(CreateTemplateDto $dto): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->redirect('/login');
-        }
-
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
 
@@ -95,10 +86,6 @@ class TemplateController extends Controller
     #[Route('/templates/{id}', 'GET')]
     public function edit(ServerRequestInterface $request, int $id): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->redirect('/login');
-        }
-
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
         /** @var Template|null $template */
@@ -117,10 +104,6 @@ class TemplateController extends Controller
     #[Route('/templates/{id}', ['PUT', 'POST'])]
     public function update(ServerRequestInterface $request, int $id, CreateTemplateDto $dto): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->redirect('/login');
-        }
-
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
         /** @var Template|null $template */
@@ -157,13 +140,6 @@ class TemplateController extends Controller
                 $status
             );
         };
-
-        if (!Auth::check()) {
-            if ($ckEditorFuncNum !== '') {
-                return $respondForCkeditor4('Unauthorized', '', 401);
-            }
-            return $this->json(['error' => ['message' => 'Unauthorized']], 401);
-        }
 
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
@@ -230,10 +206,6 @@ class TemplateController extends Controller
     #[Route('/templates/{id}', 'DELETE')]
     public function destroy(ServerRequestInterface $request, int $id): ResponseInterface
     {
-        if (!Auth::check()) {
-            return $this->json(['error' => 'Unauthorized'], 401);
-        }
-
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
         /** @var Template|null $template */
