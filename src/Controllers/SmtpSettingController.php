@@ -10,6 +10,7 @@ use App\Models\SmtpSetting;
 use App\Models\User;
 use Larafony\Framework\Auth\Auth;
 use Larafony\Framework\Database\Base\Query\Enums\OrderDirection;
+use Larafony\Framework\Database\Schema;
 use Larafony\Framework\Routing\Advanced\Attributes\Route;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -79,7 +80,6 @@ class SmtpSettingController extends Controller
 
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
-        $isActive = isset($_POST['is_active']) && (string) $_POST['is_active'] !== '' ? 1 : 0;
 
         $smtpSetting = new SmtpSetting()->fill([
             'organization_id' => $user->getOrganizationId(),
@@ -90,7 +90,7 @@ class SmtpSettingController extends Controller
             'password' => SmtpSetting::encryptPassword($dto->password),
             'from_email' => $dto->from_email,
             'from_name' => $dto->from_name,
-            'is_active' => $isActive,
+            'is_active' => $dto->is_active ? 1 : 0,
         ]);
 
         $smtpSetting->save();
@@ -196,37 +196,10 @@ class SmtpSettingController extends Controller
 
     private function campaignsTableHasSmtpSettingId(): bool
     {
-        $host = $_ENV['DB_HOST'] ?? getenv('DB_HOST') ?: '127.0.0.1';
-        $port = (int) ($_ENV['DB_PORT'] ?? getenv('DB_PORT') ?: 3306);
-        $database = $_ENV['DB_DATABASE'] ?? getenv('DB_DATABASE') ?: '';
-        $username = $_ENV['DB_USERNAME'] ?? getenv('DB_USERNAME') ?: '';
-        $password = $_ENV['DB_PASSWORD'] ?? getenv('DB_PASSWORD') ?: '';
-
-        if ($database === '' || $username === '') {
-            return false;
-        }
-
         try {
-            $pdo = new \PDO(
-                sprintf('mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4', $host, $port, $database),
-                (string) $username,
-                (string) $password,
-                [
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-                    \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
-                ]
-            );
-
-            $stmt = $pdo->prepare('SELECT COUNT(*) AS column_count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = :database AND TABLE_NAME = :table AND COLUMN_NAME = :column');
-            $stmt->execute([
-                'database' => $database,
-                'table' => 'campaigns',
-                'column' => 'smtp_setting_id',
-            ]);
-
-            $row = $stmt->fetch();
-            return (int) (($row['column_count'] ?? 0)) > 0;
-        } catch (\Throwable $e) {
+            $columns = Schema::getColumnListing('campaigns');
+            return in_array('smtp_setting_id', $columns, true);
+        } catch (\Throwable) {
             return false;
         }
     }

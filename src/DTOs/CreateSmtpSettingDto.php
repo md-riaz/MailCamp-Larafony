@@ -34,4 +34,6 @@ class CreateSmtpSettingDto extends FormRequest
 
     #[IsValidated]
     public protected(set) string $from_name;
+
+    public protected(set) bool $is_active = false;
 }

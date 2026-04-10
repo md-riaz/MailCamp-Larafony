@@ -70,6 +70,17 @@ final class ClickTrackingService
             return ['ok' => false, 'reason' => 'message_not_found', 'status' => 404];
         }
 
+        // Verify the URL was actually tracked for this message to prevent open redirects
+        $urlHash = hash('sha256', $targetUrl);
+        $existingLink = Link::query()
+            ->where('message_id', '=', $message->id)
+            ->where('url_hash', '=', $urlHash)
+            ->first();
+
+        if (!$existingLink) {
+            return ['ok' => false, 'reason' => 'url_not_tracked_for_message', 'status' => 404];
+        }
+
         $occurredAt = date('Y-m-d H:i:s');
         $headers = array_change_key_case($request->getHeaders(), CASE_LOWER);
         $userAgent = $this->firstHeaderValue($headers, 'user-agent');

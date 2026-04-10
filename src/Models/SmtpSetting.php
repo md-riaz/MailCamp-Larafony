@@ -6,13 +6,14 @@ namespace App\Models;
 
 use Larafony\Framework\Database\ORM\Attributes\BelongsTo;
 use Larafony\Framework\Database\ORM\Model;
+use Larafony\Framework\Encryption\EncryptionService;
 
 class SmtpSetting extends Model
 {
     public string $table { get => 'smtp_settings'; }
 
     public array $fillable = [
-        'organization_id', 'host', 'port', 'encryption', 
+        'organization_id', 'host', 'port', 'encryption',
         'username', 'password', 'from_email', 'from_name', 'is_active'
     ];
     public array $hidden = ['password'];
@@ -96,21 +97,58 @@ class SmtpSetting extends Model
     )]
     public ?Organization $organization { get => $this->relations->getRelation('organization'); }
 
-    public static function encryptPassword(string $password): string
+    /**
+     * Encrypt an SMTP password using XChaCha20-Poly1305 AEAD via APP_KEY.
+     */
+    public static function encryptPassword(#[\SensitiveParameter] string $password): string
     {
-        return base64_encode($password);
+        return (new EncryptionService())->encrypt($password);
     }
 
+    /**
+     * Decrypt the stored SMTP password.
+     *
+     * Falls back to legacy base64 decoding for passwords encrypted before
+     * the migration to libsodium, then re-encrypts and persists the upgrade.
+     */
     public function decryptPassword(): string
     {
-        return base64_decode($this->password);
+        $stored = $this->password;
+
+        if ($stored === null || $stored === '') {
+            return '';
+        }
+
+        // Try modern decryption first
+        try {
+            $decrypted = (new EncryptionService())->decrypt($stored);
+            return is_string($decrypted) ? $decrypted : '';
+        } catch (\Throwable) {
+            // Fall through to legacy handling
+        }
+
+        // Legacy: base64-encoded passwords from before encryption migration
+        $legacy = base64_decode($stored, true);
+        if ($legacy === false || $legacy === '') {
+            return '';
+        }
+
+        // Silently upgrade to modern encryption on read
+        try {
+            $this->password = self::encryptPassword($legacy);
+            $this->save();
+        } catch (\Throwable) {
+            // If upgrade fails (e.g. no APP_KEY), still return the decrypted value
+        }
+
+        return $legacy;
     }
 
     public function validate(): bool
     {
-        return !empty($this->host) && 
-               !empty($this->port) && 
-               !empty($this->username) && 
+        return !empty($this->host) &&
+               !empty($this->port) &&
+               !empty($this->username) &&
                !empty($this->password) &&
                !empty($this->from_email);
     }
