@@ -16,6 +16,7 @@ use App\Services\CampaignMessageLifecycleService;
 use App\Services\CampaignRiskHistoryService;
 use App\Services\CampaignSafetyService;
 use App\Services\ObservabilityService;
+use App\Services\TemplateValidationService;
 use App\ViewDto\CampaignViewDto;
 use Larafony\Framework\Auth\Auth;
 use Larafony\Framework\Database\Base\Query\Enums\OrderDirection;
@@ -26,9 +27,24 @@ use Psr\Http\Message\UploadedFileInterface;
 
 class CampaignController extends Controller
 {
+    private const int PER_PAGE = 25;
+    private const int MAX_IMPORT_RECIPIENTS = 10000;
+    private const int MAX_IMPORT_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+    private readonly ObservabilityService $observability;
+    private readonly CampaignSafetyService $safetyService;
+    private readonly CampaignRiskHistoryService $riskHistory;
+    private readonly CampaignMessageLifecycleService $lifecycleService;
+    private readonly TemplateValidationService $templateValidation;
+
     public function __construct()
     {
         parent::__construct(\Larafony\Framework\Web\Application::instance());
+        $this->observability = new ObservabilityService();
+        $this->safetyService = new CampaignSafetyService();
+        $this->riskHistory = new CampaignRiskHistoryService();
+        $this->lifecycleService = new CampaignMessageLifecycleService();
+        $this->templateValidation = new TemplateValidationService();
     }
 
     #[Route('/campaigns', 'GET')]
@@ -47,6 +63,8 @@ class CampaignController extends Controller
         $sort = (string) ($queryParams['sort'] ?? 'created_desc');
         $sortDirection = $sort === 'created_asc' ? OrderDirection::ASC : OrderDirection::DESC;
         $normalizedSort = $sort === 'created_asc' ? 'created_asc' : 'created_desc';
+        $page = max(1, (int) ($queryParams['page'] ?? 1));
+        $offset = ($page - 1) * self::PER_PAGE;
 
         $campaignQuery = Campaign::query()
             ->where('organization_id', '=', $user->getOrganizationId());
@@ -71,6 +89,8 @@ class CampaignController extends Controller
 
         $campaigns = $campaignQuery
             ->orderBy('created_at', $sortDirection)
+            ->limit(self::PER_PAGE)
+            ->offset($offset)
             ->get();
 
         $campaignViews = array_map(
@@ -84,6 +104,8 @@ class CampaignController extends Controller
                 'q' => $search,
                 'status' => $status,
                 'sort' => $normalizedSort,
+                'page' => $page,
+                'perPage' => self::PER_PAGE,
             ],
             'statusOptions' => $allowedStatuses,
             'notice' => $this->resolveCampaignIndexNotice($request),
@@ -279,7 +301,7 @@ class CampaignController extends Controller
             return $this->redirect('/campaigns?notice=campaign_not_found');
         }
 
-        $observability = new ObservabilityService();
+        $observability = $this->observability;
         /** @var Template|null $template */
         $template = Template::query()->where('id', '=', $campaign->template_id)->first();
         $smtpSetting = null;
@@ -295,8 +317,8 @@ class CampaignController extends Controller
                 ->where('is_active', '=', 1)
                 ->first();
         }
-        $riskHistory = new CampaignRiskHistoryService();
-        $safety = (new CampaignSafetyService())->evaluate($campaign, $template, $smtpSetting);
+        $riskHistory = $this->riskHistory;
+        $safety = $this->safetyService->evaluate($campaign, $template, $smtpSetting);
 
         $templates = Template::query()
             ->where('organization_id', '=', $user->getOrganizationId())
@@ -412,7 +434,7 @@ class CampaignController extends Controller
                 return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_template_missing');
             }
 
-            $validation = (new \App\Services\TemplateValidationService())->validateForCampaign($template, $campaign);
+            $validation = $this->templateValidation->validateForCampaign($template, $campaign);
             if (!$validation['ok']) {
                 return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_template_invalid');
             }
@@ -438,8 +460,8 @@ class CampaignController extends Controller
             if (!$smtpSetting) {
                 return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_smtp_missing');
             }
-            $safety = (new CampaignSafetyService())->evaluate($campaign, $template, $smtpSetting);
-            $riskHistory = new CampaignRiskHistoryService();
+            $safety = $this->safetyService->evaluate($campaign, $template, $smtpSetting);
+            $riskHistory = $this->riskHistory;
             $riskHistory->record($campaign, 'campaign_safety_snapshot', $safety);
             if ($safety['should_pause']) {
                 $campaign->status = 'paused';
@@ -460,7 +482,7 @@ class CampaignController extends Controller
             ->count();
 
         try {
-            $queuedCount = (new CampaignMessageLifecycleService())->queueCampaign($campaign);
+            $queuedCount = $this->lifecycleService->queueCampaign($campaign);
         } catch (\Throwable) {
             return $this->redirect('/campaigns/' . $campaign->id . '?notice=campaign_queue_failed');
         }
@@ -549,6 +571,10 @@ class CampaignController extends Controller
             throw new \RuntimeException('Upload failed.');
         }
 
+        if ($uploadedFile->getSize() > self::MAX_IMPORT_FILE_SIZE) {
+            throw new \RuntimeException('Recipient file exceeds maximum allowed size of 5MB.');
+        }
+
         $stream = $uploadedFile->getStream();
         $stream->rewind();
         $csv = $stream->getContents();
@@ -614,6 +640,11 @@ class CampaignController extends Controller
                 continue;
             }
 
+            if ($imported >= self::MAX_IMPORT_RECIPIENTS) {
+                $skipped++;
+                continue;
+            }
+
             $recipient = new Recipient()->fill([
                 'organization_id' => $campaign->organization_id,
                 'campaign_id' => $campaign->id,
@@ -665,6 +696,11 @@ class CampaignController extends Controller
             }
 
             if (isset($seenEmails[$email])) {
+                $skipped++;
+                continue;
+            }
+
+            if ($imported >= self::MAX_IMPORT_RECIPIENTS) {
                 $skipped++;
                 continue;
             }

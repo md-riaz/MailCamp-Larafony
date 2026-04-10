@@ -4,37 +4,45 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Models\Audience;
+use App\DTOs\CreateAudienceDto;
 use App\Services\AudienceService;
-use Larafony\Framework\Http\Request;
-use Larafony\Framework\Http\Response;
+use Larafony\Framework\Routing\Advanced\Attributes\Route;
+use Larafony\Framework\Web\Application;
+use Psr\Http\Message\ResponseInterface;
 
-final class AudienceController
+final class AudienceController extends Controller
 {
-    public function create(Request $request): Response
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'string|nullable',
-        ]);
+    private readonly AudienceService $audienceService;
 
-        $service = new AudienceService();
-        $audience = $service->createAudience(
-            name: $validated['name'],
-            description: $validated['description'] ?? null
+    public function __construct()
+    {
+        parent::__construct(Application::instance());
+        $this->audienceService = new AudienceService();
+    }
+
+    #[Route('/audiences', methods: ['POST'])]
+    public function create(CreateAudienceDto $dto): ResponseInterface
+    {
+        $audience = $this->audienceService->createAudience(
+            name: $dto->name,
+            description: $dto->description
         );
 
-        return Response::json([
+        return $this->json([
             'message' => 'Audience created successfully!',
-            'audience' => $audience,
+            'audience' => [
+                'id' => $audience->id,
+                'name' => $audience->name,
+                'description' => $audience->description,
+            ],
         ], 201);
     }
 
-    public function list(): Response
+    #[Route('/audiences', methods: ['GET'])]
+    public function list(): ResponseInterface
     {
-        $service = new AudienceService();
-        $audiences = $service->listAudiences();
+        $audiences = $this->audienceService->listAudiences();
 
-        return Response::json($audiences);
+        return $this->json($audiences);
     }
 }

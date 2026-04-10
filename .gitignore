@@ -3,6 +3,7 @@
 .env
 /storage/logs/*
 /storage/cache/*
+/storage/sessions/*
 !.gitkeep
 composer.lock
 composer.local.json

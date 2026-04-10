@@ -18,9 +18,12 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class DashboardController extends Controller
 {
+    private readonly ObservabilityService $observability;
+
     public function __construct()
     {
         parent::__construct(\Larafony\Framework\Web\Application::instance());
+        $this->observability = new ObservabilityService();
     }
 
     #[Route('/', 'GET')]
@@ -93,17 +96,16 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $observability = new ObservabilityService();
-        $deliveryHealthMetrics = $observability->dashboardMetrics($organization_id);
+        $deliveryHealthMetrics = $this->observability->dashboardMetrics($organization_id);
 
         return $this->render('dashboard.index', [
             'stats' => $stats,
             'campaignHealth' => $campaignHealth,
             'deliveryHealthMetrics' => $deliveryHealthMetrics,
-            'deliveryFunnel' => $observability->dashboardFunnel($organization_id),
-            'organizationBounceBreakdown' => $observability->organizationBounceBreakdown($organization_id),
+            'deliveryFunnel' => $this->observability->dashboardFunnel($organization_id),
+            'organizationBounceBreakdown' => $this->observability->organizationBounceBreakdown($organization_id),
             'recent_campaigns' => $recentCampaigns,
-            'recentEvents' => $observability->recentOrganizationEvents($organization_id, 12),
+            'recentEvents' => $this->observability->recentOrganizationEvents($organization_id, 12),
             'smtpSetting' => $smtpSetting,
             'user' => $user,
         ]);

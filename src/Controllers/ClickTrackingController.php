@@ -11,16 +11,19 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class ClickTrackingController extends Controller
 {
+    private readonly ClickTrackingService $trackingService;
+
     public function __construct()
     {
         parent::__construct(\Larafony\Framework\Web\Application::instance());
+        $this->trackingService = new ClickTrackingService();
     }
 
     #[Route('/click/{messageId}', 'GET')]
     public function click(ServerRequestInterface $request, string $messageId): ResponseInterface
     {
         $targetUrl = (string) ($request->getQueryParams()['url'] ?? '');
-        $result = (new ClickTrackingService())->track($messageId, $targetUrl, $request);
+        $result = $this->trackingService->track($messageId, $targetUrl, $request);
 
         if (!($result['ok'] ?? false)) {
             return $this->redirect('/campaigns', 302);

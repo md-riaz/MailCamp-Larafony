@@ -53,6 +53,6 @@ class UnsubscribeController extends Controller
         $subscription->unsubscribe_date = date('Y-m-d H:i:s');
         $subscription->save();
 
-        return $this->redirect('/?notice=unsubscribed&email=' . rawurlencode($decoded['email']), 302);
+        return $this->redirect('/?notice=unsubscribed', 302);
     }
 }

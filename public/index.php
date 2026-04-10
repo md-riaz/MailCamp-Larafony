@@ -31,5 +31,13 @@ if ($appUrlPath !== '' && isset($_SERVER['REQUEST_URI']) && str_starts_with($_SE
 // Bootstrap the application
 $app = require_once __DIR__ . '/../bootstrap/app.php';
 
+if (($_ENV['APP_DEBUG'] ?? 'false') === 'true') {
+    error_reporting(E_ALL);
+    ini_set('display_errors', '1');
+} else {
+    error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
+    ini_set('display_errors', '0');
+    ini_set('log_errors', '1');
+}
 // Run the application
 $app->run();

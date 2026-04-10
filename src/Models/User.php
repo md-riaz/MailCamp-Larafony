@@ -85,10 +85,10 @@ class User extends Authenticable
     }
 
     /**
-     * Check if user has manager or admin role
+     * Check if user has manager, admin, or superadmin role
      */
     public function isManager(): bool
     {
-        return in_array($this->role, ['Admin', 'Superadmin'], true);
+        return in_array($this->role, ['Manager', 'Admin', 'Superadmin'], true);
     }
 }

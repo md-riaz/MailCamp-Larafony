@@ -16,6 +16,8 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class SmtpSettingController extends Controller
 {
+    private const int PER_PAGE = 25;
+
     public function __construct()
     {
         parent::__construct(\Larafony\Framework\Web\Application::instance());
@@ -30,10 +32,17 @@ class SmtpSettingController extends Controller
 
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
+
+        $queryParams = $request->getQueryParams();
+        $page = max(1, (int) ($queryParams['page'] ?? 1));
+        $offset = ($page - 1) * self::PER_PAGE;
+
         $smtpSettings = SmtpSetting::query()
             ->where('organization_id', '=', $user->getOrganizationId())
             ->orderBy('is_active', OrderDirection::DESC)
             ->orderBy('created_at', OrderDirection::DESC)
+            ->limit(self::PER_PAGE)
+            ->offset($offset)
             ->get();
 
         $activeSmtp = null;
@@ -54,6 +63,10 @@ class SmtpSettingController extends Controller
             'activeSmtp' => $activeSmtp,
             'canDeleteById' => $canDeleteById,
             'user' => $user,
+            'filters' => [
+                'page' => $page,
+                'perPage' => self::PER_PAGE,
+            ],
         ]);
     }
 

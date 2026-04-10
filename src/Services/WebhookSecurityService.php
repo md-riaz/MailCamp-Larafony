@@ -22,6 +22,19 @@ final class WebhookSecurityService
         $timestamp = is_numeric($timestampValue) ? (int) $timestampValue : null;
 
         $secret = trim((string) (getenv('SMTP_REPORT_WEBHOOK_SECRET') ?: ''));
+        $appEnv = trim((string) (getenv('APP_ENV') ?: 'production'));
+
+        if ($secret === '' && $appEnv === 'production') {
+            return [
+                'ok' => false,
+                'reason' => 'webhook_secret_not_configured',
+                'idempotency_key' => $this->requestIdempotencyKey($provider, $rawPayload, $timestampValue),
+                'signature' => $signature,
+                'timestamp' => $timestamp,
+                'headers' => $this->headerSnapshot($headers),
+            ];
+        }
+
         if ($secret !== '') {
             if ($signature === null || $timestamp === null) {
                 return [

@@ -15,9 +15,12 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class EventController extends Controller
 {
+    private readonly ObservabilityService $observability;
+
     public function __construct()
     {
         parent::__construct(\Larafony\Framework\Web\Application::instance());
+        $this->observability = new ObservabilityService();
     }
 
     #[Route('/campaign/{id}/events', 'GET')]
@@ -41,7 +44,7 @@ class EventController extends Controller
             return $this->json(['error' => 'Campaign not found'], 404);
         }
 
-        $payload = (new ObservabilityService())->campaignEvents(
+        $payload = $this->observability->campaignEvents(
             $user->getOrganizationId(),
             $campaignId,
             $request->getQueryParams(),
@@ -85,7 +88,7 @@ class EventController extends Controller
             return $this->json(['error' => 'Message not found'], 404);
         }
 
-        $payload = (new ObservabilityService())->messageEvents(
+        $payload = $this->observability->messageEvents(
             $user->getOrganizationId(),
             $messageId,
             $request->getQueryParams(),

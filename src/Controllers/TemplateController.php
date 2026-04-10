@@ -16,6 +16,8 @@ use Psr\Http\Message\UploadedFileInterface;
 
 class TemplateController extends Controller
 {
+    private const int PER_PAGE = 25;
+
     public function __construct()
     {
         parent::__construct(\Larafony\Framework\Web\Application::instance());
@@ -30,14 +32,25 @@ class TemplateController extends Controller
 
         /** @var \App\Models\User $user */
         $user = User::query()->where('id', '=', Auth::id())->first();
+
+        $queryParams = $request->getQueryParams();
+        $page = max(1, (int) ($queryParams['page'] ?? 1));
+        $offset = ($page - 1) * self::PER_PAGE;
+
         $templates = Template::query()
             ->where('organization_id', '=', $user->getOrganizationId())
             ->orderBy('created_at', OrderDirection::DESC)
+            ->limit(self::PER_PAGE)
+            ->offset($offset)
             ->get();
 
         return $this->render('templates.index', [
             'templates' => $templates,
             'user' => $user,
+            'filters' => [
+                'page' => $page,
+                'perPage' => self::PER_PAGE,
+            ],
         ]);
     }
 
