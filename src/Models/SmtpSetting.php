@@ -107,41 +107,16 @@ class SmtpSetting extends Model
 
     /**
      * Decrypt the stored SMTP password.
-     *
-     * Falls back to legacy base64 decoding for passwords encrypted before
-     * the migration to libsodium, then re-encrypts and persists the upgrade.
      */
     public function decryptPassword(): string
     {
-        $stored = $this->password;
-
-        if ($stored === null || $stored === '') {
+        if ($this->password === null || $this->password === '') {
             return '';
         }
 
-        // Try modern decryption first
-        try {
-            $decrypted = (new EncryptionService())->decrypt($stored);
-            return is_string($decrypted) ? $decrypted : '';
-        } catch (\Throwable) {
-            // Fall through to legacy handling
-        }
+        $decrypted = (new EncryptionService())->decrypt($this->password);
 
-        // Legacy: base64-encoded passwords from before encryption migration
-        $legacy = base64_decode($stored, true);
-        if ($legacy === false || $legacy === '') {
-            return '';
-        }
-
-        // Silently upgrade to modern encryption on read
-        try {
-            $this->password = self::encryptPassword($legacy);
-            $this->save();
-        } catch (\Throwable) {
-            // If upgrade fails (e.g. no APP_KEY), still return the decrypted value
-        }
-
-        return $legacy;
+        return is_string($decrypted) ? $decrypted : '';
     }
 
     public function validate(): bool
