@@ -41,6 +41,10 @@ return [
             'prefix' => EnvReader::read('DB_PREFIX', ''),
             'strict' => (bool) EnvReader::read('DB_STRICT_MODE', 'true'),
             'engine' => EnvReader::read('DB_ENGINE', 'InnoDB'),
+            'logging' => [
+                'path' => 'storage/logs/query.log',
+                'enabled' => (bool) EnvReader::read('DB_LOG_QUERIES', 'false'),
+            ],
         ],
 
     ],

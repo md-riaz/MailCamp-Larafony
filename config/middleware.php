@@ -2,7 +2,14 @@
 
 declare(strict_types=1);
 
+use Larafony\Framework\Config\Environment\EnvReader;
 use Larafony\Framework\DebugBar\Middleware\InjectDebugBar;
+
+$afterGlobal = [];
+
+if (EnvReader::read('APP_DEBUG', 'false') === 'true') {
+    $afterGlobal[] = InjectDebugBar::class;
+}
 
 return [
     'before_global' => [
@@ -11,7 +18,5 @@ return [
     'global' => [
         // Add global middleware
     ],
-    'after_global' => [
-        InjectDebugBar::class,
-    ],
+    'after_global' => $afterGlobal,
 ];
